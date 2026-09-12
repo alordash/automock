@@ -55,7 +55,7 @@ macro_rules! transmute_lifetime {
     ($expr:expr) => {
         unsafe {
             #[allow(clippy::missing_transmute_annotations)]
-            let result = core::mem::transmute($expr);
+            let result = core::mem::transmute_copy(&core::mem::ManuallyDrop::new($expr));
             result
         }
     };
@@ -64,7 +64,7 @@ macro_rules! transmute_lifetime {
     ($expr:expr, $ty:ty) => {{
         unsafe {
             #[allow(clippy::missing_transmute_annotations)]
-            let result: $ty = core::mem::transmute($expr);
+            let result: $ty = core::mem::transmute_copy(&core::mem::ManuallyDrop::new($expr));
             result
         }
     }};

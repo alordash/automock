@@ -1,11 +1,10 @@
 [package]
 name = "rsubstitute_core"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2024"
 rust-version = "1.88.0"
 description = "Core of rsubstitute that handles mocking logic."
 license = "MIT"
-homepage = "https://github.com/alordash/rsubstitute"
 repository = "https://github.com/alordash/rsubstitute"
 readme = "../README.md"
 
