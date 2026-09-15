@@ -17,7 +17,7 @@ Add `rsubsitute` to your `dev-dependencies`:
 
 ```toml
 [dev-dependencies]
-rsubsitute = "0.1.5"
+rsubsitute = "0.1.6"
 ```
 
 Import `rsubstitute::*` and apply `mock` attribute on your function, trait, structure, or `impl` block.  
