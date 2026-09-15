@@ -211,7 +211,7 @@ Received no non-matching calls",
 
         // Assert
         accept_ref::received(Arg::eq(first_reference), Times::Once).no_other_calls();
-        accept_ref::received(Arg::eq(second_reference), Times::Never).no_other_calls();
+        accept_ref::received(Arg::eq(second_reference), Times::Once).no_other_calls();
     }
 
     #[test]

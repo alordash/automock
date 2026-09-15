@@ -92,8 +92,10 @@ List of existing configuration ordered by number of correctly matched arguments 
 
         // Act
         let actual_returned_value = mock.work::<f32, 1>(&actual_value);
-        let panic_msg =
-            record_panic(|| mock.received().work::<f32, 1>(&expected_value, Times::Once));
+        let panic_msg = record_panic(|| {
+            mock.received()
+                .work::<f32, 1>(Arg::ref_eq(&expected_value), Times::Once)
+        });
 
         // Assert
         assert_eq!(returned_value, actual_returned_value);
@@ -109,8 +111,8 @@ Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 work(*{actual_debug_string}*)
 	1. v (&i32):
-		Expected reference (ptr: {expected_value_ptr:?}): {expected_debug_string}
-		Actual reference   (ptr: {actual_value_ptr:?}): {actual_debug_string}"
+		Expected (ptr: {expected_value_ptr:?}): {expected_debug_string}
+		Actual   (ptr: {actual_value_ptr:?}): {actual_debug_string}"
         );
 
         assert_eq!(Some(expected_panic_msg), panic_msg);
@@ -255,7 +257,7 @@ List of existing configuration ordered by number of correctly matched arguments 
         let actual_returned_value = TraitMock::<i32, false>::static_work::<f32, 1>(&actual_value);
         let panic_msg = record_panic(|| {
             TraitMock::<i32, false>::static_received()
-                .static_work::<f32, 1>(&expected_value, Times::Once)
+                .static_work::<f32, 1>(Arg::ref_eq(&expected_value), Times::Once)
         });
 
         // Assert
@@ -273,8 +275,8 @@ Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 static_work(*{actual_debug_string}*)
 	1. v (&i32):
-		Expected reference (ptr: {expected_value_ptr:?}): {expected_debug_string}
-		Actual reference   (ptr: {actual_value_ptr:?}): {actual_debug_string}"
+		Expected (ptr: {expected_value_ptr:?}): {expected_debug_string}
+		Actual   (ptr: {actual_value_ptr:?}): {actual_debug_string}"
         );
 
         assert_eq!(Some(expected_panic_msg), panic_msg);

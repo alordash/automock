@@ -10,6 +10,9 @@ pub(crate) struct Internal;
 /// `T` - type of argument.
 #[allow(private_interfaces)]
 #[repr(C)]
+// TODO - need ExplicitEq along with ImplicitEq
+// ImplicitEq comes from `.into()`, ExplicitEq comes from `Arg::eq`
+// ExplicitEq uses `PartialEq::eq` even for reference types
 pub enum Arg<T: ?Sized> {
     /// Accepts any possible value.
     Any,
@@ -91,7 +94,7 @@ impl<T> Arg<T> {
     /// Checks that reference of argument value is equal to reference of given value.
     ///
     /// Reference is acquired from [`Deref::deref`].
-    pub fn ref_eq<U>(value: T) -> Self
+    pub fn ref_eq<U: ?Sized>(value: T) -> Self
     where
         T: Deref<Target = U>,
     {
@@ -99,7 +102,7 @@ impl<T> Arg<T> {
         let arg_cmp = ArgCmp {
             print_arg: UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
             value: Box::new(value),
-            comparator: |a, b| core::ptr::eq(a.deref(), b.deref()),
+            comparator: ptr_cmp,
             maybe_deref_info: Some(deref_info),
         };
         return Self::PrivateEq(arg_cmp, Internal);
@@ -108,7 +111,7 @@ impl<T> Arg<T> {
     /// Checks that reference of argument value is NOT equal to reference of given value.
     ///
     /// Reference is acquired from [`Deref::deref`].
-    pub fn ref_not_eq<U>(value: T) -> Self
+    pub fn ref_not_eq<U: ?Sized>(value: T) -> Self
     where
         T: Deref<Target = U>,
     {
@@ -116,11 +119,15 @@ impl<T> Arg<T> {
         let arg_cmp = ArgCmp {
             print_arg: UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
             value: Box::new(value),
-            comparator: |a, b| core::ptr::eq(a.deref(), b.deref()),
+            comparator: ptr_cmp,
             maybe_deref_info: Some(deref_info),
         };
         return Self::PrivateNotEq(arg_cmp, Internal);
     }
+}
+
+fn ptr_cmp<U: ?Sized, T: Deref<Target = U>>(a: &T, b: &T) -> bool {
+    core::ptr::eq(a.deref(), b.deref())
 }
 
 impl<T: ?Sized> Arg<T> {
@@ -179,122 +186,6 @@ impl<T: ?Sized> Arg<T> {
                 }
             }
             Arg::Any => (),
-        };
-        return ArgCheckResult::Ok(ArgCheckResultOk { arg_info });
-    }
-}
-
-impl<'a, T: ?Sized> Arg<&'a T> {
-    #[doc(hidden)]
-    pub fn check_ref(
-        &self,
-        arg_name: &'static str,
-        actual_value: &&'a T,
-        actual_value_str: String,
-    ) -> ArgCheckResult {
-        let arg_info = ArgInfo::new(arg_name, actual_value, actual_value_str.clone());
-        let actual_ptr = core::ptr::from_ref(*actual_value);
-        match self {
-            Arg::PrivateEq(arg_cmp, _) => {
-                let expected_ptr = core::ptr::from_ref(*arg_cmp.value);
-                if !core::ptr::eq(actual_ptr, expected_ptr) {
-                    // let expected_value_str = print_arg(arg_cmp.value.as_ref());
-                    let expected_value_str = &arg_cmp.print_arg;
-                    return ArgCheckResult::Err(ArgCheckResultErr {
-                        arg_info,
-                        error_msg: format!(
-                            "\t\tExpected reference (ptr: {expected_ptr:?}): {expected_value_str}\n\t\tActual reference   (ptr: {actual_ptr:?}): {actual_value_str}"
-                        ),
-                    });
-                }
-            }
-            Arg::PrivateNotEq(arg_cmp, _) => {
-                let not_expected_ptr = core::ptr::from_ref(*arg_cmp.value);
-                if core::ptr::eq(actual_ptr, not_expected_ptr) {
-                    // let not_expected_value_str = print_arg(arg_cmp.value.as_ref());
-                    let not_expected_value_str = &arg_cmp.print_arg;
-                    return ArgCheckResult::Err(ArgCheckResultErr {
-                        arg_info,
-                        error_msg: format!(
-                            "\t\tDid not expect reference (ptr: {not_expected_ptr:?}): {not_expected_value_str}"
-                        ),
-                    });
-                }
-            }
-            Arg::PrivateIs(predicate, _) => {
-                if !predicate(actual_value as *const _ as *const ()) {
-                    return ArgCheckResult::Err(ArgCheckResultErr {
-                        arg_info,
-                        error_msg: format!(
-                            "\t\tCustom predicate didn't match passed reference value. Received value (ptr: {actual_ptr:?}): {actual_value_str}"
-                        ),
-                    });
-                }
-            }
-            Arg::Any => {}
-        };
-        return ArgCheckResult::Ok(ArgCheckResultOk { arg_info });
-    }
-}
-
-impl<T: ?Sized> Arg<&mut T> {
-    #[doc(hidden)]
-    pub fn check_mut_ref(
-        &self,
-        arg_name: &'static str,
-        actual_value_ptr: &*mut T,
-        actual_value_str: String,
-    ) -> ArgCheckResult {
-        // SAFETY: mut reference are replaced with mut pointers to allow having multiple mutable
-        // references. This is needed to expose argument in `Arg::is` predicate as is, i.e. as a
-        // mutable and not a regular reference.
-        // It's ok to have multiple mutable references to mock arguments, their mutability should
-        // not matter for testing with mocks.
-        let actual_value = unsafe {
-            &(*actual_value_ptr)
-                .as_ref()
-                .expect("Mutable reference to call argument should not be null.")
-        };
-        let arg_info = ArgInfo::new(arg_name, actual_value, actual_value_str.clone());
-        let actual_ptr = core::ptr::from_ref(*actual_value);
-        match self {
-            Arg::PrivateEq(arg_cmp, _) => {
-                let expected_ptr = core::ptr::from_ref(*arg_cmp.value);
-                if !core::ptr::eq(actual_ptr, expected_ptr) {
-                    // let expected_value_str = print_arg(arg_cmp.value.as_ref());
-                    let expected_value_str = &arg_cmp.print_arg;
-                    return ArgCheckResult::Err(ArgCheckResultErr {
-                        arg_info,
-                        error_msg: format!(
-                            "\t\tExpected reference (ptr: {expected_ptr:?}): {expected_value_str}\n\t\tActual reference   (ptr: {actual_ptr:?}): {actual_value_str}"
-                        ),
-                    });
-                }
-            }
-            Arg::PrivateNotEq(arg_cmp, _) => {
-                let not_expected_ptr = core::ptr::from_ref(*arg_cmp.value);
-                if core::ptr::eq(actual_ptr, not_expected_ptr) {
-                    // let not_expected_value_str = print_arg(arg_cmp.value.as_ref());
-                    let not_expected_value_str = &arg_cmp.print_arg;
-                    return ArgCheckResult::Err(ArgCheckResultErr {
-                        arg_info,
-                        error_msg: format!(
-                            "\t\tDid not expect reference (ptr: {not_expected_ptr:?}): {not_expected_value_str}"
-                        ),
-                    });
-                }
-            }
-            Arg::PrivateIs(predicate, _) => {
-                if !predicate(actual_value as *const _ as *const ()) {
-                    return ArgCheckResult::Err(ArgCheckResultErr {
-                        arg_info,
-                        error_msg: format!(
-                            "\t\tCustom predicate didn't match passed reference value. Received value (ptr: {actual_ptr:?}): {actual_value_str}"
-                        ),
-                    });
-                }
-            }
-            Arg::Any => {}
         };
         return ArgCheckResult::Ok(ArgCheckResultOk { arg_info });
     }

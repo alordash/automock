@@ -68,7 +68,6 @@ Received no non-matching calls"
             );
 
             let invalid_r = &22;
-            let invalid_r_ptr = core::ptr::from_ref(invalid_r);
             assert_panics(
                 || mock.received().accept_ref(invalid_r, Times::Once),
                 format!(
@@ -78,10 +77,29 @@ Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref(*{r}*)
 	1. r (&i32):
-		Expected reference (ptr: {invalid_r_ptr:?}): {invalid_r}
-		Actual reference   (ptr: {r_ptr:?}): {r}"
+		Expected: {invalid_r}
+		Actual:   {r}"
                 ),
-            )
+            );
+
+            let invalid_r = &22;
+            let invalid_r_ptr = core::ptr::from_ref(invalid_r);
+            assert_panics(
+                || {
+                    mock.received()
+                        .accept_ref(Arg::ref_eq(invalid_r), Times::Once)
+                },
+                format!(
+                    "Expected to receive a call exactly once matching:
+	Trait::accept_ref((&i32): equal to {invalid_r})
+Actually received no matching calls
+Received 1 non-matching call (non-matching arguments indicated with '*' characters):
+accept_ref(*{r}*)
+	1. r (&i32):
+		Expected (ptr: {invalid_r_ptr:?}): {invalid_r}
+		Actual   (ptr: {r_ptr:?}): {r}"
+                ),
+            );
         }
     }
 

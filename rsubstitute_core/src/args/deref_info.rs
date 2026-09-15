@@ -6,7 +6,7 @@ pub(crate) struct DerefInfo {
 }
 
 impl DerefInfo {
-    pub fn new<T: Deref<Target = U>, U>(expected_value: &T) -> Self {
+    pub fn new<T: Deref<Target = U>, U: ?Sized>(expected_value: &T) -> Self {
         let expected_value_deref_ptr = expected_value.deref() as *const _ as *const ();
         let dyn_ref: &dyn Deref<Target = U> = expected_value;
         // SAFETY: copy-paste from

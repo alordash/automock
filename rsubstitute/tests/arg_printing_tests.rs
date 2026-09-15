@@ -111,7 +111,8 @@ mod tests {
 
             // Act
             let actual_return_value = accept_ref(r);
-            let panic_msg = record_panic(|| accept_ref::received(unexpected_r, Times::Once));
+            let panic_msg =
+                record_panic(|| accept_ref::received(Arg::ref_eq(unexpected_r), Times::Once));
 
             // Assert
             assert_eq!(return_value, actual_return_value);
@@ -123,8 +124,8 @@ Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref(*{r}*)
 	1. r (&&&i32):
-		Expected reference (ptr: {unexpected_r_ptr:?}): {unexpected_r}
-		Actual reference   (ptr: {r_ptr:?}): {r}"
+		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r}
+		Actual   (ptr: {r_ptr:?}): {r}"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -180,7 +181,8 @@ accept_ref(*{r}*)
 
             // Act
             let actual_return_value = accept_ref_ptr(r);
-            let panic_msg = record_panic(|| accept_ref_ptr::received(unexpected_r, Times::Once));
+            let panic_msg =
+                record_panic(|| accept_ref_ptr::received(Arg::ref_eq(unexpected_r), Times::Once));
 
             // Assert
             assert_eq!(return_value, actual_return_value);
@@ -192,8 +194,8 @@ Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref_ptr(*{r:?}*)
 	1. r (&&*const &&i32):
-		Expected reference (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
-		Actual reference   (ptr: {r_ptr:?}): {r:?}"
+		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
+		Actual   (ptr: {r_ptr:?}): {r:?}"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -375,7 +377,10 @@ Received no non-matching calls"
 
             // Act
             let actual_return_value = mock.accept_ref(r);
-            let panic_msg = record_panic(|| mock.received().accept_ref(unexpected_r, Times::Once));
+            let panic_msg = record_panic(|| {
+                mock.received()
+                    .accept_ref(Arg::ref_eq(unexpected_r), Times::Once)
+            });
 
             // Assert
             assert_eq!(return_value, actual_return_value);
@@ -387,8 +392,8 @@ Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref(*{r}*)
 	1. r (&&&i32):
-		Expected reference (ptr: {unexpected_r_ptr:?}): {unexpected_r}
-		Actual reference   (ptr: {r_ptr:?}): {r}"
+		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r}
+		Actual   (ptr: {r_ptr:?}): {r}"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -450,8 +455,10 @@ accept_ref(*{r}*)
 
             // Act
             let actual_return_value = mock.accept_ref_ptr(r);
-            let panic_msg =
-                record_panic(|| mock.received().accept_ref_ptr(unexpected_r, Times::Once));
+            let panic_msg = record_panic(|| {
+                mock.received()
+                    .accept_ref_ptr(Arg::ref_eq(unexpected_r), Times::Once)
+            });
 
             // Assert
             assert_eq!(return_value, actual_return_value);
@@ -463,8 +470,8 @@ Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref_ptr(*{r:?}*)
 	1. r (&&*const &&i32):
-		Expected reference (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
-		Actual reference   (ptr: {r_ptr:?}): {r:?}"
+		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
+		Actual   (ptr: {r_ptr:?}): {r:?}"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -655,7 +662,10 @@ Received no non-matching calls"
 
             // Act
             let actual_return_value = mock.accept_ref(r);
-            let panic_msg = record_panic(|| mock.received().accept_ref(unexpected_r, Times::Once));
+            let panic_msg = record_panic(|| {
+                mock.received()
+                    .accept_ref(Arg::ref_eq(unexpected_r), Times::Once)
+            });
 
             // Assert
             assert_eq!(return_value, actual_return_value);
@@ -667,8 +677,8 @@ Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref(*{r}*)
 	1. r (&&&i32):
-		Expected reference (ptr: {unexpected_r_ptr:?}): {unexpected_r}
-		Actual reference   (ptr: {r_ptr:?}): {r}"
+		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r}
+		Actual   (ptr: {r_ptr:?}): {r}"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -730,8 +740,10 @@ accept_ref(*{r}*)
 
             // Act
             let actual_return_value = mock.accept_ref_ptr(r);
-            let panic_msg =
-                record_panic(|| mock.received().accept_ref_ptr(unexpected_r, Times::Once));
+            let panic_msg = record_panic(|| {
+                mock.received()
+                    .accept_ref_ptr(Arg::ref_eq(unexpected_r), Times::Once)
+            });
 
             // Assert
             assert_eq!(return_value, actual_return_value);
@@ -743,8 +755,8 @@ Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref_ptr(*{r:?}*)
 	1. r (&&*const &&i32):
-		Expected reference (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
-		Actual reference   (ptr: {r_ptr:?}): {r:?}"
+		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
+		Actual   (ptr: {r_ptr:?}): {r:?}"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -938,7 +950,7 @@ Received no non-matching calls"
             let panic_msg = record_panic(|| {
                 mock.received()
                     .as_Trait()
-                    .accept_ref(unexpected_r, Times::Once)
+                    .accept_ref(Arg::ref_eq(unexpected_r), Times::Once)
             });
 
             // Assert
@@ -951,8 +963,8 @@ Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref(*{r}*)
 	1. r (&&&i32):
-		Expected reference (ptr: {unexpected_r_ptr:?}): {unexpected_r}
-		Actual reference   (ptr: {r_ptr:?}): {r}"
+		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r}
+		Actual   (ptr: {r_ptr:?}): {r}"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -1020,7 +1032,7 @@ accept_ref(*{r}*)
             let panic_msg = record_panic(|| {
                 mock.received()
                     .as_Trait()
-                    .accept_ref_ptr(unexpected_r, Times::Once)
+                    .accept_ref_ptr(Arg::ref_eq(unexpected_r), Times::Once)
             });
 
             // Assert
@@ -1033,8 +1045,8 @@ Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref_ptr(*{r:?}*)
 	1. r (&&*const &&i32):
-		Expected reference (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
-		Actual reference   (ptr: {r_ptr:?}): {r:?}"
+		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
+		Actual   (ptr: {r_ptr:?}): {r:?}"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }

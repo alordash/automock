@@ -142,7 +142,6 @@ fn generate_fn_check(span: Span, arguments: &[Argument], call_struct_type: Type)
                 }),
                 argument.ident.clone(),
             ));
-            let arg_check_fn_name = get_matching_arg_check_fn_name(&argument.ident_pat_type.ty);
             let result = expr::method_call::new(
                 span,
                 Expr::Macro(transmute_lifetime_expr::new_with_target(
@@ -163,7 +162,7 @@ fn generate_fn_check(span: Span, arguments: &[Argument], call_struct_type: Type)
                         ))),
                     }),
                 )),
-                Ident::new(arg_check_fn_name, span),
+                Ident::new("check", span),
                 [
                     Expr::Lit(ExprLit {
                         attrs: Vec::new(),
@@ -284,17 +283,4 @@ fn generate_fn_fmt_args(span: Span, arguments: &[Argument]) -> ImplItemFn {
     };
 
     return result;
-}
-
-fn get_matching_arg_check_fn_name(argument_type: &Type) -> &'static str {
-    match argument_type {
-        Type::Reference(type_reference) => {
-            if type_reference.mutability.is_some() {
-                "check_mut_ref"
-            } else {
-                "check_ref"
-            }
-        }
-        _ => "check",
-    }
 }
