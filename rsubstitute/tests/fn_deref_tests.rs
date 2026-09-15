@@ -41,7 +41,7 @@ mod tests {
         use super::*;
 
         #[test]
-        fn ref_test_Raw_ComparesByReference() {
+        fn ref_test_Raw_ComparesByValue() {
             // Arrange
             let v = [1, 1, 1];
             let [r1, r2, r3] = &v;
@@ -54,17 +54,44 @@ mod tests {
             ref_test(r3);
 
             // Assert 1
+            assert_eq!(2, counter.get());
+            ref_test::received(r1, Times::Exactly(2))
+                .received(r2, Times::Exactly(2))
+                .received(r3, Times::Exactly(2));
+
+            // Act 2
+            ref_test(r1);
+
+            // Assert 2
+            assert_eq!(3, counter.get());
+            ref_test::received(r1, Times::Exactly(3)).no_other_calls();
+        }
+
+        #[test]
+        fn ref_test_RefEq_ComparesByReference() {
+            // Arrange
+            let v = [1, 1, 1];
+            let [r1, r2, r3] = &v;
+            let counter = Counter::new();
+
+            ref_test::setup(Arg::ref_eq(r1)).does(move |_| counter.inc());
+
+            // Act 1
+            ref_test(r2);
+            ref_test(r3);
+
+            // Assert 1
             assert_eq!(0, counter.get());
-            ref_test::received(r1, Times::Never)
-                .received(r2, Times::Once)
-                .received(r3, Times::Once);
+            ref_test::received(Arg::ref_eq(r1), Times::Never)
+                .received(Arg::ref_eq(r2), Times::Once)
+                .received(Arg::ref_eq(r3), Times::Once);
 
             // Act 2
             ref_test(r1);
 
             // Assert 2
             assert_eq!(1, counter.get());
-            ref_test::received(r1, Times::Once).no_other_calls();
+            ref_test::received(Arg::ref_eq(r1), Times::Once).no_other_calls();
         }
     }
 
