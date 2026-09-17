@@ -1,4 +1,5 @@
 #[doc(hidden)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ArgInfo {
     arg_name: &'static str,
     arg_type_name: &'static str,
