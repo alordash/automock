@@ -10,9 +10,6 @@ pub(crate) struct Internal;
 /// `T` - type of argument.
 #[allow(private_interfaces)]
 #[repr(C)]
-// TODO - need ExplicitEq along with ImplicitEq
-// ImplicitEq comes from `.into()`, ExplicitEq comes from `Arg::eq`
-// ExplicitEq uses `PartialEq::eq` even for reference types
 pub enum Arg<T: ?Sized> {
     /// Accepts any possible value.
     Any,
