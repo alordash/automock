@@ -47,7 +47,7 @@ mod tests {
     #![allow(non_snake_case)]
 
     use super::*;
-    use crate::fn_parameters::tests::StubCall;
+    use crate::fn_parameters::tests::CallMock;
     use crate::fn_parameters::*;
 
     #[test]
@@ -55,7 +55,7 @@ mod tests {
         // Arrange
         let number = 12usize;
         get_next_call_order_number::setup().returns(number);
-        let call = Rc::new(DynCall::new(StubCall::new()));
+        let call = Rc::new(DynCall::new(CallMock::new()));
 
         // Act
         let result = CallCheck::new(call.clone());
@@ -72,7 +72,7 @@ mod tests {
         let call_check = CallCheck {
             number: 1,
             verified: Cell::new(false),
-            call: Rc::new(DynCall::new(StubCall::new())),
+            call: Rc::new(DynCall::new(CallMock::new())),
         };
 
         // Act
@@ -88,7 +88,7 @@ mod tests {
         let call_check = CallCheck {
             number: 1,
             verified: Cell::new(false),
-            call: Rc::new(DynCall::new(StubCall::new())),
+            call: Rc::new(DynCall::new(CallMock::new())),
         };
 
         // Act
@@ -104,7 +104,7 @@ mod tests {
         let call_check = CallCheck {
             number: 1,
             verified: Cell::new(true),
-            call: Rc::new(DynCall::new(StubCall::new())),
+            call: Rc::new(DynCall::new(CallMock::new())),
         };
 
         // Act
@@ -117,7 +117,7 @@ mod tests {
     #[test]
     fn get_call_Ok() {
         // Arrange
-        let call = Rc::new(DynCall::new(StubCall::new()));
+        let call = Rc::new(DynCall::new(CallMock::new()));
 
         let call_check = CallCheck {
             number: 1,

@@ -56,7 +56,7 @@ mod tests {
     #[test]
     fn new_Ok() {
         // Arrange
-        let mut call_mock = StubCall::new();
+        let mut call_mock = CallMock::new();
         call_mock
             .setup()
             .as_ICall()
@@ -72,9 +72,23 @@ mod tests {
     }
 
     #[test]
+    fn downcast_ref_Ok() {
+        // Arrange
+        let mut call_mock = CallMock::new();
+        call_mock.id = 123;
+        let dyn_call = DynCall::new(call_mock.clone());
+
+        // Act
+        let result: &CallMock = dyn_call.downcast_ref();
+
+        // Assert
+        assert_eq!(result.id, call_mock.id);
+    }
+
+    #[test]
     fn ICall_get_arg_infos_ForwardsToInner() {
         // Arrange
-        let mut call_mock = StubCall::new();
+        let mut call_mock = CallMock::new();
         let arg_infos = vec![
             ArgInfo::new("quo 1", "vadis 1", "veridis 1".to_owned()),
             ArgInfo::new("quo 2", "vadis 2", "veridis 2".to_owned()),
@@ -102,7 +116,7 @@ mod tests {
     #[test]
     fn ICall_get_ptr_to_boxed_tuple_of_refs_ForwardsToInner() {
         // Arrange
-        let mut call_mock = StubCall::new();
+        let mut call_mock = CallMock::new();
         let ptr = 123usize as *mut ();
         call_mock
             .setup()
@@ -131,7 +145,7 @@ mod tests {
             name: "quo",
             type_name: "vadis",
         })];
-        let mut call_mock = StubCall::new();
+        let mut call_mock = CallMock::new();
         call_mock
             .setup()
             .as_IGenericsInfoProvider()
@@ -156,7 +170,7 @@ mod tests {
     fn IGenericsInfoProvider_hash_generics_type_ids_ForwardsToInner() {
         // Arrange
         let mut generics_hasher = GenericsHasher::new();
-        let mut call_mock = StubCall::new();
+        let mut call_mock = CallMock::new();
         let dyn_call = DynCall::new(call_mock.clone());
 
         // Act
@@ -174,7 +188,7 @@ mod tests {
     fn IGenericsInfoProvider_hash_const_values_ids_ForwardsToInner() {
         // Arrange
         let mut generics_hasher = GenericsHasher::new();
-        let mut call_mock = StubCall::new();
+        let mut call_mock = CallMock::new();
         let dyn_call = DynCall::new(call_mock.clone());
 
         // Act

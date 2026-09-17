@@ -19,15 +19,15 @@ pub mod tests {
 
     #[mock]
     #[derive(Clone)]
-    pub struct StubArgsChecker;
+    pub struct ArgsCheckerMock;
     
     #[mock(base)]
-    impl StubArgsChecker {
+    impl ArgsCheckerMock {
         pub fn new() -> Self { Self }
     }
 
     #[mock]
-    impl IGenericsInfoProvider for StubArgsChecker {
+    impl IGenericsInfoProvider for ArgsCheckerMock {
         fn get_generic_parameter_infos(&self) -> Vec<GenericParameterInfo> {
             unreachable!()
         }
@@ -43,7 +43,7 @@ pub mod tests {
     }
     
     #[mock]
-    impl IArgsChecker for StubArgsChecker {
+    impl IArgsChecker for ArgsCheckerMock {
         fn check(&self, dyn_call: &DynCall<'_>) -> Vec<ArgCheckResult> {
             unreachable!()
         }

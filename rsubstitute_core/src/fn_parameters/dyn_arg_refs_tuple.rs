@@ -1,9 +1,11 @@
 use crate::fn_parameters::*;
 
+#[cfg_attr(test, rsubstitute::mock)]
 pub struct DynArgRefsTuple<'rs> {
     inner: Box<dyn IArgRefsTuple<'rs> + 'rs>,
 }
 
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'rs> DynArgRefsTuple<'rs> {
     pub(crate) fn from_raw(raw_ptr: *mut (dyn IArgRefsTuple<'rs> + 'rs)) -> Self {
         Self {
@@ -24,7 +26,9 @@ impl<'rs> DynArgRefsTuple<'rs> {
 #[cfg(test)]
 mod tests {
     #![allow(non_snake_case)]
+
     use super::*;
+    use rsubstitute::Mockable;
 
     #[test]
     fn from_raw_Ok() {
@@ -44,13 +48,18 @@ mod tests {
     #[test]
     fn downcast_into_Ok() {
         // Arrange
-        let arg_refs_tuple = (1, 2, 3);
+        type ArgRefsTupleType = (i32, i32, i32);
+        let arg_refs_tuple: ArgRefsTupleType = (1, 2, 3);
         let boxed: Box<dyn IArgRefsTuple> = Box::new(arg_refs_tuple);
         let ptr = Box::leak(boxed) as *mut _;
-        let dyn_arg_refs_tuple = DynArgRefsTuple::from_raw(ptr);
+        let mut dyn_arg_refs_tuple = DynArgRefsTuple::from_raw(ptr);
+        dyn_arg_refs_tuple
+            .setup()
+            .downcast_into::<ArgRefsTupleType>()
+            .call_base();
 
         // Act
-        let result: (i32, i32, i32) = dyn_arg_refs_tuple.downcast_into();
+        let result: ArgRefsTupleType = dyn_arg_refs_tuple.downcast_into();
 
         // Assert
         assert_eq!(result, arg_refs_tuple);

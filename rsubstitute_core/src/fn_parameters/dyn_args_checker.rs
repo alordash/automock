@@ -53,7 +53,7 @@ mod tests {
             name: "quo",
             type_name: "vadis",
         })];
-        let mut args_checker_mock = StubArgsChecker::new();
+        let mut args_checker_mock = ArgsCheckerMock::new();
         args_checker_mock
             .setup()
             .as_IGenericsInfoProvider()
@@ -78,7 +78,7 @@ mod tests {
     fn IGenericsInfoProvider_hash_generics_type_ids_ForwardsToInner() {
         // Arrange
         let mut generics_hasher = GenericsHasher::new();
-        let mut args_checker_mock = StubArgsChecker::new();
+        let mut args_checker_mock = ArgsCheckerMock::new();
         let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
 
         // Act
@@ -96,7 +96,7 @@ mod tests {
     fn IGenericsInfoProvider_hash_const_values_ids_ForwardsToInner() {
         // Arrange
         let mut generics_hasher = GenericsHasher::new();
-        let mut args_checker_mock = StubArgsChecker::new();
+        let mut args_checker_mock = ArgsCheckerMock::new();
         let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
 
         // Act
@@ -113,7 +113,7 @@ mod tests {
     #[test]
     fn IArgsChecker_check_ForwardsToInner() {
         // Arrange
-        let mut args_checker_mock = StubArgsChecker::new();
+        let mut args_checker_mock = ArgsCheckerMock::new();
         let arg_check_results = vec![
             ArgCheckResult::Ok(ArgCheckResultOk {
                 arg_info: ArgInfo::new("quo", "vadis", "veridis".to_owned()),
@@ -130,7 +130,7 @@ mod tests {
             .returns(arg_check_results.clone());
 
         let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
-        let dyn_call = DynCall::new(StubCall::new());
+        let dyn_call = DynCall::new(CallMock::new());
 
         // Act
         let result = dyn_args_checker.check(&dyn_call);
@@ -147,7 +147,7 @@ mod tests {
     #[test]
     fn IArgsChecker_fmt_args_ForwardsToInner() {
         // Arrange
-        let mut args_checker_mock = StubArgsChecker::new();
+        let mut args_checker_mock = ArgsCheckerMock::new();
         let fmt_args_string = "quo vadis".to_owned();
         args_checker_mock
             .setup()
