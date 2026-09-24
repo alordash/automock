@@ -2,6 +2,10 @@ use crate::args::*;
 use crate::fn_parameters::*;
 
 pub trait ICall: IGenericsInfoProvider {
+    fn is_zst(&self) -> bool {
+        true
+    }
+
     fn get_arg_infos(&self) -> Vec<ArgInfo> {
         Vec::new()
     }
@@ -13,6 +17,9 @@ pub trait ICall: IGenericsInfoProvider {
     #[doc(hidden)]
     #[allow(private_interfaces)]
     fn get_dyn_tuple_of_refs<'a>(&self) -> DynArgRefsTuple<'a> {
+        if self.is_zst() {
+            return DynArgRefsTuple::zero_size();
+        }
         let raw_ptr = self.get_ptr_to_boxed_tuple_of_refs();
         return DynArgRefsTuple::from_raw(raw_ptr);
     }
@@ -55,7 +62,7 @@ pub mod tests {
             .downcast_into::<ArgRefsTupleType>()
             .call_base();
         DynArgRefsTuple::static_setup()
-            .from_raw(rsubstitute::Arg::Any)
+            .zero_size()
             .returns(dyn_arg_refs_tuple_mock);
 
         // Act
@@ -66,13 +73,7 @@ pub mod tests {
         assert_eq!(actual_arg_refs_tuple, arg_refs_tuple);
 
         DynArgRefsTuple::static_received()
-            .from_raw(
-                rsubstitute::Arg::is(|actual_raw_ptr: &*mut (dyn IArgRefsTuple + '_)| {
-                    let ptr = *actual_raw_ptr as *mut ();
-                    ptr == core::ptr::null_mut()
-                }),
-                1.time(),
-            )
+            .zero_size(1.time())
             .no_other_calls();
     }
 
@@ -111,6 +112,9 @@ pub mod tests {
 
     #[mock]
     impl ICall for CallMock {
+        fn is_zst(&self) -> bool {
+            unreachable!()
+        }
         fn get_arg_infos(&self) -> Vec<ArgInfo> {
             unreachable!()
         }

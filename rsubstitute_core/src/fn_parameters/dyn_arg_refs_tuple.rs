@@ -2,20 +2,31 @@ use crate::fn_parameters::*;
 
 #[cfg_attr(test, rsubstitute::mock)]
 pub struct DynArgRefsTuple<'rs> {
-    inner: Box<dyn IArgRefsTuple<'rs> + 'rs>,
+    inner: Option<Box<dyn IArgRefsTuple<'rs> + 'rs>>,
 }
 
 #[cfg_attr(test, rsubstitute::mock(base))]
 impl<'rs> DynArgRefsTuple<'rs> {
+    pub(crate) fn zero_size() -> Self {
+        Self { inner: None }
+    }
+
     pub(crate) fn from_raw(raw_ptr: *mut (dyn IArgRefsTuple<'rs> + 'rs)) -> Self {
         Self {
             // SAFETY: for justification refer to module level documentation.
-            inner: unsafe { Box::from_raw(raw_ptr) },
+            inner: unsafe { Some(Box::from_raw(raw_ptr)) },
         }
     }
 
     pub fn downcast_into<'a, T: IReturnValue<'a>>(self) -> T {
-        let raw_ptr = Box::into_raw(self.inner) as *mut T;
+        if size_of::<T>() == 0 {
+            // SAFETY: target type is ZST, it is safe to initialize it using zeroed memory
+            return unsafe { core::mem::MaybeUninit::zeroed().assume_init() };
+        }
+        let raw_ptr = Box::into_raw(
+            self.inner
+                .unwrap_or_else(|| panic!("[ERROR] Tuple of function arguments is null!")),
+        ) as *mut T;
         // SAFETY: for justification refer to module level documentation.
         let boxed = unsafe { Box::from_raw(raw_ptr) };
         let value = *boxed;
@@ -41,7 +52,7 @@ mod tests {
         let result = DynArgRefsTuple::from_raw(ptr);
 
         // Assert
-        let actual_ptr = result.inner.as_ref() as *const _;
+        let actual_ptr = result.inner.expect("from_raw -> must be Some").as_ref() as *const _;
         assert_eq!(actual_ptr, ptr);
     }
 

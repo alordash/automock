@@ -43,15 +43,19 @@ impl<'rs, TMock> FnConfig<'rs, TMock> {
         mut callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'static,
     ) {
         let dyn_callback = move |raw_mock_ptr: *const (), dyn_call: &DynCall<'rs>| {
-            let raw_arg_refs_tuple_ptr = dyn_call.get_ptr_to_boxed_tuple_of_refs();
-            let arg_refs_tuple_ptr = raw_arg_refs_tuple_ptr as *mut TArgRefsTuple;
+            let arg_refs_tuple = if size_of::<TArgRefsTuple>() == 0 {
+                // SAFETY: target type is ZST, it is safe to initialize it using zeroed memory
+                unsafe { core::mem::MaybeUninit::zeroed().assume_init() }
+            } else {
+                let raw_arg_refs_tuple_ptr = dyn_call.get_ptr_to_boxed_tuple_of_refs();
+                let arg_refs_tuple_ptr = raw_arg_refs_tuple_ptr as *mut TArgRefsTuple;
 
-            // SAFETY: both `get_ptr_to_boxed_tuple_of_refs` implementation and `TArgRefsTuple` type
-            // are controlled by procedure macro. This guarantees that downcasting from `Box` is safe
-            // and won't lead to transmutation between different types.
-            let boxed_arg_refs_tuple = unsafe { Box::from_raw(arg_refs_tuple_ptr) };
-            let arg_refs_tuple = *boxed_arg_refs_tuple;
-
+                // SAFETY: both `get_ptr_to_boxed_tuple_of_refs` implementation and `TArgRefsTuple` type
+                // are controlled by procedure macro. This guarantees that downcasting from `Box` is safe
+                // and won't lead to transmutation between different types.
+                let boxed_arg_refs_tuple = unsafe { Box::from_raw(arg_refs_tuple_ptr) };
+                *boxed_arg_refs_tuple
+            };
             // SAFETY: using pointer instead of reference to untie `TMock` lifetime from `callback`
             // in `FnConfig`. Pointer is passed from `FnData` which casts valid reference to pointer.
             let mock_ref = unsafe {

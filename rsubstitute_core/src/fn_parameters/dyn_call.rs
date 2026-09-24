@@ -7,6 +7,10 @@ pub struct DynCall<'rs> {
 }
 
 impl<'rs> ICall for DynCall<'rs> {
+    fn is_zst(&self) -> bool {
+        size_of_val(self.inner.as_ref()) == 0
+    }
+
     fn get_arg_infos(&self) -> Vec<ArgInfo> {
         self.inner.get_arg_infos()
     }
