@@ -62,7 +62,7 @@ mod tests {
 
         // Assert
         assert_eq!(result.number, number);
-        assert_eq!(result.verified.get(), false);
+        assert!(!result.verified.get());
         assert!(Rc::ptr_eq(&result.call, &call))
     }
 
@@ -79,7 +79,7 @@ mod tests {
         call_check.mark_as_verified();
 
         // Assert
-        assert_eq!(call_check.verified.get(), true);
+        assert!(call_check.verified.get());
     }
 
     #[test]
@@ -95,7 +95,7 @@ mod tests {
         let result = call_check.is_not_verified();
 
         // Assert
-        assert_eq!(result, true);
+        assert!(result);
     }
 
     #[test]
@@ -111,7 +111,7 @@ mod tests {
         let result = call_check.is_not_verified();
 
         // Assert
-        assert_eq!(result, false);
+        assert!(!result);
     }
 
     #[test]
