@@ -180,9 +180,10 @@ pub(crate) fn generate_module(ctx: &Context, mut item_impl: ItemImpl) -> MockMod
         attrs: vec![
             attributes::allow_clippy(source_span, "all"),
             attributes::allow_unused(source_span),
+            attributes::allow_private_interfaces(source_span),
+            attributes::allow_private_bounds(source_span),
             attributes::allow_unreachable_pub(source_span),
             attributes::allow_nonstandard_style(source_span),
-            attributes::allow_private_bounds(source_span),
         ],
         vis: Visibility::Public(Token![pub](source_span)),
         unsafety: None,

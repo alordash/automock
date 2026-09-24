@@ -20,10 +20,12 @@ pub mod tests {
     #[mock]
     #[derive(Clone)]
     pub struct ArgsCheckerMock;
-    
+
     #[mock(base)]
     impl ArgsCheckerMock {
-        pub fn new() -> Self { Self }
+        pub fn new() -> Self {
+            Self
+        }
     }
 
     #[mock]
@@ -41,7 +43,7 @@ pub mod tests {
             unreachable!()
         }
     }
-    
+
     #[mock]
     impl IArgsChecker for ArgsCheckerMock {
         fn check(&self, dyn_call: &DynCall<'_>) -> Vec<ArgCheckResult> {

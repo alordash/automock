@@ -129,9 +129,10 @@ pub(crate) fn generate_module(ctx: &Context, item_fn: ItemFn) -> MockMod {
         attrs: vec![
             attributes::allow_clippy(source_span, "all"),
             attributes::allow_unused(source_span),
+            attributes::allow_private_interfaces(source_span),
+            attributes::allow_private_bounds(source_span),
             attributes::allow_unreachable_pub(source_span),
             attributes::allow_nonstandard_style(source_span),
-            attributes::allow_private_bounds(source_span),
         ],
         vis: fn_info.visibility.clone(),
         unsafety: None,

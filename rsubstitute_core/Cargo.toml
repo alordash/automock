@@ -1,6 +1,6 @@
 [package]
 name = "rsubstitute_core"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2024"
 rust-version = "1.88.0"
 description = "Core of rsubstitute that handles mocking logic."
@@ -14,7 +14,7 @@ indexmap = { workspace = true }
 cfg-if = { workspace = true }
 
 [dev-dependencies]
-rsubstitute = "0.1.6"
+rsubstitute = { workspace = true }
 
 [features]
 debug_naming = []

@@ -3,9 +3,10 @@ resolver = "3"
 members = ["rsubstitute", "rsubstitute_core", "rsubstitute_proc_macro"]
 
 [workspace.dependencies]
-rsubstitute_core = { path = "rsubstitute_core", version = "0.1.7", default-features = false }
-rsubstitute_proc_macro = { path = "rsubstitute_proc_macro", version = "0.1.7" }
+rsubstitute_core = { path = "rsubstitute_core", version = "0.1.8", default-features = false }
+rsubstitute_proc_macro = { path = "rsubstitute_proc_macro", version = "0.1.8" }
 
+rsubstitute = "0.1.7"
 typeid = "1.0.3"
 proc-macro2 = { version = "1.0.95", features = ["span-locations"] }
 quote = "1.0.40"
