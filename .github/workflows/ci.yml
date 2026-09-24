@@ -1,4 +1,3 @@
-# Blatantly stolen from https://github.com/asomers/mockall/blob/master/.github/workflows/ci.yml
 name: CI
 
 on:
@@ -13,7 +12,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -49,7 +48,7 @@ jobs:
           cargo check ${{ matrix.cargo_args }}
 
   msrv:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: MSRV
     container:
       image: rust:1.88.0
@@ -61,7 +60,7 @@ jobs:
         run: cargo build
 
   fmt:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Code format
     container:
       image: rust:1.88.0

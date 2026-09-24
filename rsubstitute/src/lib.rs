@@ -1255,8 +1255,8 @@
 //!
 //! `rsubstitute` infrastructure stores all call arguments in mock objects so that they can later be
 //! inspected by `received()`. When a mocked function receives a reference, this can cause a
-//! dangling reference to be accessed later if the referenced value is dropped before `received()`
-//! is called. This can result in undefined behavior.  
+//! dangling reference access if the referenced value is dropped before `received()` is called.
+//! This can result in undefined behavior.  
 //! Here's an example of UB:
 //! ```should_panic
 //! # use rsubstitute::*;
@@ -1275,7 +1275,7 @@
 //! // Assert
 //! work::received(Arg::is(|r: &&i32| **r == 10), 1.time());
 //!                                 // ^^^
-//!                                 // UB - `r` stores reference to dropped `local` in `use_work`
+//!                                 // UB - `r` stores reference to `local` dropped in `use_work`
 //! # }
 //! ```
 //!
@@ -1300,6 +1300,8 @@
 //! work::received(Arg::is(|r: &&i32| **r == test_local), 1.time());
 //! # }
 //! ```
+//! Rule of thumb is that if function that accepts references produces flaky results, this is most
+//! likely because it receives dangling reference.
 pub use rsubstitute_proc_macro::mock;
 
 #[doc(hidden)]

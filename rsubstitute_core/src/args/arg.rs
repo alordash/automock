@@ -10,9 +10,6 @@ pub(crate) struct Internal;
 /// `T` - type of argument.
 #[allow(private_interfaces)]
 #[repr(C)]
-// TODO - need ExplicitEq along with ImplicitEq
-// ImplicitEq comes from `.into()`, ExplicitEq comes from `Arg::eq`
-// ExplicitEq uses `PartialEq::eq` even for reference types
 pub enum Arg<T: ?Sized> {
     /// Accepts any possible value.
     Any,
@@ -24,7 +21,7 @@ pub enum Arg<T: ?Sized> {
     PrivateIs(Box<dyn Fn(*const ()) -> bool>, Internal),
 }
 
-const UNINITIALIZED_ARG_PRINT_STRING: &str = "[CRITICAL ERROR]: This string should represent arguments value, but if you see this is it means that `ArgCmp.print_arg` wasn't initialized!";
+const UNINITIALIZED_ARG_PRINT_STRING: &str = "[CRITICAL ERROR]: This string should represent arguments value, but if you see this it means that `ArgCmp.print_arg` was not initialized!";
 
 impl<T: Debug> Debug for Arg<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

@@ -1,21 +1,21 @@
 use std::fmt::{Debug, Display, Formatter};
 
 #[doc(hidden)]
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum GenericParameterInfo {
     Type(GenericTypeInfo),
     Const(GenericConstInfo),
 }
 
 #[doc(hidden)]
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GenericTypeInfo {
     pub name: &'static str,
     pub type_name: &'static str,
 }
 
 #[doc(hidden)]
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GenericConstInfo {
     pub name: &'static str,
     pub debug_value_str: String,

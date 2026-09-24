@@ -55,8 +55,8 @@ mod tests {
 }
 ```
 
-To learn how to mock structures and functions as well as use call order validation, base implementations and other
-features - see [API docs](https://docs.rs/rsubstitute).
+For more information about features and caveats of `rsubstitute` refer to
+[crate documentation](https://docs.rs/rsubstitute).
 
 # Minimum Supported Rust Version (MSRV)
 

@@ -1,17 +1,20 @@
 use crate::args::arg_info::ArgInfo;
 
 #[doc(hidden)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ArgCheckResult {
     Ok(ArgCheckResultOk),
     Err(ArgCheckResultErr),
 }
 
 #[doc(hidden)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ArgCheckResultOk {
     pub arg_info: ArgInfo,
 }
 
 #[doc(hidden)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ArgCheckResultErr {
     pub arg_info: ArgInfo,
     pub error_msg: String,
