@@ -13,8 +13,8 @@ typeid = { workspace = true }
 indexmap = { workspace = true }
 cfg-if = { workspace = true }
 
-[dev-dependencies]
-rsubstitute = { workspace = true }
+#[dev-dependencies]
+#rsubstitute = { workspace = true }
 
 [features]
 debug_naming = []

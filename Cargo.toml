@@ -6,7 +6,7 @@ members = ["rsubstitute", "rsubstitute_core", "rsubstitute_proc_macro"]
 rsubstitute_core = { path = "rsubstitute_core", version = "0.1.8", default-features = false }
 rsubstitute_proc_macro = { path = "rsubstitute_proc_macro", version = "0.1.8" }
 
-rsubstitute = "0.1.8"
+#rsubstitute = "0.1.8"
 typeid = "1.0.3"
 proc-macro2 = { version = "1.0.95", features = ["span-locations"] }
 quote = "1.0.40"
