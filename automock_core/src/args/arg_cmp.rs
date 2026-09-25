@@ -23,7 +23,7 @@ impl<T: ?Sized> ArgCmp<T> {
         self.maybe_deref_info
             .as_ref()
             .map(|deref_info| {
-                let expected_ptr = deref_info.expected_value_deref_ptr;
+                let expected_ptr = deref_info.expected_value_deref_ptr();
                 let actual_ptr = deref_info.get_actual_value_deref_ptr(actual_value);
                 return PtrInfo {
                     expected_ptr_info_suffix: format!(" (ptr: {expected_ptr:?})"),

@@ -1,12 +1,22 @@
 use std::ops::Deref;
 
+#[cfg_attr(test, automock::mock)]
+#[derive(Clone)]
 pub(crate) struct DerefInfo {
-    pub expected_value_deref_ptr: *const (),
-    pub deref_vtable_ptr: *const (),
+    expected_value_deref_ptr: *const (),
+    deref_vtable_ptr: *const (),
 }
 
+#[cfg_attr(test, automock::mock(base))]
 impl DerefInfo {
-    pub fn new<T: Deref<Target = U>, U: ?Sized>(expected_value: &T) -> Self {
+    pub fn new(expected_value_deref_ptr: *const (), deref_vtable_ptr: *const ()) -> Self {
+        Self {
+            expected_value_deref_ptr,
+            deref_vtable_ptr,
+        }
+    }
+
+    pub fn from_ref<T: Deref<Target = U>, U: ?Sized>(expected_value: &T) -> Self {
         let expected_value_deref_ptr = expected_value.deref() as *const _ as *const ();
         let dyn_ref: &dyn Deref<Target = U> = expected_value;
         // SAFETY: copy-paste from
@@ -22,6 +32,14 @@ impl DerefInfo {
             deref_vtable_ptr: fat_ptr.metadata_pointer,
         };
         return result;
+    }
+
+    pub fn expected_value_deref_ptr(&self) -> *const () {
+        self.expected_value_deref_ptr
+    }
+
+    pub fn deref_vtable_ptr(&self) -> *const () {
+        self.deref_vtable_ptr
     }
 
     pub fn get_actual_value_deref_ptr<T: ?Sized>(&self, actual_value: &T) -> *const () {
