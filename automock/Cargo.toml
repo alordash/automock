@@ -1,0 +1,28 @@
+[package]
+name = "automock"
+version = "0.0.1"
+edition = "2024"
+rust-version = "1.88.0"
+description = "Library for mocking."
+license = "MIT"
+repository = "https://github.com/alordash/automock"
+readme = "../README.md"
+
+[features]
+default = []
+debug_naming = ["automock_core/debug_naming"]
+
+[dependencies]
+automock_core = { workspace = true }
+automock_proc_macro = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
+not_enough_asserts = { workspace = true }
+typeid = { workspace = true }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(nightly)'] }
+
+[lints.clippy]
+needless_return = "allow"

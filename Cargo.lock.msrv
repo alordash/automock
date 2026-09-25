@@ -64,18 +64,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "rsubstitute"
+name = "automock"
 version = "0.1.0"
 dependencies = [
  "not_enough_asserts",
- "rsubstitute_core",
- "rsubstitute_proc_macro",
+ "automock_core",
+ "automock_proc_macro",
  "tokio",
  "typeid",
 ]
 
 [[package]]
-name = "rsubstitute_core"
+name = "automock_core"
 version = "0.1.0"
 dependencies = [
  "cfg-if",
@@ -84,7 +84,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rsubstitute_proc_macro"
+name = "automock_proc_macro"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",

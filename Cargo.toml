@@ -1,12 +1,12 @@
 [workspace]
 resolver = "3"
-members = ["rsubstitute", "rsubstitute_core", "rsubstitute_proc_macro"]
+members = ["automock", "automock_core", "automock_proc_macro"]
 
 [workspace.dependencies]
-rsubstitute_core = { path = "rsubstitute_core", version = "0.1.8", default-features = false }
-rsubstitute_proc_macro = { path = "rsubstitute_proc_macro", version = "0.1.8" }
+automock_core = { path = "automock_core", version = "0.0.1", default-features = false }
+automock_proc_macro = { path = "automock_proc_macro", version = "0.0.1" }
 
-#rsubstitute = "0.1.8"
+#automock = "0.1.8"
 typeid = "1.0.3"
 proc-macro2 = { version = "1.0.95", features = ["span-locations"] }
 quote = "1.0.40"

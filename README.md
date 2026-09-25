@@ -1,10 +1,10 @@
-# rsubstitute
+# automock
 
 Library for mocking static functions, traits and structures in Rust.
 
-[![Build Status](https://github.com/alordash/rsubstitute/actions/workflows/ci.yml/badge.svg)](https://github.com/alordash/rsubstitute/actions/workflows/ci.yml)
-[![Crates.io](https://img.shields.io/crates/v/rsubstitute.svg)](https://crates.io/crates/rsubstitute)
-[![Documentation](https://docs.rs/rsubstitute/badge.svg)](https://docs.rs/rsubstitute)
+[![Build Status](https://github.com/alordash/automock/actions/workflows/ci.yml/badge.svg)](https://github.com/alordash/automock/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/automock.svg)](https://crates.io/crates/automock)
+[![Documentation](https://docs.rs/automock/badge.svg)](https://docs.rs/automock)
 
 ## Overview
 
@@ -20,12 +20,12 @@ Add `rsubsitute` to your `dev-dependencies`:
 rsubsitute = "0.1.6"
 ```
 
-Import `rsubstitute::*` and apply `mock` attribute on your function, trait, structure, or `impl` block.  
+Import `automock::*` and apply `mock` attribute on your function, trait, structure, or `impl` block.  
 Here's an example of how to test function `use_trait` using `Trait` mock:
 
 ```rust
 #[cfg(test)]
-use rsubstitute::*;
+use automock::*;
 
 #[cfg_attr(test, mock)]
 trait Trait {
@@ -55,21 +55,20 @@ mod tests {
 }
 ```
 
-For more information about features and caveats of `rsubstitute` refer to
-[crate documentation](https://docs.rs/rsubstitute).
+For more information about features and caveats of `automock` refer to
+[crate documentation](https://docs.rs/automock).
 
 # Minimum Supported Rust Version (MSRV)
 
-`rsubstitute` is supported on Rust 1.88.0 and higher. `rsubstitute`'s MSRV will not be changed in the future without
+`automock` is supported on Rust 1.88.0 and higher. `automock`'s MSRV will not be changed in the future without
 bumping the major or minor version.
 
 # License
 
-`rsubstitute` is distributed under the terms of MIT license. See [license.txt](license.txt) for details.
+`automock` is distributed under the terms of MIT license. See [license.txt](license.txt) for details.
 
 # Acknowledgements
 
-`rsubstitute` was heavily inspired by two mocking libraries: [mockall](https://github.com/asomers/mockall) (Rust)
-and [NSubstitute](https://github.com/nsubstitute/NSubstitute) (C#). A lot of documentation and features were based on
-`mockall` (including this README's structure). Errors format and API structure were basically borrowed from
-`NSubstitute` (as well as name).
+`automock` was heavily inspired by two mocking libraries: [mockall](https://github.com/asomers/mockall) (Rust) and [NSubstitute](https://github.com/nsubstitute/NSubstitute) (C#).  
+Documentation and features were based on `mockall` (including this README's structure).  
+Errors format and API structure were borrowed from `NSubstitute`.
