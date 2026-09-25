@@ -13,11 +13,11 @@ configuration. No changes for source code are needed (apart from adding `#[cfg_a
 
 ## Usage
 
-Add `rsubsitute` to your `dev-dependencies`:
+Add `automock` to your `dev-dependencies`:
 
 ```toml
 [dev-dependencies]
-rsubsitute = "0.1.6"
+automock = "0.1.6"
 ```
 
 Import `automock::*` and apply `mock` attribute on your function, trait, structure, or `impl` block.  
