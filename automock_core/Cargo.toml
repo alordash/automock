@@ -1,6 +1,6 @@
 [package]
 name = "automock_core"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2024"
 rust-version = "1.88.0"
 description = "Core of automock that handles mocking logic."
@@ -13,8 +13,8 @@ typeid = { workspace = true }
 indexmap = { workspace = true }
 cfg-if = { workspace = true }
 
-#[dev-dependencies]
-#automock = { workspace = true }
+[dev-dependencies]
+automock = { workspace = true }
 
 [features]
 debug_naming = []
