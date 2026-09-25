@@ -6,10 +6,7 @@ use syn::*;
 
 pub(crate) fn generate(span: Span, target_path: &Path) -> ItemUse {
     let tree_tail = UseTree::Path(UsePath {
-        ident: format_ident!(
-            "__automock_generated_{}Mock",
-            path::last_ident(target_path)
-        ),
+        ident: format_ident!("__automock_generated_{}Mock", path::last_ident(target_path)),
         colon2_token: Token![::](span),
         tree: Box::new(UseTree::Glob(UseGlob {
             star_token: Token![*](span),

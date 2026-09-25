@@ -20,8 +20,7 @@ pub(crate) fn generate_module(ctx: &Context, mut item_impl: ItemImpl) -> MockMod
         impl_items: item_impl.items.clone(),
     });
     let impl_struct_info = impl_struct_info::generate(ctx, impl_struct_syntax);
-    let generics_for_impl =
-        patch_lifetime::prepend_to_generics(impl_struct_info.generics.clone());
+    let generics_for_impl = patch_lifetime::prepend_to_generics(impl_struct_info.generics.clone());
     let call_site = proc_macro::Span::call_site();
     let line = call_site.line();
     let column = call_site.column();

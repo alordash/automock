@@ -162,8 +162,8 @@ mod tests {
     #![allow(unused_imports)]
 
     use super::*;
-    use common::*;
     use automock::*;
+    use common::*;
 
     mod basic_tests {
         use super::*;

@@ -32,9 +32,8 @@ pub(crate) fn generate_module(ctx: &Context, mut item_impl: ItemImpl) -> MockMod
         impl_trait_for_struct_info::generate(ctx, impl_trait_for_struct_syntax);
     let control_struct_path =
         patch_lifetime::prepend_to_path(impl_trait_for_struct_info.target_path.clone());
-    let control_struct_generics = patch_lifetime::prepend_to_generics(
-        impl_trait_for_struct_info.merged_generics.clone(),
-    );
+    let control_struct_generics =
+        patch_lifetime::prepend_to_generics(impl_trait_for_struct_info.merged_generics.clone());
     let control_struct_impl_generics = patch_lifetime::prepend_to_generics(
         impl_trait_for_struct_info.target_simple_generics.clone(),
     );

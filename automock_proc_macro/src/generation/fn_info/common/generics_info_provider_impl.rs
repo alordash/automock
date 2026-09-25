@@ -30,10 +30,7 @@ pub(crate) fn generate(impl_generics: Generics, generics: Generics, target_type:
         impl_token: Token![impl](span),
         generics: impl_generics,
         trait_: Some((
-            path::new_global(
-                span,
-                for_generated::new("IGenericsInfoProvider"),
-            ),
+            path::new_global(span, for_generated::new("IGenericsInfoProvider")),
             Token![for](span),
         )),
         self_ty: Box::new(target_type),
@@ -217,10 +214,7 @@ fn generate_fn_hash_const_values<'a>(
         .map(|const_param| {
             let const_hash_expr = Expr::Call(expr::call::new(
                 span,
-                Expr::Path(expr::path::new(
-                    span,
-                    for_generated::new("const_hash"),
-                )),
+                Expr::Path(expr::path::new(span, for_generated::new("const_hash"))),
                 [
                     Expr::Reference(ExprReference {
                         attrs: Vec::new(),

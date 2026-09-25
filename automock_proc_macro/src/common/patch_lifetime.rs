@@ -65,7 +65,6 @@ pub(crate) fn revert_in_first_generic_arg(path: &mut Path) {
         })
         .flatten()
     {
-        automock_anonymous_lifetime.ident =
-            Ident::new("_", automock_anonymous_lifetime.span());
+        automock_anonymous_lifetime.ident = Ident::new("_", automock_anonymous_lifetime.span());
     }
 }

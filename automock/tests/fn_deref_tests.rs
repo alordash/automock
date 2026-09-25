@@ -1,7 +1,7 @@
 mod common;
 
-use common::*;
 use automock::*;
+use common::*;
 use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Arc;

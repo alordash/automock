@@ -171,9 +171,9 @@ mod tests {
     #![allow(unused_imports)]
 
     use super::*;
+    use automock::*;
     use common::*;
     use not_enough_asserts::*;
-    use automock::*;
 
     mod no_return_tests {
         use super::*;

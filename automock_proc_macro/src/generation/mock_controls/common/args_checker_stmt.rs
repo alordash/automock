@@ -71,12 +71,10 @@ pub(crate) fn new(span: Span, fn_info: &FnInfo) -> (ExprPath, Local) {
                                 block: Block {
                                     brace_token: token::Brace(span),
                                     stmts: vec![
-                                        Stmt::Item(Item::Use(
-                                            for_generated::glob_usage(
-                                                span,
-                                                "arg_printing",
-                                            ),
-                                        )),
+                                        Stmt::Item(Item::Use(for_generated::glob_usage(
+                                            span,
+                                            "arg_printing",
+                                        ))),
                                         Stmt::Expr(Expr::MethodCall(arg_printer_expr), None),
                                     ],
                                 },

@@ -52,10 +52,7 @@ pub(crate) fn new_associated(
                         span,
                         Expr::Path(expr::path::new_global(
                             span,
-                            for_generated::new2(
-                                "IGenericsInfoProvider",
-                                "get_generics_hash_key",
-                            ),
+                            for_generated::new2("IGenericsInfoProvider", "get_generics_hash_key"),
                         )),
                         [Expr::Reference(ExprReference {
                             attrs: Vec::new(),
