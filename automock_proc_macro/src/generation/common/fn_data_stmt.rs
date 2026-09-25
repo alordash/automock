@@ -42,7 +42,7 @@ pub(crate) fn new_associated(
                         and_token: Token![&](span),
                         mutability: None,
                         expr: Box::new(Expr::Field(expr::field::new_self(Ident::new(
-                            "__rs_data",
+                            "__am_data",
                             span,
                         )))),
                     }),

@@ -26,7 +26,7 @@ pub(crate) fn generate(
     }: Params,
 ) -> ItemImpl {
     let mut struct_generics = generics.clone();
-    struct_generics.params = struct_generics.params.into_iter().skip(1).collect(); // skipping '__rsa
+    struct_generics.params = struct_generics.params.into_iter().skip(1).collect(); // skipping '__ama
     let struct_path = path::from_ident_with_generics(struct_ident, &struct_generics);
     let struct_type = Type::Path(TypePath {
         attrs: Vec::new(),

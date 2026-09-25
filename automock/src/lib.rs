@@ -171,7 +171,7 @@
 //!
 //! There are a couple of limitations for structures mocking:
 //! 1. Mocked structure can not be constructed or deconstructed outside of associated functions that
-//!    were mocked. This is because `automock` adds special `__rs_data` field to generated
+//!    were mocked. This is because `automock` adds special `__am_data` field to generated
 //!    structure that it automatically fills inside mocked `impl` block.
 //! 2. Structure must have either named fields or no fields at all. `struct Struct { v: i32 }` and
 //!    `struct Struct;` can be mocked, but `struct Struct(i32);` can not.
@@ -265,7 +265,7 @@
 //!     //...
 //! }
 //! impl From<usize> for Struct {
-//! #    fn from(value: usize) -> Self { Self { __rs_data: Default::default() } }
+//! #    fn from(value: usize) -> Self { Self { __am_data: Default::default() } }
 //!     //...
 //! }
 //!

@@ -7,7 +7,7 @@ use quote::format_ident;
 use syn::*;
 
 pub(crate) fn get_base_fn_ident(fn_ident: &Ident) -> Ident {
-    format_ident!("__rs_base_{}", fn_ident)
+    format_ident!("__am_base_{}", fn_ident)
 }
 
 pub(crate) struct StaticFnParams<'a> {

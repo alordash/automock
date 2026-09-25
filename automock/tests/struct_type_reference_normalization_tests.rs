@@ -106,7 +106,7 @@ mod tests {
     #[test]
     fn compile() {
         let _ = unit_mod::Unit {
-            __rs_data: Default::default(),
+            __am_data: Default::default(),
         };
     }
 }

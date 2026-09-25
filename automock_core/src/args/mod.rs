@@ -1,14 +1,13 @@
-//
 mod arg;
 mod arg_check_result;
-mod arg_cmp;
+pub(crate) mod arg_cmp;
 mod arg_info;
 mod arg_printer;
 mod calls_check_result;
 mod deref_info;
 mod generic_parameter_info;
 mod generics_hash_key;
-mod i_args_checker;
+pub(crate) mod i_args_checker;
 mod i_generics_info_provider;
 mod into_arg;
 mod ordered_calls_check_result;

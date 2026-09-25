@@ -36,7 +36,7 @@ mod tests {
         // Assert
         let inner_ptr = dyn_return_value.inner.as_ref() as *const _ as *const ReturnValue;
         // SAFETY: DynReturnValue is intended to work with type-erased values
-        let inner_ref = unsafe { inner_ptr.as_ref_unchecked() };
+        let inner_ref = unsafe { inner_ptr.as_ref().unwrap_unchecked() };
         assert_eq!(inner_ref, &return_value);
     }
 

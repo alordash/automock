@@ -8,7 +8,7 @@ pub(crate) fn new_field(span: Span) -> Field {
         attrs: vec![attributes::doc_hidden(span)],
         vis: Visibility::Public(Token![pub](span)),
         modifiers: FieldModifiers::default(),
-        ident: Some(Ident::new("__rs_data", span)),
+        ident: Some(Ident::new("__am_data", span)),
         colon_token: Some(Token![:](span)),
         ty: Type::Path(TypePath {
             attrs: Vec::new(),
@@ -32,7 +32,7 @@ pub(crate) fn new_field(span: Span) -> Field {
 pub(crate) fn new_default_value(span: Span) -> FieldValue {
     let result = FieldValue {
         attrs: Vec::new(),
-        member: Member::Named(Ident::new("__rs_data", span)),
+        member: Member::Named(Ident::new("__am_data", span)),
         colon_token: Some(Token![:](span)),
         expr: Expr::Call(expr::call::new(
             span,
@@ -50,13 +50,13 @@ pub(crate) fn new_default_value(span: Span) -> FieldValue {
 pub(crate) fn new_clone_value(span: Span) -> FieldValue {
     let result = FieldValue {
         attrs: Vec::new(),
-        member: Member::Named(Ident::new("__rs_data", span)),
+        member: Member::Named(Ident::new("__am_data", span)),
         colon_token: Some(Token![:](span)),
         expr: Expr::MethodCall(expr::method_call::new(
             span,
             Expr::Field(expr::field::new(
                 Expr::Path(self_expr_path(span)),
-                Ident::new("__rs_data", span),
+                Ident::new("__am_data", span),
             )),
             Ident::new("clone", span),
             [],

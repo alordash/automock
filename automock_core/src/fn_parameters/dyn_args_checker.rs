@@ -40,9 +40,8 @@ impl<'rs> DynArgsChecker<'rs> {
 #[cfg(test)]
 mod tests {
     #![allow(non_snake_case)]
-
     use super::*;
-    use crate::args::tests::*;
+    use crate::args::i_args_checker::tests::*;
     use crate::fn_parameters::tests::*;
     use automock::{AsTimes, Mockable};
 

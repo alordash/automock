@@ -8,6 +8,7 @@ pub(crate) struct Internal;
 /// Argument matcher, checks whether certain argument value matches some expectation.
 ///
 /// `T` - type of argument.
+/// #[
 #[allow(private_interfaces)]
 #[repr(C)]
 pub enum Arg<T: ?Sized> {
@@ -21,8 +22,6 @@ pub enum Arg<T: ?Sized> {
     Is(Box<dyn Fn(*const ()) -> bool>, Internal),
 }
 
-const UNINITIALIZED_ARG_PRINT_STRING: &str = "[CRITICAL ERROR]: This string should represent arguments value, but if you see this it means that `ArgCmp.print_arg` was not initialized!";
-
 impl<T: Debug> Debug for Arg<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         // TODO - extract to const field when std::any::type_name becomes stabilized as const fn_info
@@ -30,16 +29,18 @@ impl<T: Debug> Debug for Arg<T> {
         let arg_type_name = std::any::type_name::<T>();
         match self {
             Arg::Any => write!(f, "({arg_type_name}): any"),
-            Arg::Eq(ArgCmp { value, .. }, _) => {
-                write!(f, "({arg_type_name}): equal to {value:?}")
+            Arg::Eq(arg_cmp, _) => {
+                write!(f, "({}): equal to {:?}", arg_type_name, arg_cmp.value())
             }
-            Arg::NotEq(ArgCmp { value, .. }, _) => {
-                write!(f, "({arg_type_name}): NOT equal to {value:?}")
+            Arg::NotEq(arg_cmp, _) => {
+                write!(f, "({}): NOT equal to {:?}", arg_type_name, arg_cmp.value())
             }
             Arg::Is(_, _) => write!(f, "({arg_type_name}): custom predicate"),
         }
     }
 }
+
+const UNINITIALIZED_ARG_PRINT_STRING: &str = "[CRITICAL ERROR]: This string should represent arguments value, but if you see this it means that `ArgCmp.print_arg` was not initialized!";
 
 impl<T> Arg<T> {
     /// Checks that argument value matches some predicate.
@@ -65,12 +66,7 @@ impl<T> Arg<T> {
     where
         T: PartialEq,
     {
-        let arg_cmp = ArgCmp {
-            print_arg: UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
-            value: Box::new(value),
-            comparator: PartialEq::eq,
-            maybe_deref_info: None,
-        };
+        let arg_cmp = ArgCmp::new_eq(value, UNINITIALIZED_ARG_PRINT_STRING.to_owned());
         return Self::Eq(arg_cmp, Internal);
     }
 
@@ -79,12 +75,7 @@ impl<T> Arg<T> {
     where
         T: PartialEq,
     {
-        let arg_cmp = ArgCmp {
-            print_arg: UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
-            value: Box::new(value),
-            comparator: PartialEq::eq,
-            maybe_deref_info: None,
-        };
+        let arg_cmp = ArgCmp::new_eq(value, UNINITIALIZED_ARG_PRINT_STRING.to_owned());
         return Self::NotEq(arg_cmp, Internal);
     }
 
@@ -95,17 +86,7 @@ impl<T> Arg<T> {
     where
         T: Deref<Target = U>,
     {
-        {
-            let p = &value as *const _ as *const ();
-            dbg!(p);
-        }
-        let deref_info = DerefInfo::from_ref(&value);
-        let arg_cmp = ArgCmp {
-            print_arg: UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
-            value: Box::new(value),
-            comparator: ptr_cmp,
-            maybe_deref_info: Some(deref_info),
-        };
+        let arg_cmp = ArgCmp::new_ref_eq(value, UNINITIALIZED_ARG_PRINT_STRING.to_owned());
         return Self::Eq(arg_cmp, Internal);
     }
 
@@ -116,19 +97,9 @@ impl<T> Arg<T> {
     where
         T: Deref<Target = U>,
     {
-        let deref_info = DerefInfo::from_ref(&value);
-        let arg_cmp = ArgCmp {
-            print_arg: UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
-            value: Box::new(value),
-            comparator: ptr_cmp,
-            maybe_deref_info: Some(deref_info),
-        };
+        let arg_cmp = ArgCmp::new_ref_eq(value, UNINITIALIZED_ARG_PRINT_STRING.to_owned());
         return Self::NotEq(arg_cmp, Internal);
     }
-}
-
-fn ptr_cmp<U: ?Sized, T: Deref<Target = U>>(a: &T, b: &T) -> bool {
-    core::ptr::eq(a.deref(), b.deref())
 }
 
 impl<T: ?Sized> Arg<T> {
@@ -144,9 +115,10 @@ impl<T: ?Sized> Arg<T> {
     {
         let arg_info = ArgInfo::new(arg_name, actual_value, actual_value_str.clone());
         match self {
+            Arg::Any => (),
             Arg::Eq(arg_cmp, _) => {
                 if !arg_cmp.is_arg_equal_to(actual_value) {
-                    let expected_value_str = &arg_cmp.print_arg;
+                    let expected_value_str = arg_cmp.print_arg();
                     let PtrInfo {
                         expected_ptr_info_suffix,
                         actual_ptr_info_suffix,
@@ -161,7 +133,7 @@ impl<T: ?Sized> Arg<T> {
             }
             Arg::NotEq(arg_cmp, _) => {
                 if arg_cmp.is_arg_equal_to(actual_value) {
-                    let not_expected_value_str = &arg_cmp.print_arg;
+                    let not_expected_value_str = arg_cmp.print_arg();
                     let PtrInfo {
                         expected_ptr_info_suffix,
                         ..
@@ -184,7 +156,6 @@ impl<T: ?Sized> Arg<T> {
                     });
                 }
             }
-            Arg::Any => (),
         };
         return ArgCheckResult::Ok(ArgCheckResultOk { arg_info });
     }
@@ -195,6 +166,7 @@ mod tests {
     #![allow(non_snake_case)]
 
     use super::*;
+    use arg_cmp::tests::*;
     use automock::Mockable;
     use std::rc::Rc;
     use utilities::*;
@@ -215,26 +187,34 @@ mod tests {
     #[test]
     fn Debug_fmt_Eq_Ok() {
         // Arrange
-        let arg = Arg::<CustomType>::Eq(custom_type_stub_arg_cmp(5), Internal);
+        let arg = Arg::<CustomType>::Eq(mock_arg_cmp(), Internal);
 
         // Act
         let result = format!("{arg:?}");
 
         // Assert
-        let expected = format!("({}): equal to {:?}", *CUSTOM_TYPE_NAME, CustomType(5));
+        let expected = format!(
+            "({}): equal to {:?}",
+            *CUSTOM_TYPE_NAME,
+            CustomType::default()
+        );
         assert_eq!(result, expected);
     }
 
     #[test]
     fn Debug_fmt_NotEq_Ok() {
         // Arrange
-        let arg = Arg::<CustomType>::NotEq(custom_type_stub_arg_cmp(5), Internal);
+        let arg = Arg::<CustomType>::NotEq(mock_arg_cmp(), Internal);
 
         // Act
         let result = format!("{arg:?}");
 
         // Assert
-        let expected = format!("({}): NOT equal to {:?}", *CUSTOM_TYPE_NAME, CustomType(5));
+        let expected = format!(
+            "({}): NOT equal to {:?}",
+            *CUSTOM_TYPE_NAME,
+            CustomType::default()
+        );
         assert_eq!(result, expected);
     }
 
@@ -273,179 +253,135 @@ mod tests {
     #[test]
     fn eq_Ok() {
         // Arrange
+        ArgCmp::<CustomType>::static_setup()
+            .new_eq(automock::Arg::Any, automock::Arg::Any)
+            .returns(mock_arg_cmp());
         let custom_type = CustomType(5);
 
         // Act
         let arg = Arg::eq(custom_type.clone());
 
         // Assert
-        let arg_cmp = match arg {
-            Arg::Eq(ac, _) => ac,
+        match arg {
+            Arg::Eq(_, _) => (),
             _ => panic!("`arg` must be `Arg::Eq`, instead is: {arg:?}"),
         };
 
-        assert_eq!(arg_cmp.print_arg, UNINITIALIZED_ARG_PRINT_STRING);
-        assert_eq!(*arg_cmp.value, custom_type);
-
-        let actual_comparator_ptr = arg_cmp.comparator as *const ();
-        let expected_comparator_ptr = <CustomType as PartialEq>::eq as *const ();
-        assert!(!actual_comparator_ptr.is_null());
-        assert_eq!(actual_comparator_ptr, expected_comparator_ptr);
-
-        assert!(arg_cmp.maybe_deref_info.is_none());
+        ArgCmp::static_received()
+            .new_eq(
+                custom_type,
+                UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
+                automock::Times::Once,
+            )
+            .no_other_calls();
     }
 
     #[test]
     fn not_eq_Ok() {
         // Arrange
+        ArgCmp::<CustomType>::static_setup()
+            .new_eq(automock::Arg::Any, automock::Arg::Any)
+            .returns(mock_arg_cmp());
         let custom_type = CustomType(5);
 
         // Act
         let arg = Arg::not_eq(custom_type.clone());
 
         // Assert
-        let arg_cmp = match arg {
-            Arg::NotEq(ac, _) => ac,
+        match arg {
+            Arg::NotEq(_, _) => (),
             _ => panic!("`arg` must be `Arg::NotEq`, instead is: {arg:?}"),
         };
 
-        assert_eq!(arg_cmp.print_arg, UNINITIALIZED_ARG_PRINT_STRING);
-        assert_eq!(*arg_cmp.value, custom_type);
-
-        let actual_comparator_ptr = arg_cmp.comparator as *const ();
-        let expected_comparator_ptr = <CustomType as PartialEq>::eq as *const ();
-        assert!(!actual_comparator_ptr.is_null());
-        assert_eq!(actual_comparator_ptr, expected_comparator_ptr);
-
-        assert!(arg_cmp.maybe_deref_info.is_none());
+        ArgCmp::static_received()
+            .new_eq(
+                custom_type,
+                UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
+                automock::Times::Once,
+            )
+            .no_other_calls();
     }
 
     #[test]
     fn ref_eq_Ok() {
         // Arrange
+        ArgCmp::<Rc<CustomType>>::static_setup()
+            .new_ref_eq(automock::Arg::Any, automock::Arg::Any)
+            .returns(mock_arg_cmp());
         let custom_type = Rc::new(CustomType(5));
-        let mut deref_info_mock = DerefInfo::new(1234usize as *const (), 5678usize as *const ());
-        deref_info_mock
-            .setup()
-            .expected_value_deref_ptr()
-            .call_base()
-            .deref_vtable_ptr()
-            .call_base();
-        DerefInfo::static_setup()
-            .from_ref(automock::Arg::<&Rc<CustomType>>::Any)
-            .returns(deref_info_mock.clone());
 
         // Act
         let arg = Arg::ref_eq(custom_type.clone());
 
         // Assert
-        let arg_cmp = match arg {
-            Arg::Eq(ac, _) => ac,
+        match arg {
+            Arg::Eq(_, _) => (),
             _ => panic!("`arg` must be `Arg::Eq`, instead is: {arg:?}"),
         };
 
-        assert_eq!(arg_cmp.print_arg, UNINITIALIZED_ARG_PRINT_STRING);
-        assert!(Rc::ptr_eq(arg_cmp.value.as_ref(), &custom_type));
-
-        let actual_comparator_ptr = arg_cmp.comparator as *const ();
-        let expected_comparator_ptr = ptr_cmp::<CustomType, Rc<CustomType>> as *const ();
-        assert!(!actual_comparator_ptr.is_null());
-        assert_eq!(actual_comparator_ptr, expected_comparator_ptr);
-
-        let deref_info = arg_cmp
-            .maybe_deref_info
-            .expect("DerefInfo must be set for `Arg::ref_eq`.");
-        assert_eq!(
-            deref_info.expected_value_deref_ptr(),
-            1234usize as *const ()
-        );
-        assert_eq!(deref_info.deref_vtable_ptr(), 5678usize as *const ());
+        ArgCmp::<Rc<CustomType>>::static_received()
+            .new_ref_eq(
+                custom_type,
+                UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
+                automock::Times::Once,
+            )
+            .no_other_calls();
     }
 
     #[test]
     fn ref_not_eq_Ok() {
         // Arrange
+        ArgCmp::<Rc<CustomType>>::static_setup()
+            .new_ref_eq(automock::Arg::Any, automock::Arg::Any)
+            .returns(mock_arg_cmp());
         let custom_type = Rc::new(CustomType(5));
-        let mut deref_info_mock = DerefInfo::new(1234usize as *const (), 5678usize as *const ());
-        deref_info_mock
-            .setup()
-            .expected_value_deref_ptr()
-            .call_base()
-            .deref_vtable_ptr()
-            .call_base();
-        DerefInfo::static_setup()
-            .from_ref(automock::Arg::<&Rc<CustomType>>::Any)
-            .returns(deref_info_mock.clone());
 
         // Act
         let arg = Arg::ref_not_eq(custom_type.clone());
 
         // Assert
-        let arg_cmp = match arg {
-            Arg::NotEq(ac, _) => ac,
+        match arg {
+            Arg::NotEq(_, _) => (),
             _ => panic!("`arg` must be `Arg::Eq`, instead is: {arg:?}"),
         };
 
-        assert_eq!(arg_cmp.print_arg, UNINITIALIZED_ARG_PRINT_STRING);
-        assert!(Rc::ptr_eq(arg_cmp.value.as_ref(), &custom_type));
-
-        let actual_comparator_ptr = arg_cmp.comparator as *const ();
-        let expected_comparator_ptr = ptr_cmp::<CustomType, Rc<CustomType>> as *const ();
-        assert!(!actual_comparator_ptr.is_null());
-        assert_eq!(actual_comparator_ptr, expected_comparator_ptr);
-
-        let deref_info = arg_cmp
-            .maybe_deref_info
-            .expect("DerefInfo must be set for `Arg::ref_eq`.");
-        assert_eq!(
-            deref_info.expected_value_deref_ptr(),
-            1234usize as *const ()
-        );
-        assert_eq!(deref_info.deref_vtable_ptr(), 5678usize as *const ());
+        ArgCmp::<Rc<CustomType>>::static_received()
+            .new_ref_eq(
+                custom_type,
+                UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
+                automock::Times::Once,
+            )
+            .no_other_calls();
     }
 
     #[test]
-    fn ptr_cmp_DerefsToSame_ReturnsTrue() {
+    fn check_Any_Ok() {
         // Arrange
-        let a = Rc::new(1);
-        let b = a.clone();
+        let arg = Arg::Any;
+        let arg_name = "quo vadis";
+        let actual_value = &CustomType(1);
+        let actual_value_str = "veridis quo".to_owned();
 
         // Act
-        let result = ptr_cmp(&a, &b);
+        let result = arg.check(arg_name, actual_value, actual_value_str.clone());
 
         // Assert
-        assert!(result);
-    }
+        let ArgCheckResult::Ok(ArgCheckResultOk { arg_info }) = result else {
+            panic!("`check` result must be ok.")
+        };
 
-    #[test]
-    fn ptr_cmp_DerefsToDifferent_ReturnsFalse() {
-        // Arrange
-        let a = Rc::new(1);
-        let b = Rc::new(1);
-
-        // Act
-        let result = ptr_cmp(&a, &b);
-
-        // Assert
-        assert!(!result);
+        assert_eq!(arg_info.arg_name(), arg_name);
+        assert_eq!(arg_info.arg_type_name(), *CUSTOM_TYPE_NAME);
+        assert_eq!(arg_info.clone_arg_debug_string(), actual_value_str);
     }
 
     mod utilities {
         use super::*;
 
-        #[derive(Debug, PartialEq, Clone)]
+        #[derive(Debug, PartialEq, Clone, Default)]
         pub struct CustomType(pub i32);
         pub static CUSTOM_TYPE_NAME: std::sync::LazyLock<&'static str> =
             std::sync::LazyLock::new(std::any::type_name::<CustomType>);
-
-        pub fn custom_type_stub_arg_cmp(v: i32) -> ArgCmp<CustomType> {
-            ArgCmp {
-                print_arg: String::new(),
-                value: Box::new(CustomType(v)),
-                comparator: |_, _| false,
-                maybe_deref_info: None,
-            }
-        }
 
         #[automock::mock]
         pub fn predicate(_: &CustomType) -> bool {

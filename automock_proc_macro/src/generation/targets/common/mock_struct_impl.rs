@@ -196,7 +196,7 @@ pub(crate) fn generate_for_trait(
             modifiers: TraitModifiers::default(),
             unsafety: None,
             trait_token: Token![trait](span),
-            ident: format_ident!("__rs_base_{}_{}", mod_ident, path::last_ident(&trait_path)),
+            ident: format_ident!("__am_base_{}_{}", mod_ident, path::last_ident(&trait_path)),
             generics: merged_generics.clone(),
             colon_token: None,
             supertraits: punctuated([TypeParamBound::Trait(TraitBound {
