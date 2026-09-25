@@ -3,7 +3,7 @@ resolver = "3"
 members = ["automock", "automock_core", "automock_proc_macro"]
 
 [workspace.dependencies]
-automock = { path = "automock", version = "0.1.0" }
+automock = { path = "automock" }
 automock_core = { path = "automock_core", version = "0.1.0", default-features = false }
 automock_proc_macro = { path = "automock_proc_macro", version = "0.1.0" }
 
