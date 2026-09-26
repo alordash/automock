@@ -42,13 +42,14 @@ fn ptr_cmp<U: ?Sized, T: Deref<Target = U>>(a: &T, b: &T) -> bool {
     core::ptr::eq(a.deref(), b.deref())
 }
 
+#[cfg_attr(test, automock::mock)]
 impl<T: ?Sized> ArgCmp<T> {
     pub fn print_arg(&self) -> &str {
         self.print_arg.as_ref()
     }
 
     // Deliberate temporal coupling. `print_arg` can be calculated only in user code space without
-    // the loss of argument values debug string.
+    // the loss of argument value's debug string.
     pub fn set_print_arg(&mut self, print_arg: String) {
         self.print_arg = print_arg;
     }
@@ -96,7 +97,7 @@ pub(crate) mod tests {
     use super::*;
     use std::rc::Rc;
 
-    pub fn mock_arg_cmp<T: Default>() -> ArgCmp<T> {
+    pub fn arg_cmp_mock<T: Default>() -> ArgCmp<T> {
         ArgCmp {
             print_arg: "mock".to_owned(),
             value: Box::new(T::default()),
