@@ -67,13 +67,7 @@ pub(crate) fn generate(
             .into_iter()
             .collect()
     } else {
-        [
-            mock_arg,
-            Expr::Path(call_var_path),
-            Expr::Path(expr::path::new(span, ["None"])),
-        ]
-        .into_iter()
-        .collect()
+        [mock_arg, Expr::Path(call_var_path)].into_iter().collect()
     };
     let handle_expr = ExprMethodCall {
         attrs: Vec::new(),

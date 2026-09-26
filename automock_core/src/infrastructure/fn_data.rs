@@ -7,8 +7,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-mod handle_no_base_calling;
-mod handle_with_base_calling;
+mod handling;
 
 pub struct FnData<
     'rs,
