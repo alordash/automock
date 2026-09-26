@@ -54,7 +54,7 @@ impl<
         });
     }
 
-    fn handle_core_use_return_value<TReturnValue>(
+    fn handle_core_continue<TReturnValue>(
         &self,
         call: DynCall<'rs>,
         fn_config: SharedFnConfig<'rs, TMock>,
@@ -100,7 +100,7 @@ impl<
             let base_return_value = base_call(mock_arg, call_for_base_call);
             return base_return_value;
         }
-        return self.handle_core_use_return_value(call, fn_config);
+        return self.handle_core_continue(call, fn_config);
     }
 
     async fn handle_core_async<
@@ -130,7 +130,7 @@ impl<
             let base_return_value = base_call(mock_arg, call_for_base_call).await;
             return base_return_value;
         }
-        return self.handle_core_use_return_value(call, fn_config);
+        return self.handle_core_continue(call, fn_config);
     }
 }
 
