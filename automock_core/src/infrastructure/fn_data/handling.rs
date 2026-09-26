@@ -13,7 +13,6 @@ impl<
 {
     fn handle_core<
         'a,
-        TActualReturnValue: IReturnValue<'a>,
         TMockArg,
         TCall: ICall,
         TReturnValue: IReturnValue<'a>,
@@ -26,24 +25,24 @@ impl<
     ) -> TReturnValue {
         let call = DynCall::new(the_call);
         let with_return_value = true;
-        let fn_config =
-            match self.try_get_matching_config::<TActualReturnValue>(&call, with_return_value) {
-                MatchingConfigSearchResult::Ok(x) => x,
-                MatchingConfigSearchResult::Err(matching_config_search_err) => {
-                    if size_of::<TActualReturnValue>() == 0 {
-                        let rc_call = Rc::new(call);
-                        self.register_call(rc_call.clone());
-                        return unsafe { core::mem::zeroed() };
-                    }
-                    error_printing::panic_no_suitable_fn_configuration_found(
-                        self.fn_name,
-                        &self.formatted_fn_name,
-                        call.get_arg_infos(),
-                        call.get_generic_parameter_infos(),
-                        matching_config_search_err,
-                    )
+        let fn_config = match self.try_get_matching_config::<TReturnValue>(&call, with_return_value)
+        {
+            MatchingConfigSearchResult::Ok(x) => x,
+            MatchingConfigSearchResult::Err(matching_config_search_err) => {
+                if size_of::<TReturnValue>() == 0 {
+                    let rc_call = Rc::new(call);
+                    self.register_call(rc_call.clone());
+                    return unsafe { core::mem::zeroed() };
                 }
-            };
+                error_printing::panic_no_suitable_fn_configuration_found(
+                    self.fn_name,
+                    &self.formatted_fn_name,
+                    call.get_arg_infos(),
+                    call.get_generic_parameter_infos(),
+                    matching_config_search_err,
+                )
+            }
+        };
         let should_call_base = {
             let fn_config_ref = fn_config.borrow();
             if let Some(callback) = fn_config_ref.get_callback() {
@@ -73,7 +72,6 @@ impl<
 
     async fn handle_core_async<
         'a,
-        TActualReturnValue: IReturnValue<'a>,
         TMockArg,
         TCall: ICall,
         TReturnValue: IReturnValue<'a>,
@@ -85,27 +83,26 @@ impl<
         the_call: TCall,
         base_call_policy: MaybeBaseCall<TBaseCall>,
     ) -> TReturnValue {
-        // return self.handle_core::<TActualReturnValue, _, _, _, _>(mock_arg, the_call, base_call_policy).await;
         let call = DynCall::new(the_call);
         let with_return_value = true;
-        let fn_config =
-            match self.try_get_matching_config::<TActualReturnValue>(&call, with_return_value) {
-                MatchingConfigSearchResult::Ok(x) => x,
-                MatchingConfigSearchResult::Err(matching_config_search_err) => {
-                    if size_of::<TActualReturnValue>() == 0 {
-                        let rc_call = Rc::new(call);
-                        self.register_call(rc_call.clone());
-                        return unsafe { core::mem::zeroed() };
-                    }
-                    error_printing::panic_no_suitable_fn_configuration_found(
-                        self.fn_name,
-                        &self.formatted_fn_name,
-                        call.get_arg_infos(),
-                        call.get_generic_parameter_infos(),
-                        matching_config_search_err,
-                    )
+        let fn_config = match self.try_get_matching_config::<TReturnValue>(&call, with_return_value)
+        {
+            MatchingConfigSearchResult::Ok(x) => x,
+            MatchingConfigSearchResult::Err(matching_config_search_err) => {
+                if size_of::<TReturnValue>() == 0 {
+                    let rc_call = Rc::new(call);
+                    self.register_call(rc_call.clone());
+                    return unsafe { core::mem::zeroed() };
                 }
-            };
+                error_printing::panic_no_suitable_fn_configuration_found(
+                    self.fn_name,
+                    &self.formatted_fn_name,
+                    call.get_arg_infos(),
+                    call.get_generic_parameter_infos(),
+                    matching_config_search_err,
+                )
+            }
+        };
         let should_call_base = {
             let fn_config_ref = fn_config.borrow();
             if let Some(callback) = fn_config_ref.get_callback() {
@@ -149,11 +146,7 @@ impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bo
         the_call: TCall,
         base_call: TBaseCall,
     ) -> TReturnValue {
-        self.handle_core::<TReturnValue, _, _, _, _>(
-            mock_arg,
-            the_call,
-            MaybeBaseCall::Some(base_call),
-        )
+        self.handle_core(mock_arg, the_call, MaybeBaseCall::Some(base_call))
     }
 
     pub async fn handle_base_async<
@@ -169,12 +162,8 @@ impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bo
         the_call: TCall,
         base_call: TBaseCall,
     ) -> TReturnValue {
-        self.handle_core_async::<TReturnValue, _, _, _, _, _>(
-            mock_arg,
-            the_call,
-            MaybeBaseCall::Some(base_call),
-        )
-        .await
+        self.handle_core_async(mock_arg, the_call, MaybeBaseCall::Some(base_call))
+            .await
     }
 }
 
@@ -186,7 +175,7 @@ impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bo
         mock_arg: TMockArg,
         the_call: TCall,
     ) -> TReturnValue {
-        self.handle_core::<TReturnValue, _, _, _, _>(
+        self.handle_core(
             mock_arg,
             the_call,
             MaybeBaseCall::None(|_, _| unreachable!()),
@@ -204,7 +193,7 @@ impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bo
         mock_arg: TMockArg,
         the_call: TCall,
     ) -> TReturnValue {
-        self.handle_core_async::<TReturnValue, _, _, _, _, _>(
+        self.handle_core_async(
             mock_arg,
             the_call,
             MaybeBaseCall::None(async |_, _| unreachable!()),
