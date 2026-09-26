@@ -1,9 +1,14 @@
 use super::*;
 
-impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bool>
-    FnData<'rs, TMock, HAS_RETURN_VALUE, true, PASSES_MOCK_TO_CALLBACK>
+impl<
+    'rs,
+    TMock,
+    const HAS_RETURN_VALUE: bool,
+    const SUPPORTS_BASE_CALLING: bool,
+    const PASSES_MOCK_TO_CALLBACK: bool,
+> FnData<'rs, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
 {
-    pub fn handle<
+    pub fn handle_base<
         'a,
         TMockArg,
         TCall: ICall,
@@ -13,7 +18,7 @@ impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bo
         &self,
         mock_arg: TMockArg,
         the_call: TCall,
-        mut base_call: TBaseCall,
+        maybe_base_call: MaybeBaseCall<TBaseCall>,
     ) -> TReturnValue {
         let call = DynCall::new(the_call);
         let with_return_value = true;
@@ -42,7 +47,7 @@ impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bo
             }
             fn_config_ref.should_call_base()
         };
-        if should_call_base {
+        if should_call_base && let MaybeBaseCall::Use(mut base_call) = maybe_base_call {
             let call_for_base_call = call.downcast_into();
             let base_return_value = base_call(mock_arg, call_for_base_call);
             return base_return_value;
@@ -62,7 +67,7 @@ impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bo
         return return_value.downcast_into();
     }
 
-    pub async fn handle_async<
+    pub async fn handle_base_async<
         'a,
         TMockArg,
         TCall: ICall,
@@ -73,7 +78,7 @@ impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bo
         &self,
         mock_arg: TMockArg,
         the_call: TCall,
-        mut base_call: TBaseCall,
+        maybe_base_call: MaybeBaseCall<TBaseCall>,
     ) -> TReturnValue {
         let call = DynCall::new(the_call);
         let with_return_value = true;
@@ -102,7 +107,7 @@ impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bo
             }
             fn_config_ref.should_call_base()
         };
-        if should_call_base {
+        if should_call_base && let MaybeBaseCall::Use(mut base_call) = maybe_base_call {
             let call_for_base_call = call.downcast_into();
             let base_return_value = base_call(mock_arg, call_for_base_call).await;
             return base_return_value;
@@ -121,4 +126,9 @@ impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bo
         };
         return return_value.downcast_into();
     }
+}
+
+pub enum MaybeBaseCall<T> {
+    Use(T),
+    DoNotUse(T),
 }

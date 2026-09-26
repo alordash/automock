@@ -53,17 +53,27 @@ pub(crate) fn generate(
         })
     });
 
+    let method_ident = match (
+        maybe_base_call.is_some(),
+        fn_info.source_signature.asyncness.is_some(),
+    ) {
+        (false, false) => "handle",
+        (true, false) => "handle_base",
+        (false, true) => "handle_async",
+        (true, true) => "handle_base_async",
+    };
     let args = if let Some(base_call) = maybe_base_call {
         [mock_arg, Expr::Path(call_var_path), base_call]
             .into_iter()
             .collect()
     } else {
-        [mock_arg, Expr::Path(call_var_path)].into_iter().collect()
-    };
-    let method_ident = if fn_info.source_signature.asyncness.is_some() {
-        "handle_async"
-    } else {
-        "handle"
+        [
+            mock_arg,
+            Expr::Path(call_var_path),
+            Expr::Path(expr::path::new(span, ["None"])),
+        ]
+        .into_iter()
+        .collect()
     };
     let handle_expr = ExprMethodCall {
         attrs: Vec::new(),
