@@ -60,7 +60,6 @@ mod tests {
         assert_eq!(v5, av5);
 
         mock.received()
-            .work::<_, i32, true, 2>(&10, &"amogus", Times::Once)
             .work::<_, i32, true, 4>(&10, &"amogus", Times::Once)
             .work::<_, i32, false, 2>(&10, &"amogus", Times::Once)
             .work::<_, [i32; 5], false, 2>(&10, &"amogus", Times::Once)

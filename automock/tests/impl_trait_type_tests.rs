@@ -117,7 +117,7 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
-            mock.received().work(1.time()).no_other_calls();
+            mock.received().no_other_calls();
         }
 
         #[test]
@@ -130,9 +130,7 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
-            TraitMock::static_received()
-                .static_work(1.time())
-                .no_other_calls();
+            TraitMock::static_received().no_other_calls();
         }
     }
 
@@ -142,6 +140,7 @@ mod tests {
         #[test]
         fn Struct_work_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup().work().returns(Box::new(Bar));
 
@@ -171,6 +170,7 @@ mod tests {
         #[test]
         fn StructBase_work_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup().work().call_base();
 
@@ -179,7 +179,7 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
-            mock.received().work(1.time()).no_other_calls();
+            mock.received().no_other_calls();
         }
 
         #[test]
@@ -192,9 +192,7 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
-            Struct::static_received()
-                .static_work(1.time())
-                .no_other_calls();
+            Struct::static_received().no_other_calls();
         }
     }
 
@@ -204,6 +202,7 @@ mod tests {
         #[test]
         fn StructAsTrait_work_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup().as_Trait().work().returns(Box::new(Bar));
 
@@ -237,6 +236,7 @@ mod tests {
         #[test]
         fn StructAsTraitBase_work_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup().as_Trait().work().call_base();
 
@@ -245,7 +245,7 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
-            mock.received().as_Trait().work(1.time()).no_other_calls();
+            mock.received().as_Trait().no_other_calls();
         }
 
         #[test]
@@ -258,10 +258,7 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
-            Struct::static_received()
-                .as_Trait()
-                .static_work(1.time())
-                .no_other_calls();
+            Struct::static_received().as_Trait().no_other_calls();
         }
     }
 }

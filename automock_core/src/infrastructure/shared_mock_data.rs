@@ -41,7 +41,6 @@ impl ISharedMockData for SharedMockData {
                 unique_fn_ident,
                 fn_ident,
                 generics_hash_key,
-                false,
             )
     }
 }

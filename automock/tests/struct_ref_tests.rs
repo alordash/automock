@@ -40,6 +40,7 @@ mod tests {
         #[test]
         fn accept_ref_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let r = &1;
 
@@ -53,6 +54,7 @@ mod tests {
         #[test]
         fn accept_rc_Panics() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let r = &11;
             let r_ptr = core::ptr::from_ref(r);
@@ -125,6 +127,7 @@ accept_ref(*{r}*)
         #[test]
         fn return_ref_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let r = Box::leak(Box::new(11));
             mock.setup().return_ref().returns(r);
@@ -143,6 +146,7 @@ accept_ref(*{r}*)
         #[test]
         fn accept_ref_return_ref_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let accepted_r = &10;
             let returned_r = &20;
@@ -169,6 +173,7 @@ accept_ref(*{r}*)
         #[test]
         fn accept_two_refs_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let r1 = &10;
             let r2 = &20.2;
@@ -190,6 +195,7 @@ accept_ref(*{r}*)
         #[test]
         fn accept_two_refs_return_ref_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let r1 = &10;
             let r2 = &20.2;

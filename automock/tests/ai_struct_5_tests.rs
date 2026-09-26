@@ -480,6 +480,9 @@ mod tests {
     }
 
     fn create_mock() -> MonsterStruct<'static, i32, 4> {
+        MonsterStruct::<'static, i32, 4>::static_setup()
+            .new()
+            .call_base();
         MonsterStruct::new()
     }
 

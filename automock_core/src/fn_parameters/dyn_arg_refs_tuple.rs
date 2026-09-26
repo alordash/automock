@@ -21,7 +21,7 @@ impl<'rs> DynArgRefsTuple<'rs> {
     pub fn downcast_into<'a, T: IReturnValue<'a>>(self) -> T {
         if size_of::<T>() == 0 {
             // SAFETY: target type is ZST, it is safe to initialize it using zeroed memory
-            return unsafe { core::mem::MaybeUninit::zeroed().assume_init() };
+            return unsafe { core::mem::zeroed() };
         }
         let raw_ptr = Box::into_raw(
             self.inner

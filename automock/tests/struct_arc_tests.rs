@@ -46,6 +46,7 @@ mod tests {
         #[test]
         fn accept_arc_Ok() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(3);
             let r = Arc::new(1);
 
@@ -59,6 +60,7 @@ mod tests {
         #[test]
         fn accept_arc_Panics() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(3);
             let r = Arc::new(11);
             let r_ptr = Arc::as_ptr(&r);
@@ -116,6 +118,7 @@ accept_arc(*{r}*)
         #[test]
         fn return_arc_Ok() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(3);
             let r = Arc::new(10);
             mock.setup().return_arc().returns(r.clone());
@@ -134,6 +137,7 @@ accept_arc(*{r}*)
         #[test]
         fn accept_arc_return_arc_Ok() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(3);
             let accepted_r = Arc::new(10);
             let returned_r = Arc::new(20);
@@ -160,6 +164,7 @@ accept_arc(*{r}*)
         #[test]
         fn accept_two_arcs_Ok() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(3);
             let r1 = Arc::new(10);
             let r2 = Arc::new(20.2);
@@ -181,6 +186,7 @@ accept_arc(*{r}*)
         #[test]
         fn accept_two_arcs_return_arc_Ok() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(3);
             let r1 = Arc::new(10);
             let r2 = Arc::new(20.2);

@@ -40,9 +40,7 @@ mod tests {
         // Assert
         assert_eq!(result, 10);
 
-        mock.received().calculate(1.time());
-
-        mock.received().work(1, 1.time());
+        mock.received().work(1, 1.time()).no_other_calls();
     }
 
     #[test]
@@ -60,8 +58,6 @@ mod tests {
         // Assert
         assert_eq!(result, 20);
 
-        mock.received().calculate(1.time());
-
-        mock.received().work(1, 1.time());
+        mock.received().work(1, 1.time()).no_other_calls();
     }
 }

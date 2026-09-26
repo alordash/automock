@@ -98,6 +98,7 @@ mod tests {
     use super::*;
 
     fn create_mock() -> Monster<'static, i32, 3> {
+        Monster::<'static, i32, 3>::static_setup().new().call_base();
         Monster::new()
     }
 
@@ -132,15 +133,9 @@ mod tests {
         //
         assert_eq!(result, 205);
 
-        mock.received().calculate(10, 1.time());
-
-        mock.received().prepare(10, 1.time());
-
-        mock.received().process(10, 1.time());
-
         mock.received().transform(10, 2.times());
 
-        mock.received().adjust(1.time());
+        mock.received().adjust(1.time()).no_other_calls();
     }
 
     #[test]
@@ -174,15 +169,11 @@ mod tests {
         //
         assert_eq!(result, 155);
 
-        mock.received().calculate(10, 1.time());
-
         mock.received().prepare(10, 1.time());
-
-        mock.received().process(10, 1.time());
 
         mock.received().transform(10, 1.time());
 
-        mock.received().adjust(1.time());
+        mock.received().adjust(1.time()).no_other_calls();
     }
 
     #[test]
@@ -223,17 +214,9 @@ mod tests {
         //
         assert_eq!(result, 24);
 
-        mock.received().run(10, 1.time());
-
-        mock.received().calculate(10, 1.time());
-
-        mock.received().prepare(10, 2.times());
-
-        mock.received().process(10, 1.time());
-
         mock.received().transform(10, 3.times());
 
-        mock.received().adjust(1.time());
+        mock.received().adjust(1.time()).no_other_calls();
     }
 
     #[test]
@@ -260,8 +243,6 @@ mod tests {
         //
         assert_eq!(result, 3000);
 
-        mock.received().run(10, 1.time());
-
         mock.received().calculate(10, 1.time());
 
         mock.received().prepare(10, 1.time());
@@ -270,7 +251,7 @@ mod tests {
 
         mock.received().transform(10, Times::Never);
 
-        mock.received().adjust(Times::Never);
+        mock.received().adjust(Times::Never).no_other_calls();
     }
 
     #[test]
@@ -298,15 +279,9 @@ mod tests {
         // Assert
         assert_eq!(result, 130);
 
-        mock.received().recursive(3, 1.time());
-
-        mock.received().recursive(2, 1.time());
-
-        mock.received().recursive(1, 1.time());
-
         mock.received().recursive(0, 1.time());
 
-        mock.received().transform(0, 3.times());
+        mock.received().transform(0, 3.times()).no_other_calls();
     }
 
     #[test]
@@ -324,15 +299,16 @@ mod tests {
         // Assert
         assert_eq!(result, 50);
 
-        mock.received().reset(1.time());
-
-        mock.received().adjust(1.time());
+        mock.received().adjust(1.time()).no_other_calls();
     }
 
     #[test]
     fn mixed_chain_with_static_method() {
         // Arrange
         let mut mock = create_mock();
+        Monster::<'static, i32, 3>::static_setup()
+            .static_value()
+            .call_base();
 
         mock.setup().mixed(10).call_base();
 
@@ -352,15 +328,13 @@ mod tests {
         //
         assert_eq!(result, 600);
 
-        mock.received().mixed(10, 1.time());
-
         mock.received().calculate(10, 1.time());
 
         mock.received().prepare(10, 1.time());
 
         mock.received().transform(10, Times::Never);
 
-        mock.received().process(10, Times::Never);
+        mock.received().process(10, Times::Never).no_other_calls();
     }
 
     #[test]
@@ -396,16 +370,10 @@ mod tests {
         //
         assert_eq!(result, 514);
 
-        mock.received().run(10, 1.time());
-
-        mock.received().calculate(10, 1.time());
-
-        mock.received().prepare(10, 2.times());
-
         mock.received().process(10, 1.time());
 
         mock.received().transform(10, 2.times());
 
-        mock.received().adjust(Times::Never);
+        mock.received().adjust(Times::Never).no_other_calls();
     }
 }

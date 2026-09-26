@@ -202,7 +202,7 @@ accept_ref(*{r}*)
 
             // Assert
             assert_eq!(BASE_ACCEPT_REF_RETURN_REF, actual_returned_r);
-            accept_ref_return_ref::received(accepted_r, Times::Once).no_other_calls();
+            accept_ref_return_ref::received_nothing();
         }
     }
 
@@ -258,7 +258,7 @@ accept_ref(*{r}*)
             // Assert
             assert_eq!(ACCEPT_TWO_REFS_RETURN_REF, actual_returned_r);
 
-            accept_two_refs_return_ref::received(r1, r2, Times::Once).no_other_calls();
+            accept_two_refs_return_ref::received_nothing();
         }
     }
 }

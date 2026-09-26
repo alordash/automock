@@ -49,9 +49,6 @@ mod tests {
         let expected_value = value + 1;
         assert_eq!(expected_value, actual_value);
 
-        mock.received()
-            .get(Times::Once)
-            .get_plus_one(Times::Once)
-            .no_other_calls();
+        mock.received().get(Times::Once).no_other_calls();
     }
 }

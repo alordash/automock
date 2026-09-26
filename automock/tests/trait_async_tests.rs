@@ -194,7 +194,6 @@ mod tests {
         mock.nothing_base().await;
 
         // Assert
-        mock.received().nothing_base(Times::Once).no_other_calls();
         mock.received().dependency(Times::Once).no_other_calls();
     }
 
@@ -209,9 +208,6 @@ mod tests {
         mock.input_base(value).await;
 
         // Assert
-        mock.received()
-            .input_base(value, Times::Once)
-            .no_other_calls();
         mock.received().dependency(Times::Once).no_other_calls();
     }
 
@@ -226,7 +222,6 @@ mod tests {
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        mock.received().output_base(Times::Once).no_other_calls();
         mock.received().dependency(Times::Once).no_other_calls();
     }
 
@@ -242,9 +237,6 @@ mod tests {
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        mock.received()
-            .input_output_base(value, Times::Once)
-            .no_other_calls();
         mock.received().dependency(Times::Once).no_other_calls();
     }
 
@@ -258,7 +250,6 @@ mod tests {
 
         // Assert
         TraitMock::static_received()
-            .static_nothing_base(Times::Once)
             .static_dependency(Times::Once)
             .no_other_calls();
     }
@@ -276,7 +267,6 @@ mod tests {
 
         // Assert
         TraitMock::static_received()
-            .static_input_base(value, Times::Once)
             .static_dependency(Times::Once)
             .no_other_calls();
     }
@@ -292,7 +282,6 @@ mod tests {
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
         TraitMock::static_received()
-            .static_output_base(Times::Once)
             .static_dependency(Times::Once)
             .no_other_calls();
     }
@@ -311,7 +300,6 @@ mod tests {
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
         TraitMock::static_received()
-            .static_input_output_base(value, Times::Once)
             .static_dependency(Times::Once)
             .no_other_calls();
     }

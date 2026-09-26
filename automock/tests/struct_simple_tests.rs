@@ -51,6 +51,7 @@ mod tests {
         fn f_Ok() {
             // Arrange
             let value = 22;
+            Struct::<i32>::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(value);
             let callback_flag = Arc::new(RefCell::new(false));
             let callback_flag_clone = callback_flag.clone();
@@ -71,6 +72,7 @@ mod tests {
         #[test]
         fn f_NoConfig_Ok() {
             // Arrange
+            Struct::<i32>::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(1);
 
             // Act
@@ -83,6 +85,7 @@ mod tests {
         #[test]
         fn f_MultipleTimes_Ok() {
             // Arrange
+            Struct::<i32>::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(1);
 
             // Act
@@ -97,6 +100,7 @@ mod tests {
         #[test]
         fn f_MultipleTimes_Panics() {
             // Arrange
+            Struct::<i32>::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(1);
 
             // Act
@@ -158,6 +162,7 @@ Received no non-matching calls"#,
         fn Trait_f_Ok() {
             // Arrange
             let value = 22;
+            Struct::<i32>::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(value);
             let callback_flag = Arc::new(RefCell::new(false));
             let callback_flag_clone = callback_flag.clone();
@@ -180,6 +185,7 @@ Received no non-matching calls"#,
         #[test]
         fn Trait_f_NoConfig_Ok() {
             // Arrange
+            Struct::<i32>::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(1);
 
             // Act
@@ -193,6 +199,7 @@ Received no non-matching calls"#,
         #[test]
         fn Trait_f_MultipleTimes_Ok() {
             // Arrange
+            Struct::<i32>::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(1);
 
             // Act
@@ -208,6 +215,7 @@ Received no non-matching calls"#,
         #[test]
         fn Trait_f_MultipleTimes_Panics() {
             // Arrange
+            Struct::<i32>::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(1);
 
             // Act

@@ -1,18 +1,18 @@
 use automock::*;
 
 #[mock]
-struct Structure {
+struct Struct {
     pub v: i32,
 }
 
 #[mock(base)]
-impl Structure {
+impl Struct {
     pub fn new(v: i32) -> Self {
         Self { v }
     }
 }
 
-impl Structure {
+impl Struct {
     pub fn get(&self) -> i32 {
         self.v
     }
@@ -26,7 +26,8 @@ mod tests {
     fn get_Ok() {
         // Arrange
         let value = 10;
-        let mock = Structure::new(value);
+        Struct::static_setup().new(Arg::Any).call_base();
+        let mock = Struct::new(value);
 
         // Act
         let result = mock.get();

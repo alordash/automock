@@ -79,11 +79,7 @@ mod tests {
             // Assert
             assert_eq!(1, result.len());
             assert_eq!(mock_id, result[0].id());
-            result[0]
-                .received()
-                .id(Times::Once)
-                .work(Times::Once)
-                .no_other_calls();
+            result[0].received().id(Times::Once).no_other_calls();
         }
     }
 
@@ -93,6 +89,7 @@ mod tests {
         #[test]
         fn Struct_work_Ok() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(1);
             let returned_mock_id = 2;
             let returned_mock = Struct::new(returned_mock_id);
@@ -111,6 +108,7 @@ mod tests {
         fn Struct_work_Base_Ok() {
             // Arrange
             let mock_id = 1;
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(mock_id);
             mock.setup().work().call_base();
 
@@ -121,8 +119,8 @@ mod tests {
             assert_eq!(2, result.len());
             assert_eq!(mock_id, result[0].id);
             assert_eq!(mock_id, result[1].id);
-            result[0].received().work(Times::Once).no_other_calls();
-            result[1].received().work(Times::Once).no_other_calls();
+            result[0].received().no_other_calls();
+            result[1].received().no_other_calls();
         }
     }
 
@@ -132,6 +130,7 @@ mod tests {
         #[test]
         fn Struct_as_Trait_work_Ok() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(1);
             let returned_trait_mock_id = 20;
             let mut returned_mock = Struct::new(2);
@@ -160,6 +159,7 @@ mod tests {
         fn Struct_as_Trait_work_Base_Ok() {
             // Arrange
             let trait_mock_id = 10;
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(1);
             mock.setup()
                 .as_Trait()
@@ -178,19 +178,16 @@ mod tests {
                 .received()
                 .as_Trait()
                 .id(Times::Once)
-                .work(Times::Once)
                 .no_other_calls();
             result[1]
                 .received()
                 .as_Trait()
                 .id(Times::Once)
-                .work(Times::Once)
                 .no_other_calls();
             result[2]
                 .received()
                 .as_Trait()
                 .id(Times::Once)
-                .work(Times::Once)
                 .no_other_calls();
         }
     }

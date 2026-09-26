@@ -43,7 +43,6 @@ impl MockData {
         unique_fn_ident: String, // for trait fns
         fn_ident: &'static str,
         generics_hash_key: GenericsHashKey,
-        for_struct: bool,
     ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
     {
         let fn_data_ptr = self
@@ -58,9 +57,7 @@ impl MockData {
                     HAS_RETURN_VALUE,
                     SUPPORTS_BASE_CALLING,
                     PASSES_MOCK_TO_CALLBACK,
-                >::new(
-                    maybe_owner_name, fn_ident, for_struct
-                ))) as *const _ as *const ()
+                >::new(maybe_owner_name, fn_ident))) as *const _ as *const ()
             });
 
         let fn_data_ref = Self::cast_ptr_to_ref(*fn_data_ptr);

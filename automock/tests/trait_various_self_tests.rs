@@ -1093,7 +1093,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_value(Times::Exactly(2))
+                .return_by_value(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1121,7 +1121,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_value_colon(Times::Exactly(2))
+                .return_by_value_colon(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1149,7 +1149,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_value(Times::Exactly(2))
+                .return_by_mut_value(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1177,7 +1177,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_value_colon(Times::Exactly(2))
+                .return_by_mut_value_colon(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1205,7 +1205,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_ref(Times::Exactly(2))
+                .return_by_ref(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1233,7 +1233,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_ref_colon(Times::Exactly(2))
+                .return_by_ref_colon(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1261,7 +1261,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_ref_with_lifetime(Times::Exactly(2))
+                .return_by_ref_with_lifetime(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1289,7 +1289,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_ref_colon_with_lifetime(Times::Exactly(2))
+                .return_by_ref_colon_with_lifetime(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1317,7 +1317,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_ref_mut(Times::Exactly(2))
+                .return_by_ref_mut(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1345,7 +1345,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_ref_mut_colon(Times::Exactly(2))
+                .return_by_ref_mut_colon(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1373,7 +1373,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_ref_mut_with_lifetime(Times::Exactly(2))
+                .return_by_ref_mut_with_lifetime(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1401,7 +1401,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_ref_mut_colon_with_lifetime(Times::Exactly(2))
+                .return_by_ref_mut_colon_with_lifetime(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1429,7 +1429,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_box(Times::Exactly(2))
+                .return_by_box(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1457,7 +1457,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_box_ref(Times::Exactly(2))
+                .return_by_box_ref(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1485,7 +1485,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_box_ref_mut(Times::Exactly(2))
+                .return_by_box_ref_mut(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1513,7 +1513,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_box(Times::Exactly(2))
+                .return_by_mut_box(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1541,7 +1541,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_box_ref(Times::Exactly(2))
+                .return_by_mut_box_ref(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1569,7 +1569,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_box_ref_mut(Times::Exactly(2))
+                .return_by_mut_box_ref_mut(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1597,7 +1597,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_rc(Times::Exactly(2))
+                .return_by_rc(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1625,7 +1625,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_rc_ref(Times::Exactly(2))
+                .return_by_rc_ref(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1653,7 +1653,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_rc_ref_mut(Times::Exactly(2))
+                .return_by_rc_ref_mut(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1681,7 +1681,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_rc(Times::Exactly(2))
+                .return_by_mut_rc(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1709,7 +1709,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_rc_ref(Times::Exactly(2))
+                .return_by_mut_rc_ref(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1737,7 +1737,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_rc_ref_mut(Times::Exactly(2))
+                .return_by_mut_rc_ref_mut(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1765,7 +1765,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_arc(Times::Exactly(2))
+                .return_by_arc(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1793,7 +1793,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_arc_ref(Times::Exactly(2))
+                .return_by_arc_ref(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1821,7 +1821,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_arc_ref_mut(Times::Exactly(2))
+                .return_by_arc_ref_mut(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1849,7 +1849,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_arc(Times::Exactly(2))
+                .return_by_mut_arc(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1877,7 +1877,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_arc_ref(Times::Exactly(2))
+                .return_by_mut_arc_ref(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1905,7 +1905,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_arc_ref_mut(Times::Exactly(2))
+                .return_by_mut_arc_ref_mut(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1933,7 +1933,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_pin_ref(Times::Exactly(2))
+                .return_by_pin_ref(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1961,7 +1961,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_pin_ref_mut(Times::Exactly(2))
+                .return_by_pin_ref_mut(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -1989,7 +1989,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_pin_ref(Times::Exactly(2))
+                .return_by_mut_pin_ref(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -2017,7 +2017,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_pin_ref_mut(Times::Exactly(2))
+                .return_by_mut_pin_ref_mut(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -2049,7 +2049,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_ref_mut_box_mut_ref_mut_with_lifetimes(Times::Exactly(2))
+                .return_by_mut_ref_mut_box_mut_ref_mut_with_lifetimes(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -2082,7 +2082,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_ref_mut_rc_mut_ref_mut_with_lifetimes(Times::Exactly(2))
+                .return_by_mut_ref_mut_rc_mut_ref_mut_with_lifetimes(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -2115,7 +2115,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_ref_mut_arc_mut_ref_mut_with_lifetimes(Times::Exactly(2))
+                .return_by_mut_ref_mut_arc_mut_ref_mut_with_lifetimes(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -2148,7 +2148,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_by_mut_ref_mut_pin_mut_ref_mut_with_lifetimes(Times::Exactly(2))
+                .return_by_mut_ref_mut_pin_mut_ref_mut_with_lifetimes(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);
@@ -2189,7 +2189,7 @@ mod tests {
 
             // Assert
             mock.received()
-                .return_nested(Times::Exactly(2))
+                .return_nested(Times::Exactly(1))
                 .no_other_calls();
             assert_eq!(3, counter.get());
             assert_eq!(first_value, actual_first_value);

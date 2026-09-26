@@ -449,6 +449,7 @@ mod tests {
     #[test]
     fn ordinary_methods() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().one_arg(42).returns(123);
@@ -484,6 +485,7 @@ mod tests {
     #[test]
     fn generic_methods() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup()
@@ -522,6 +524,7 @@ mod tests {
     #[test]
     fn generic_lifetime() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         let value = 42;
@@ -540,6 +543,7 @@ mod tests {
     #[test]
     fn const_generic_method() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup()
@@ -559,6 +563,7 @@ mod tests {
     #[test]
     fn lifetime_methods() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         let value = 42;
@@ -588,6 +593,7 @@ mod tests {
     #[test]
     fn where_clauses() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup()
@@ -612,6 +618,7 @@ mod tests {
     #[test]
     fn nested_types() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().generic_result(42).returns(Ok(123));
@@ -639,6 +646,7 @@ mod tests {
     #[test]
     fn deeply_nested_argument() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         // Act
@@ -651,6 +659,7 @@ mod tests {
     #[test]
     fn references_and_pointers() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         let value = 42;
@@ -673,6 +682,7 @@ mod tests {
     #[test]
     fn function_pointers() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup()
@@ -714,6 +724,7 @@ mod tests {
     #[test]
     fn closures() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().closure(Arg::Any).returns(10);
@@ -748,6 +759,7 @@ mod tests {
     #[test]
     fn impl_trait() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().impl_iterator(Arg::Any).returns(123);
@@ -764,6 +776,7 @@ mod tests {
     #[test]
     fn dyn_arguments() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup()
@@ -796,6 +809,7 @@ mod tests {
     #[test]
     fn self_argument() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         // Act
@@ -808,6 +822,7 @@ mod tests {
     #[test]
     fn return_self() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup()
@@ -836,6 +851,7 @@ mod tests {
     #[test]
     fn unsafe_methods() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup()
@@ -861,6 +877,7 @@ mod tests {
     #[test]
     fn extern_c_methods() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().extern_c(42).returns(123);
@@ -885,6 +902,7 @@ mod tests {
     #[tokio::test]
     async fn async_methods() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().async_method(42).returns(123);
@@ -916,6 +934,7 @@ mod tests {
     #[tokio::test]
     async fn async_unsafe() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         let mut value = 42;
@@ -982,6 +1001,7 @@ mod tests {
     #[test]
     fn cross_module_call() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().one_arg(42).returns(123);
@@ -998,6 +1018,7 @@ mod tests {
     #[test]
     fn cross_module_generic_call() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup()
@@ -1017,6 +1038,7 @@ mod tests {
     #[tokio::test]
     async fn cross_module_async_call() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().async_method(42).returns(123);
@@ -1033,6 +1055,7 @@ mod tests {
     #[test]
     fn cross_module_unsafe_call() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         let mut value = 42;
@@ -1069,6 +1092,7 @@ mod tests {
     #[test]
     fn consuming_receiver() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().by_value().returns(123);
@@ -1083,6 +1107,7 @@ mod tests {
     #[test]
     fn boxed_receiver() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().boxed().returns(123);
@@ -1097,6 +1122,7 @@ mod tests {
     #[test]
     fn rc_receiver() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().rc().returns(123);
@@ -1113,6 +1139,7 @@ mod tests {
     #[test]
     fn arc_receiver() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().arc().returns(123);
@@ -1129,6 +1156,7 @@ mod tests {
     #[test]
     fn pinned_receiver() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().pinned().returns(123);
@@ -1145,6 +1173,7 @@ mod tests {
     #[test]
     fn mutable_receiver() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         // Act
@@ -1160,6 +1189,7 @@ mod tests {
     #[test]
     fn body_call() {
         // Arrange
+        Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup().one_arg(42).returns(123);

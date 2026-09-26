@@ -41,11 +41,20 @@ impl<'rs> DynCall<'rs> {
         })
     }
 
-    pub fn downcast_ref<T: 'rs>(&self) -> &T {
+    pub fn downcast_to<T: 'rs>(&self) -> &T {
         let dyn_ref = self.inner.as_ref();
         // SAFETY: for justification refer to module level documentation.
         let t_ref = unsafe { &*(dyn_ref as *const _ as *const T) };
         return t_ref;
+    }
+
+    pub(crate) fn downcast_into<T>(self) -> T {
+        let dyn_ptr = Box::leak(self.inner) as *mut _;
+        let dyn_fat_ptr: FatPointer = unsafe { core::mem::transmute(dyn_ptr) };
+        let t_ptr = dyn_fat_ptr.data_pointer as *mut T;
+        let t_box: Box<T> = unsafe { Box::from_raw(t_ptr) };
+        let t = *t_box;
+        return t;
     }
 }
 
@@ -83,7 +92,7 @@ mod tests {
         let dyn_call = DynCall::new(call_mock.clone());
 
         // Act
-        let result: &CallMock = dyn_call.downcast_ref();
+        let result: &CallMock = dyn_call.downcast_to();
 
         // Assert
         assert_eq!(result.id, call_mock.id);

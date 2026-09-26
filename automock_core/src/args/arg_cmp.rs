@@ -10,6 +10,10 @@ pub(crate) struct ArgCmp<T: ?Sized> {
     maybe_deref_info: Option<DerefInfo>,
 }
 
+fn ptr_cmp<U: ?Sized, T: Deref<Target = U>>(a: &T, b: &T) -> bool {
+    core::ptr::eq(a.deref(), b.deref())
+}
+
 #[cfg_attr(test, automock::mock)]
 impl<T> ArgCmp<T> {
     pub fn new_eq(value: T, print_arg: String) -> Self
@@ -38,11 +42,7 @@ impl<T> ArgCmp<T> {
     }
 }
 
-fn ptr_cmp<U: ?Sized, T: Deref<Target = U>>(a: &T, b: &T) -> bool {
-    core::ptr::eq(a.deref(), b.deref())
-}
-
-#[cfg_attr(test, automock::mock)]
+#[cfg_attr(test, automock::mock(base))]
 impl<T: ?Sized> ArgCmp<T> {
     pub fn print_arg(&self) -> &str {
         self.print_arg.as_ref()
@@ -97,16 +97,6 @@ pub(crate) mod tests {
     use super::*;
     use std::rc::Rc;
 
-    pub fn arg_cmp_mock<T: Default>() -> ArgCmp<T> {
-        ArgCmp {
-            print_arg: "mock".to_owned(),
-            value: Box::new(T::default()),
-            comparator: |_, _| false,
-            maybe_deref_info: None,
-            __rs_data: Default::default(),
-        }
-    }
-
     #[test]
     fn ptr_cmp_DerefsToSame_ReturnsTrue() {
         // Arrange
@@ -131,5 +121,29 @@ pub(crate) mod tests {
 
         // Assert
         assert!(!result);
+    }
+
+    #[test]
+    fn new_eq_Ok() {
+        // Arrange
+        let value = 5;
+        let print_arg = "quo vadis".to_owned();
+
+        // Act
+        todo!()
+    }
+
+    pub mod utilities {
+        use super::*;
+
+        pub fn arg_cmp_mock<T: Default>() -> ArgCmp<T> {
+            ArgCmp {
+                print_arg: "mock".to_owned(),
+                value: Box::new(T::default()),
+                comparator: |_, _| false,
+                maybe_deref_info: None,
+                __rs_data: Default::default(),
+            }
+        }
     }
 }

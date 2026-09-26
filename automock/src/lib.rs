@@ -331,22 +331,23 @@
 //!    configuration from one test leaking into next sequentially ran test. Standalone function
 //!    set-up must happen in **single module-level `setup()` call** in each unit-test.  
 //!    For example, this is a wrong way of configuring standalone function:
-//! ```no_run
-//! # use automock::*;
-//! #[mock] fn work(v: i32) -> i32 { v }
-//!
-//! work::setup(1).returns(10);
-//! work::setup(2).returns(20); // `work::setup(2)` will clear previous configuration
-//! ```
-//! The correct approach is to call `work::setup()` only once and then chain subsequent `.setup()`
-//! calls:
-//! ```no_run
-//! # use automock::*; #[mock] fn work(v: i32) -> i32 { v }
-//! # fn main() {
-//! work::setup(1).returns(10)
-//!      .setup(2).returns(20); // `.setup(2)` does not clear previous configuration
-//! }
-//! ```
+//!    // TODO - fix indents in numbered lists
+//!    ```no_run
+//!    # use automock::*;
+//!    #[mock] fn work(v: i32) -> i32 { v }
+//!   
+//!    work::setup(1).returns(10);
+//!    work::setup(2).returns(20); // `work::setup(2)` will clear previous configuration
+//!    ```
+//!    The correct approach is to call `work::setup()` only once and then chain subsequent `.setup()`
+//!    calls:
+//!    ```no_run
+//!    # use automock::*; #[mock] fn work(v: i32) -> i32 { v }
+//!    # fn main() {
+//!    work::setup(1).returns(10)
+//!         .setup(2).returns(20); // `.setup(2)` does not clear previous configuration
+//!    }
+//!    ```
 //!
 //! ## Mocking static associated functions
 //!
@@ -403,7 +404,7 @@
 //! ### Limitations
 //!
 //! There are a couple of limitations for static associated functions mocking:
-//! 1. Associated functions that use base implementation using `#[mock(base)]` use base
+//! 1. Associated functions that use base implementation using `#[mock(base)]` use base // TODO - remove this remark?
 //!    implementation by default, without any configuration. This is done to make creation of
 //!    structure mocks simpler by just calling `Struct::new()` without needing to first do
 //!    `Struct::static_setup().new(Arg::Any, ...).call_base()` in each test.
@@ -628,6 +629,8 @@
 //!
 //! ### Limitations
 //!
+//! TODO - this limitation is no longer valid, fix docs (basically now calls that were forwarded to
+//! base implementation won't be registered by mock and they can't be inspected by `received`)
 //! There is one limitation: all arguments of function must implement [`Clone`] for its base
 //! implementation to be used in tests. If even single argument does not implement `Clone` you will
 //! get compilation error and will have to change your code or just use `#[mock]`:

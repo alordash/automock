@@ -58,11 +58,11 @@ mod tests {
         //
         assert_eq!(result, 50);
 
-        calculate::received(10, Times::Once);
+        calculate::received_nothing();
 
-        adjust::received(10, Times::Once);
+        adjust::received_nothing();
 
-        transform::received(10, Times::Exactly(2));
+        transform::received_nothing();
     }
 
     #[test]
@@ -89,11 +89,11 @@ mod tests {
         //
         assert_eq!(result, 210);
 
-        calculate::received(10, Times::Once);
-
-        adjust::received(10, Times::Once);
+        calculate::received_nothing();
 
         transform::received(10, Times::Exactly(2));
+
+        adjust::received_nothing();
     }
 
     #[test]
@@ -118,7 +118,7 @@ mod tests {
         //
         assert_eq!(result, 600);
 
-        calculate::received(10, Times::Once);
+        calculate::received_nothing();
 
         adjust::received(10, Times::Once);
 

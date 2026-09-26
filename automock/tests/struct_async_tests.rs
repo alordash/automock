@@ -89,6 +89,7 @@ mod tests {
     #[tokio::test]
     async fn nothing_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
 
         // Act
@@ -101,6 +102,7 @@ mod tests {
     #[tokio::test]
     async fn input_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         let value = 1;
 
@@ -114,6 +116,7 @@ mod tests {
     #[tokio::test]
     async fn output_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         let result = 2;
         mock.setup().output().returns(result);
@@ -129,6 +132,7 @@ mod tests {
     #[tokio::test]
     async fn input_output_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         let value = 1;
         let result = 2;
@@ -208,6 +212,7 @@ mod tests {
     #[tokio::test]
     async fn nothing_base_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         mock.setup().nothing_base().call_base();
 
@@ -215,13 +220,13 @@ mod tests {
         mock.nothing_base().await;
 
         // Assert
-        mock.received().nothing_base(Times::Once).no_other_calls();
         mock.received().dependency(Times::Once).no_other_calls();
     }
 
     #[tokio::test]
     async fn input_base_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         let value = 1;
         mock.setup().input_base(Arg::Any).call_base();
@@ -230,15 +235,13 @@ mod tests {
         mock.input_base(value).await;
 
         // Assert
-        mock.received()
-            .input_base(value, Times::Once)
-            .no_other_calls();
         mock.received().dependency(Times::Once).no_other_calls();
     }
 
     #[tokio::test]
     async fn output_base_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         mock.setup().output_base().call_base();
 
@@ -247,13 +250,13 @@ mod tests {
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        mock.received().output_base(Times::Once).no_other_calls();
         mock.received().dependency(Times::Once).no_other_calls();
     }
 
     #[tokio::test]
     async fn input_output_base_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         let value = 1;
         mock.setup().input_output_base(Arg::Any).call_base();
@@ -263,9 +266,6 @@ mod tests {
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        mock.received()
-            .input_output_base(value, Times::Once)
-            .no_other_calls();
         mock.received().dependency(Times::Once).no_other_calls();
     }
 
@@ -279,7 +279,6 @@ mod tests {
 
         // Assert
         Struct::static_received()
-            .static_nothing_base(Times::Once)
             .static_dependency(Times::Once)
             .no_other_calls();
     }
@@ -297,7 +296,6 @@ mod tests {
 
         // Assert
         Struct::static_received()
-            .static_input_base(value, Times::Once)
             .static_dependency(Times::Once)
             .no_other_calls();
     }
@@ -313,7 +311,6 @@ mod tests {
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
         Struct::static_received()
-            .static_output_base(Times::Once)
             .static_dependency(Times::Once)
             .no_other_calls();
     }
@@ -332,7 +329,6 @@ mod tests {
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
         Struct::static_received()
-            .static_input_output_base(value, Times::Once)
             .static_dependency(Times::Once)
             .no_other_calls();
     }

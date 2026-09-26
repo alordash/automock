@@ -29,9 +29,7 @@ mod tests {
         let result2_1 = global(143);
 
         // Assert
-        let expected_v = 2;
-        global::received(Arg::is(|v| *v == expected_v), Times::Once);
-        global::received(Arg::eq(2), Times::Once).received(Arg::eq(143), Times::Exactly(1));
+        global::received(Arg::eq(143), Times::Exactly(1)).no_other_calls();
         assert_eq!("actual number: 2", result1);
         assert_eq!("MOCK: 143", result2_1);
     }
@@ -49,7 +47,7 @@ mod tests {
         let result2_1 = global(33);
 
         // Assert
-        global::received(Arg::eq(11), Times::Once).received(Arg::eq(33), Times::Exactly(1));
+        global::received(Arg::eq(33), Times::Exactly(1)).no_other_calls();
         assert_eq!("actual number: 11", result1);
         assert_eq!("MOCK: 33", result2_1);
     }

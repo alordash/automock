@@ -166,7 +166,7 @@ mod tests {
     #![allow(non_snake_case)]
 
     use super::*;
-    use arg_cmp::tests::*;
+    use arg_cmp::tests::utilities::*;
     use automock::Mockable;
     use std::rc::Rc;
     use utilities::*;

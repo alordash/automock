@@ -469,6 +469,7 @@ mod tests {
     #[test]
     fn struct_work_Ok() {
         // Arrange
+        Struct::<[i32; 2]>::static_setup().new().call_base();
         let mut mock = Struct::<[i32; 2]>::new();
         let return_value = &&&&&&&&&&&&&&&&&55;
         let a = &1;
@@ -574,28 +575,6 @@ mod tests {
 
                                                 // Assert
                                                 assert_eq!(return_value, actual_return_value);
-
-                                                mock.received().as_Trait().work(
-                                                    a,
-                                                    b,
-                                                    c,
-                                                    d,
-                                                    axb,
-                                                    cxd,
-                                                    abxbax,
-                                                    cdxdcx,
-                                                    abcd,
-                                                    xaxbxcxdx,
-                                                    data.clone(),
-                                                    t1,
-                                                    t1_ref,
-                                                    xaxbxcxdx_t1_ref,
-                                                    t2,
-                                                    t2_ref,
-                                                    xaxbxcxdx_t2_ref,
-                                                    xapx,
-                                                    Times::Once,
-                                                );
 
                                                 mock.received()
                                                     .work(

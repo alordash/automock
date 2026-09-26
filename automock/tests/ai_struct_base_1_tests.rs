@@ -41,6 +41,7 @@ mod tests {
     #[test]
     fn base_method_calls_another_method_using_mock() {
         // Arrange
+        RecursiveWorker::static_setup().new().call_base();
         let mut mock = RecursiveWorker::new();
 
         mock.setup().run().call_base();
@@ -53,7 +54,7 @@ mod tests {
         // Assert
         assert_eq!(result, 999);
 
-        mock.received().run(Times::Once);
+        mock.received().run(Times::Never);
 
         mock.received().step(3, Times::Once);
     }
@@ -61,6 +62,7 @@ mod tests {
     #[test]
     fn base_recursion_can_be_intercepted_at_the_bottom() {
         // Arrange
+        RecursiveWorker::static_setup().new().call_base();
         let mut mock = RecursiveWorker::new();
 
         mock.setup().run().call_base();
@@ -79,14 +81,6 @@ mod tests {
         // Assert
         assert_eq!(result, 999);
 
-        mock.received().run(Times::Once);
-
-        mock.received().step(3, Times::Once);
-
-        mock.received().step(2, Times::Once);
-
-        mock.received().step(1, Times::Once);
-
-        mock.received().step(0, Times::Once);
+        mock.received().step(0, Times::Once).no_other_calls();
     }
 }

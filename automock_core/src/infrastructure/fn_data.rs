@@ -7,10 +7,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-mod handle_no_return_value_no_base_calling;
-mod handle_no_return_value_with_base_calling;
-mod handle_with_return_value_no_base_calling;
-mod handle_with_return_value_with_base_calling;
+mod handle_no_base_calling;
+mod handle_with_base_calling;
 
 pub struct FnData<
     'rs,
@@ -24,7 +22,6 @@ pub struct FnData<
     pub call_infos: RefCell<HashMap<GenericsHashKey, Vec<CallCheck<'rs>>>>,
     #[allow(clippy::type_complexity)]
     pub configs: RefCell<HashMap<GenericsHashKey, Vec<Rc<RefCell<FnConfig<'rs, TMock>>>>>>,
-    force_call_base: bool,
 }
 
 impl<
@@ -35,11 +32,7 @@ impl<
     const PASSES_MOCK_TO_CALLBACK: bool,
 > FnData<'rs, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
 {
-    pub(crate) fn new(
-        maybe_owner_name: Option<&'static str>,
-        fn_name: &'static str,
-        for_struct: bool,
-    ) -> Self {
+    pub(crate) fn new(maybe_owner_name: Option<&'static str>, fn_name: &'static str) -> Self {
         let formatted_fn_name = match maybe_owner_name {
             None => fn_name.to_owned(),
             Some(owner_name) => format!("{owner_name}::{fn_name}"),
@@ -49,7 +42,6 @@ impl<
             formatted_fn_name,
             call_infos: RefCell::new(HashMap::new()),
             configs: RefCell::new(HashMap::new()),
-            force_call_base: for_struct,
         }
     }
 
@@ -216,35 +208,35 @@ mod internal {
             return (matching_calls_check_result, non_matching_calls_check_result);
         }
 
-        pub(crate) fn get_optional_matching_config(
-            &self,
-            dyn_call: &DynCall<'rs>,
-        ) -> MatchingConfigSearchResult<'rs, TMock> {
-            let with_return_value = false;
-            return self.try_get_matching_config(dyn_call, with_return_value);
-        }
+        // pub(crate) fn get_optional_matching_config(
+        //     &self,
+        //     dyn_call: &DynCall<'rs>,
+        // ) -> MatchingConfigSearchResult<'rs, TMock> {
+        //     let with_return_value = false;
+        //     return self.try_get_matching_config(dyn_call, with_return_value);
+        // }
+        //
+        // pub(crate) fn get_required_matching_config(
+        //     &self,
+        //     dyn_call: &DynCall<'rs>,
+        // ) -> Rc<RefCell<FnConfig<'rs, TMock>>> {
+        //     let with_return_value = true;
+        //     let fn_config = match self.try_get_matching_config(dyn_call, with_return_value) {
+        //         MatchingConfigSearchResult::Ok(matching_config) => matching_config,
+        //         MatchingConfigSearchResult::Err(matching_config_search_err) => {
+        //             error_printing::panic_no_suitable_fn_configuration_found(
+        //                 self.fn_name,
+        //                 &self.formatted_fn_name,
+        //                 dyn_call.get_arg_infos(),
+        //                 dyn_call.get_generic_parameter_infos(),
+        //                 matching_config_search_err,
+        //             )
+        //         }
+        //     };
+        //     return fn_config;
+        // }
 
-        pub(crate) fn get_required_matching_config(
-            &self,
-            dyn_call: &DynCall<'rs>,
-        ) -> Rc<RefCell<FnConfig<'rs, TMock>>> {
-            let with_return_value = true;
-            let fn_config = match self.try_get_matching_config(dyn_call, with_return_value) {
-                MatchingConfigSearchResult::Ok(matching_config) => matching_config,
-                MatchingConfigSearchResult::Err(matching_config_search_err) => {
-                    error_printing::panic_no_suitable_fn_configuration_found(
-                        self.fn_name,
-                        &self.formatted_fn_name,
-                        dyn_call.get_arg_infos(),
-                        dyn_call.get_generic_parameter_infos(),
-                        matching_config_search_err,
-                    )
-                }
-            };
-            return fn_config;
-        }
-
-        pub(super) fn try_get_matching_config(
+        pub(super) fn try_get_matching_config<TReturnValue>(
             &self,
             dyn_call: &DynCall<'rs>,
             with_return_value: bool,
@@ -257,7 +249,10 @@ mod internal {
             let mut calls_args_check_results = Vec::with_capacity(matching_configs.len());
             for config in matching_configs.iter() {
                 let config_ref = config.borrow();
-                if with_return_value && !config_ref.has_return_value() {
+                if size_of::<TReturnValue>() != 0
+                    && with_return_value
+                    && !config_ref.has_return_value()
+                {
                     continue;
                 }
                 let args_check_result = config_ref.check_call(dyn_call);

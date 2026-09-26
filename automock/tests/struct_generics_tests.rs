@@ -44,6 +44,9 @@ mod tests {
         let t1 = "amogus";
         let t2 = vec![3, 4, 5];
         let number = 4534;
+        Struct::<&str, Vec<i32>>::static_setup()
+            .new(Arg::Any, Arg::Any, Arg::Any)
+            .call_base();
         let mut mock = Struct::new(t1, &t2, number);
 
         let another_t2 = vec![11, 2];

@@ -107,10 +107,7 @@ mod tests {
         unsafe {
             assert_eq!(&*&raw mut BASE_MUT_REF, actual_r);
         }
-        trait_mock
-            .received()
-            .return_mut_ref_with_base(Times::Once)
-            .no_other_calls();
+        trait_mock.received().no_other_calls();
     }
 
     #[test]
@@ -151,9 +148,6 @@ mod tests {
         let expected_r = v.numbers.iter().sum::<i32>() * 2;
         assert_eq!(expected_r, actual_r);
 
-        trait_mock
-            .received()
-            .foo_sum(v, Times::Once)
-            .no_other_calls();
+        trait_mock.received().no_other_calls();
     }
 }

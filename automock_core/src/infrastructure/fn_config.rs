@@ -45,7 +45,7 @@ impl<'rs, TMock> FnConfig<'rs, TMock> {
         let dyn_callback = move |raw_mock_ptr: *const (), dyn_call: &DynCall<'rs>| {
             let arg_refs_tuple = if size_of::<TArgRefsTuple>() == 0 {
                 // SAFETY: target type is ZST, it is safe to initialize it using zeroed memory
-                unsafe { core::mem::MaybeUninit::zeroed().assume_init() }
+                unsafe { core::mem::zeroed() }
             } else {
                 let raw_arg_refs_tuple_ptr = dyn_call.get_ptr_to_boxed_tuple_of_refs();
                 let arg_refs_tuple_ptr = raw_arg_refs_tuple_ptr as *mut TArgRefsTuple;

@@ -123,7 +123,7 @@ fn generate_fn_check(span: Span, arguments: &[Argument], call_struct_type: Type)
                     qself: None,
                     path: dyn_call_arg_path,
                 }),
-                Ident::new("downcast_ref", span),
+                Ident::new("downcast_to", span),
                 [],
             ))),
             diverge: None,

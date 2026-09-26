@@ -107,7 +107,7 @@ mod tests {
         nothing_base().await;
 
         // Assert
-        nothing_base::received(Times::Once).no_other_calls();
+        nothing_base::received_nothing();
         dependency::received(Times::Once).no_other_calls();
     }
 
@@ -121,7 +121,7 @@ mod tests {
         input_base(value).await;
 
         // Assert
-        input_base::received(value, Times::Once).no_other_calls();
+        input_base::received_nothing();
         dependency::received(Times::Once).no_other_calls();
     }
 
@@ -135,7 +135,7 @@ mod tests {
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        output_base::received(Times::Once).no_other_calls();
+        output_base::received_nothing();
         dependency::received(Times::Once).no_other_calls();
     }
 
@@ -150,7 +150,7 @@ mod tests {
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        input_output_base::received(value, Times::Once).no_other_calls();
+        input_output_base::received_nothing();
         dependency::received(Times::Once).no_other_calls();
     }
 }
