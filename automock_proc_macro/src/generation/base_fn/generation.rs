@@ -178,13 +178,18 @@ fn generate_core(
         semi_token: Token![;](span),
     };
     let cast_args_stmts = fn_info.arguments.iter().map(|x| {
-        let mut source_pat_type = x.source_pat_type.clone();
-        let attrs = core::mem::take(&mut source_pat_type.attrs);
+        let pat_type = PatType {
+            attrs: Vec::new(),
+            pat: x.source_pat_type.pat.clone(),
+            colon_token: x.source_pat_type.colon_token,
+            ty: x.ident_pat_type.ty.clone(),
+        };
+        let attrs = x.source_pat_type.attrs.clone();
         Local {
             attrs,
             let_token: Token![let](span),
             modifiers: LocalModifiers::default(),
-            pat: Pat::Type(source_pat_type),
+            pat: Pat::Type(pat_type),
             init: Some(LocalInit {
                 eq_token: Token![=](span),
                 expr: Box::new(Expr::Macro(transmute_lifetime_expr::new(Expr::Path(

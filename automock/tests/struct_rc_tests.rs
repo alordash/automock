@@ -4,14 +4,14 @@ use std::rc::Rc;
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new() -> Self {
         Self
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub(crate) fn accept_rc(&self, _: Rc<i32>) {}
 

@@ -18,7 +18,7 @@ impl<S1: Clone> Struct<S1> {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl<S1: Clone> Struct<S1> {
     pub fn f(&self, v: i32) -> f32
     where
@@ -36,12 +36,12 @@ impl<S1: Clone> Struct<S1> {
     }
 }
 
-#[mock(base)]
+#[mock]
 trait Trait {
     fn f(v: i32) -> i32;
 }
 
-#[mock(base)]
+#[mock]
 fn f(v: i32) -> i32 {
     v + 10
 }

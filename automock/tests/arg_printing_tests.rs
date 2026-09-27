@@ -33,7 +33,7 @@ struct Struct<'s, TS> {
     phantom: PhantomData<&'s TS>,
 }
 
-#[mock(base)]
+#[mock]
 impl<'s, TS> Struct<'s, TS> {
     pub fn new() -> Self {
         Self {

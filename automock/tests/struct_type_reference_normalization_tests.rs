@@ -6,7 +6,7 @@ mod unit_mod {
     #[mock]
     pub struct Unit;
 
-    #[mock(base)]
+    #[mock]
     impl Unit {
         #[allow(unused)]
         fn ident(&self) {
@@ -25,7 +25,7 @@ mod unit_mod {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl unit_mod::Unit {
     fn path(&self) {
         let unit = unit_mod::Unit;
@@ -51,7 +51,7 @@ mod named_mod {
         pub v: i32,
     }
 
-    #[mock(base)]
+    #[mock]
     impl Named {
         #[allow(unused)]
         fn ident(&self) {
@@ -76,7 +76,7 @@ mod named_mod {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl named_mod::Named {
     fn path(&self) {
         let unit = named_mod::Named { v: 1 };

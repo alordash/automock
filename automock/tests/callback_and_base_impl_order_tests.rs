@@ -5,7 +5,7 @@ fn base_dep() {}
 #[mock]
 fn callback_dep() {}
 
-#[mock(base)]
+#[mock]
 fn f() {
     base_dep();
 }

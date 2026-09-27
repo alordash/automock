@@ -13,7 +13,7 @@ trait Trait<T1, T2 = u16> {
 
 #[mock]
 struct Structs00;
-#[mock(base)]
+#[mock]
 impl Structs00 {
     pub const FOO: i32 = 1;
 }

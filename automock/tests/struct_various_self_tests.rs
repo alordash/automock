@@ -65,7 +65,7 @@ pub struct Struct {
     v: i32,
 }
 
-#[mock(base)]
+#[mock]
 #[rustfmt::skip]
 #[allow(unused_mut)]
 impl Struct {

@@ -59,7 +59,7 @@ mod consts {
 use consts::*;
 
 #[rustfmt::skip]
-#[mock(base)]
+#[mock]
 #[allow(unused_mut)]
 trait Trait: Sized {
     fn by_value          (    self      ) {}

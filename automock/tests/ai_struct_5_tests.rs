@@ -44,7 +44,7 @@ fn monster_struct_function<T>(t: T) -> T {
     t
 }
 
-#[cfg_attr(test, mock(base))]
+#[cfg_attr(test, mock)]
 impl<'a, T, const N: usize> MonsterStruct<'a, T, N>
 where
     T: Clone,
@@ -298,7 +298,7 @@ where
             raw_const: std::ptr::null(),
             raw_mut: std::ptr::null_mut(),
             function: self.function,
-            boxed_function: Box::new(|x| x),
+            boxed_function: Box::leak(Box::new(Box::new(|x| x) as Box<dyn Fn(i32) -> i32>)),
             marker: std::marker::PhantomData,
         }
     }

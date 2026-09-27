@@ -11,7 +11,7 @@ pub trait B: A {
 #[mock]
 struct C;
 
-#[mock(base)]
+#[mock]
 impl C {
     fn new() -> Self {
         Self
@@ -19,7 +19,7 @@ impl C {
 }
 
 const A_DEFAULT: i32 = 11;
-#[mock(base)]
+#[mock]
 impl A for C {
     fn foo(&self) -> i32 {
         A_DEFAULT
@@ -27,7 +27,7 @@ impl A for C {
 }
 
 const B_DEFAULT: i32 = 11;
-#[mock(base)]
+#[mock]
 impl B for C {
     fn bar(&self) -> i32 {
         B_DEFAULT

@@ -7,17 +7,17 @@ use automock::*;
 // ============================================================================
 //
 
-#[mock(base)]
+#[mock]
 fn transform(value: i32) -> i32 {
     value * 2
 }
 
-#[mock(base)]
+#[mock]
 fn adjust(value: i32) -> i32 {
     transform(value) + 10
 }
 
-#[mock(base)]
+#[mock]
 fn calculate(value: i32) -> i32 {
     let transformed = transform(value);
     let adjusted = adjust(value);

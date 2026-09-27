@@ -23,7 +23,7 @@ impl IFoo for Foo {
 }
 
 const DEFAULT_MY_TRAIT_GET: i32 = 10;
-#[mock(base)]
+#[mock]
 trait MyTrait {
     fn work(&self, value: i32);
 

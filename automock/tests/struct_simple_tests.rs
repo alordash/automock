@@ -12,7 +12,7 @@ struct Struct<Q = i32> {
     pub value: i32,
 }
 
-#[mock(base)]
+#[mock]
 impl<Q> Struct<Q> {
     pub fn new(value: i32) -> Self {
         Self {

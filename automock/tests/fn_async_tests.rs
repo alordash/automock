@@ -21,23 +21,23 @@ async fn input_output(_: i32) -> i32 {
 #[mock]
 async fn dependency() {}
 
-#[mock(base)]
+#[mock]
 async fn nothing_base() {
     dependency().await
 }
 
-#[mock(base)]
+#[mock]
 async fn input_base(_: i32) {
     dependency().await
 }
 
-#[mock(base)]
+#[mock]
 async fn output_base() -> i32 {
     dependency().await;
     DEFAULT_RESULT
 }
 
-#[mock(base)]
+#[mock]
 async fn input_output_base(_: i32) -> i32 {
     dependency().await;
     DEFAULT_RESULT

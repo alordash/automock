@@ -12,14 +12,14 @@ impl Struct {
     fn first_struct_impl(&self) {}
 }
 
-#[mock(base)]
+#[mock]
 impl MyTrait for Struct {
     fn work(&self, value: i32) -> String {
         return "working...".to_owned();
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new(number: i32) -> Self {
         Self { number }

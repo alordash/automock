@@ -24,7 +24,7 @@ impl IPayload for Box<dyn IPayload> {
     }
 }
 
-#[mock(base)]
+#[mock]
 trait Trait {
     fn work(&self) -> impl IPayload {
         Foo
@@ -38,7 +38,7 @@ trait Trait {
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     fn new() -> Self {
         Self
@@ -53,7 +53,7 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Trait for Struct {
     fn work(&self) -> impl IPayload {
         Foo

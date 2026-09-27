@@ -90,7 +90,7 @@ mod trait_tests {
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     #[allow(unused)]
     pub fn new() -> Self {

@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use automock::*;
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 trait Trait<'a, T1> {
     fn work<T2: Clone, T3: Default, const B: bool, const N: usize>(&self, t1: T1, t2: &'a T2) -> T3

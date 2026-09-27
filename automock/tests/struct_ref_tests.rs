@@ -3,14 +3,14 @@ use automock::*;
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new() -> Self {
         Self
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn accept_ref(&self, _: &i32) {}
 

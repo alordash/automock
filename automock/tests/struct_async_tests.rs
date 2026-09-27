@@ -5,7 +5,7 @@ const DEFAULT_RESULT: i32 = 123;
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new() -> Self {
         Self
@@ -43,7 +43,7 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Struct {
     async fn nothing_base(&self) {
         self.dependency().await

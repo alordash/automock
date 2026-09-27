@@ -1,6 +1,6 @@
 use automock::*;
 
-#[mock(base)]
+#[mock]
 trait Trait: Sized {
     fn id(&self) -> i32;
 
@@ -9,13 +9,13 @@ trait Trait: Sized {
     }
 }
 
-#[mock(base)]
+#[mock]
 #[derive(Clone)]
 struct Struct {
     id: i32,
 }
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new(id: i32) -> Self {
         Self { id }
@@ -26,7 +26,7 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Trait for Struct {
     fn id(&self) -> i32 {
         self.id

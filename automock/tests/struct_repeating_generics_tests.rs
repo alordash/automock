@@ -32,10 +32,10 @@ where
     phantom: PhantomData<&'x &'a &'b &'c &'d ()>,
 }
 
-#[mock(base)]
+#[mock]
 impl<'x: 'a + 'c, 'a, 'b, 'c, 'd> Lifetime<'x, 'a, 'b, 'c, 'd> where 'x: 'b + 'd {}
 
-#[mock(base)]
+#[mock]
 impl<'x: 'a + 'c, 'a, 'b, 'c, 'd> ILifetime<'x, 'a, 'b, 'c, 'd> for Lifetime<'x, 'a, 'b, 'c, 'd> where
     'x: 'b + 'd
 {

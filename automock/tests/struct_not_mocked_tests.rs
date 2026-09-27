@@ -5,7 +5,7 @@ struct Struct {
     pub v: i32,
 }
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new(v: i32) -> Self {
         Self { v }

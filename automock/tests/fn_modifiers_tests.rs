@@ -10,7 +10,7 @@ async fn async_fn() {
     async_dep().await
 }
 #[allow(unused)]
-#[mock(base)]
+#[mock]
 async fn async_fn_base() {
     async_dep().await
 }
@@ -21,7 +21,7 @@ unsafe fn unsafe_fn() {
     unsafe_dep()
 }
 #[allow(unused)]
-#[mock(base)]
+#[mock]
 unsafe fn unsafe_fn_base() {
     unsafe_dep()
 }
@@ -32,7 +32,7 @@ extern "C" fn extern_fn() {
     extern_dep()
 }
 #[allow(unused)]
-#[mock(base)]
+#[mock]
 extern "C" fn extern_fn_base() {
     extern_dep()
 }
@@ -45,7 +45,7 @@ async unsafe extern "C" fn mutant() {
     extern_dep();
 }
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 trait Trait {
     async fn async_fn(&self);
@@ -84,7 +84,7 @@ impl Struct {
     #[allow(improper_ctypes_definitions)]
     async unsafe extern "C" fn mutant(&self) {}
 }
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 impl Struct {
     async fn async_fn_base(&self) {
@@ -104,7 +104,7 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Trait for Struct {
     async fn async_fn(&self) {}
     async fn async_fn_base(&self) {

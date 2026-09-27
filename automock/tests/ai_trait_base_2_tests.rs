@@ -7,7 +7,7 @@ use automock::*;
 // ============================================================================
 //
 
-#[mock(base)]
+#[mock]
 trait GenericChain {
     fn transform<T>(&self, value: T) -> T
     where

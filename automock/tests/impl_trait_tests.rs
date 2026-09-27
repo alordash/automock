@@ -2,7 +2,7 @@
 use automock::*;
 
 const DUMMY_VALUE: i32 = 124;
-#[mock(base)]
+#[mock]
 trait Dummy {
     fn work(&self) -> i32 {
         DUMMY_VALUE
@@ -23,7 +23,7 @@ fn input(dummy: impl Dummy) -> i32 {
     dummy.work()
 }
 
-#[mock(base)]
+#[mock]
 fn output() -> impl Dummy {
     return DummyImpl;
 }
@@ -39,7 +39,7 @@ trait Trait {
     }
 }
 
-#[mock(base)]
+#[mock]
 trait ReturnTrait {
     fn output(&self) -> impl Dummy {
         DummyImpl
@@ -52,7 +52,7 @@ trait ReturnTrait {
 
 #[mock]
 struct Struct;
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new() -> Self {
         Self
@@ -70,7 +70,7 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn output_self(&self) -> impl Dummy {
         DummyImpl
@@ -92,7 +92,7 @@ impl Trait for Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl ReturnTrait for Struct {
     fn output(&self) -> impl Dummy {
         DummyImpl

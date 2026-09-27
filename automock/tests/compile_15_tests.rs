@@ -15,7 +15,7 @@ struct MyFuture {
     thread: JoinHandle<()>,
 }
 
-#[mock(base)]
+#[mock]
 impl MyFuture {
     pub fn new(value: i32) -> MyFuture {
         let atomic_result = Arc::new(AtomicI32::new(0));
@@ -39,7 +39,7 @@ impl MyFuture {
     }
 }
 
-#[mock(base)]
+#[mock]
 async fn work() -> i32 {
     tokio::time::sleep(Duration::from_secs(1));
     return 12;
@@ -56,11 +56,11 @@ async fn work_return() -> i32 {
 #[allow(unused)]
 async fn work_nothing() {}
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 async fn work_base_nothing() {}
 
-#[mock(base)]
+#[mock]
 impl Future for MyFuture {
     type Output = i32;
 

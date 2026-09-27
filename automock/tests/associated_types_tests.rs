@@ -4,7 +4,7 @@
 use automock::*;
 use std::fmt::Debug;
 
-#[mock(base)]
+#[mock]
 trait Trait {
     const CONST: usize = 43;
 
@@ -31,7 +31,7 @@ trait Trait {
 #[derive(Clone)]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     #[allow(unused)]
     pub fn new() -> Self {
@@ -39,7 +39,7 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Trait for Struct {
     const CONST: usize = 4;
     type InputType<TAmogus: Clone>

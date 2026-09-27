@@ -6,7 +6,7 @@ use std::sync::Arc;
 #[mock]
 fn f() {}
 
-#[mock(base)]
+#[mock]
 fn f_base() {}
 
 mod tests {

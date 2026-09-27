@@ -8,7 +8,7 @@ struct Consumer<'a> {
     phantom: PhantomData<&'a ()>,
 }
 
-#[mock(base)]
+#[mock]
 fn consume(consumer: Consumer<'_>) {}
 
 #[mock]
@@ -36,7 +36,7 @@ impl PartialEq<MyI32> for i32 {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl<T: PartialEq<U>, U> PartialEq<U> for S<T> {
     fn eq(&self, _: &U) -> bool {
         unreachable!()

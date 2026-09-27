@@ -10,7 +10,7 @@ use automock::*;
 #[mock]
 pub struct RecursiveWorker;
 
-#[mock(base)]
+#[mock]
 impl RecursiveWorker {
     pub fn new() -> Self {
         Self

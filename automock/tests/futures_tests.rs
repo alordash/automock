@@ -6,19 +6,19 @@ const MOCKED: i32 = 20;
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new() -> Self {
         Self
     }
 }
 
-#[mock(base)]
+#[mock]
 fn work_full() -> impl core::future::Future<Output = i32> {
     async move { DEFAULT }
 }
 
-#[mock(base)]
+#[mock]
 trait TraitFull {
     fn work_full(&self) -> impl core::future::Future<Output = i32> {
         async move { DEFAULT }
@@ -28,7 +28,7 @@ trait TraitFull {
         async move { DEFAULT }
     }
 }
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn work_full(&self) -> impl core::future::Future<Output = i32> {
         async move { DEFAULT }
@@ -39,7 +39,7 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl TraitFull for Struct {
     fn work_full(&self) -> impl core::future::Future<Output = i32> {
         async move { DEFAULT }
@@ -55,12 +55,12 @@ mod part {
     use super::*;
     use core::future;
 
-    #[mock(base)]
+    #[mock]
     pub fn work_part() -> impl future::Future<Output = i32> {
         async move { DEFAULT }
     }
 
-    #[mock(base)]
+    #[mock]
     pub trait TraitPart {
         fn work_part(&self) -> impl future::Future<Output = i32> {
             async move { DEFAULT }
@@ -71,7 +71,7 @@ mod part {
         }
     }
 
-    #[mock(base)]
+    #[mock]
     impl Struct {
         pub fn work_part(&self) -> impl future::Future<Output = i32> {
             async move { DEFAULT }
@@ -82,7 +82,7 @@ mod part {
         }
     }
 
-    #[mock(base)]
+    #[mock]
     impl TraitPart for Struct {
         fn work_part(&self) -> impl future::Future<Output = i32> {
             async move { DEFAULT }
@@ -100,12 +100,12 @@ mod name {
     use core::future::Future;
     use std::future;
 
-    #[mock(base)]
+    #[mock]
     pub fn work_name() -> impl Future<Output = i32> {
         async move { DEFAULT }
     }
 
-    #[mock(base)]
+    #[mock]
     pub trait TraitName {
         fn work_name(&self) -> impl future::Future<Output = i32> {
             async move { DEFAULT }
@@ -116,7 +116,7 @@ mod name {
         }
     }
 
-    #[mock(base)]
+    #[mock]
     impl Struct {
         pub fn work_name(&self) -> impl future::Future<Output = i32> {
             async move { DEFAULT }
@@ -127,7 +127,7 @@ mod name {
         }
     }
 
-    #[mock(base)]
+    #[mock]
     impl TraitName for Struct {
         fn work_name(&self) -> impl future::Future<Output = i32> {
             async move { DEFAULT }

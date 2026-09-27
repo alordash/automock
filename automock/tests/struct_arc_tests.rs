@@ -7,7 +7,7 @@ struct Struct {
     pub number: i32,
 }
 
-#[mock(base)]
+#[mock]
 impl Struct {
     #[allow(unused)]
     pub fn new(number: i32) -> Self {
@@ -15,7 +15,7 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 impl Struct {
     pub(crate) fn accept_arc(&self, r: Arc<i32>) {}

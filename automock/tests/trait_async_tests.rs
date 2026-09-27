@@ -2,7 +2,7 @@ use automock::*;
 
 const DEFAULT_RESULT: i32 = 123;
 
-#[mock(base)]
+#[mock]
 trait Trait {
     async fn dependency(&self);
 

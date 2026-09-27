@@ -1,4 +1,3 @@
-use crate::common::models::*;
 use crate::generation::fn_info::models::*;
 use crate::generation::mock_controls::models::*;
 use crate::generation::mock_controls::*;
@@ -16,7 +15,6 @@ pub(crate) struct Params<'a, T: Borrow<FnInfo>> {
     pub maybe_trait_ident: Option<Ident>,
 }
 pub(crate) fn generate<T: Borrow<FnInfo>>(
-    ctx: &Context,
     span: Span,
     Params {
         ident,
@@ -31,7 +29,6 @@ pub(crate) fn generate<T: Borrow<FnInfo>>(
         control_struct::new(span, ident, generics, ControlType::Setup, maybe_trait_ident);
     let path = path::from_ident_with_generics(item_struct.ident.clone(), &generics_for_impl);
     let item_impl = setup_impl::generate(
-        ctx,
         span,
         setup_impl::Params {
             setup_struct_path: path.clone(),

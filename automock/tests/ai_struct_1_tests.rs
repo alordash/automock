@@ -12,7 +12,7 @@ pub struct Calculator {
     pub value: i32,
 }
 
-#[mock(base)]
+#[mock]
 impl Calculator {
     pub fn new(value: i32) -> Self {
         Self { value }

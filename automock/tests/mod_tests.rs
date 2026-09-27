@@ -27,7 +27,7 @@ impl b::Trait for c::S {
         unreachable!()
     }
 }
-#[mock(base)]
+#[mock]
 impl c::S {
     pub fn new() -> Self {
         Self

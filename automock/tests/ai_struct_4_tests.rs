@@ -22,7 +22,7 @@ impl Generator for GeneratedValue {
 #[mock]
 pub struct Factory;
 
-#[mock(base)]
+#[mock]
 impl Factory {
     pub fn new() -> Self {
         Self

@@ -1,4 +1,3 @@
-use crate::common::models::*;
 use crate::common::*;
 use crate::generation::fn_info::models::*;
 use crate::generation::mock_struct::models::*;
@@ -22,7 +21,6 @@ pub(crate) struct Params<'a> {
     pub qualify_call: bool,
 }
 pub(crate) fn generate(
-    ctx: &Context,
     span: Span,
     Params {
         attributes,
@@ -35,26 +33,19 @@ pub(crate) fn generate(
         qualify_call,
     }: Params,
 ) -> ItemImpl {
-    let base_fns = if ctx.support_base_calling {
-        associated_fns
-            .iter()
-            .chain(static_fns.iter())
-            .map(|ordered| {
-                ordered.ref_map(|x| try_extract_base_fn(span, x, Some(mod_ident.clone())))
-            })
-            .filter_map(|ordered| match ordered.value {
-                Some(x) => Some(Ordered::new(ordered.order_number, x)),
-                _ => None,
-            })
-            .collect()
-    } else {
-        Vec::new()
-    };
+    let base_fns: Vec<_> = associated_fns
+        .iter()
+        .chain(static_fns.iter())
+        .map(|ordered| ordered.ref_map(|x| try_extract_base_fn(span, x, Some(mod_ident.clone()))))
+        .filter_map(|ordered| match ordered.value {
+            Some(x) => Some(Ordered::new(ordered.order_number, x)),
+            _ => None,
+        })
+        .collect();
     let mut fns: Vec<_> = associated_fns
         .iter()
         .map(|ordered| {
             map_fn(
-                ctx,
                 mock_struct_path.clone(),
                 ordered,
                 mod_ident.clone(),
@@ -65,7 +56,6 @@ pub(crate) fn generate(
         })
         .chain(static_fns.iter().map(|ordered| {
             map_fn(
-                ctx,
                 mock_struct_path.clone(),
                 ordered,
                 mod_ident.clone(),
@@ -110,7 +100,6 @@ pub(crate) struct ResultForTrait {
     pub maybe_base_trait_and_fns_impl: Option<(ItemTrait, ItemImpl)>,
 }
 pub(crate) fn generate_for_trait(
-    ctx: &Context,
     span: Span,
     ParamsForTrait {
         attributes,
@@ -125,16 +114,16 @@ pub(crate) fn generate_for_trait(
         mod_ident,
     }: ParamsForTrait,
 ) -> ResultForTrait {
-    let maybe_base_trait_and_fns_impl = ctx.support_base_calling.then(|| {
-        let base_fns: Vec<_> = associated_fns
-            .iter()
-            .chain(static_fns.iter())
-            .map(|ordered| ordered.ref_map(|x| try_extract_base_fn(span, x, None)))
-            .filter_map(|ordered| match ordered.value {
-                Some(x) => Some(Ordered::new(ordered.order_number, x)),
-                _ => None,
-            })
-            .collect();
+    let base_fns: Vec<_> = associated_fns
+        .iter()
+        .chain(static_fns.iter())
+        .map(|ordered| ordered.ref_map(|x| try_extract_base_fn(span, x, None)))
+        .filter_map(|ordered| match ordered.value {
+            Some(x) => Some(Ordered::new(ordered.order_number, x)),
+            _ => None,
+        })
+        .collect();
+    let maybe_base_trait_and_fns_impl = (!base_fns.is_empty()).then(|| {
         let fn_generics = TraitItemFn {
             attrs: Vec::new(),
             modifiers: FnModifiers::default(),
@@ -237,7 +226,6 @@ pub(crate) fn generate_for_trait(
         .iter()
         .map(|ordered| {
             map_fn(
-                ctx,
                 mock_struct_path.clone(),
                 ordered,
                 mod_ident.clone(),
@@ -248,7 +236,6 @@ pub(crate) fn generate_for_trait(
         })
         .chain(static_fns.iter().map(|ordered| {
             map_fn(
-                ctx,
                 mock_struct_path.clone(),
                 ordered,
                 mod_ident.clone(),
@@ -315,7 +302,6 @@ fn generate_item_impl(
 }
 
 fn map_fn(
-    ctx: &Context,
     mock_struct_path: Path,
     ordered_fn_info: &Ordered<FnInfo>,
     mod_ident: Ident,
@@ -332,7 +318,6 @@ fn map_fn(
             sig: fn_info.source_signature.clone(),
             block: if is_static {
                 static_fn_block::generate(
-                    ctx,
                     span,
                     static_fn_block::Params {
                         mock_struct_path,
@@ -350,7 +335,6 @@ fn map_fn(
                 )
             } else {
                 associated_method_block::generate(
-                    ctx,
                     span,
                     associated_method_block::Params {
                         mock_struct_path,

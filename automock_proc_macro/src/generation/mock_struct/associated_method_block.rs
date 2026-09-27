@@ -1,4 +1,3 @@
-use crate::common::models::*;
 use crate::generation::common::*;
 use crate::generation::fn_info::models::*;
 use crate::generation::mock_struct::common::*;
@@ -15,7 +14,6 @@ pub(crate) struct Params<'a> {
     pub qualify_call: bool,
 }
 pub(crate) fn generate(
-    ctx: &Context,
     span: Span,
     Params {
         mock_struct_path,
@@ -27,7 +25,6 @@ pub(crate) fn generate(
     }: Params,
 ) -> Block {
     let generic_arguments = generic_arguments::new(
-        ctx,
         span,
         generic_arguments::Params {
             mock_struct_path: mock_struct_path.clone(),
@@ -56,7 +53,6 @@ pub(crate) fn generate(
         },
     );
     let fn_handle_stmt = fn_handle_stmt::generate(
-        ctx,
         span,
         fn_handle_stmt::Params {
             fn_info,

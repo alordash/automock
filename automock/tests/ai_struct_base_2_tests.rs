@@ -13,7 +13,7 @@ pub struct Monster<'a, T, const N: usize> {
     values: &'a [T; N],
 }
 
-#[mock(base)]
+#[mock]
 impl<'a, T, const N: usize> Monster<'a, T, N>
 where
     T: Clone + Default + Into<i32>,

@@ -9,7 +9,7 @@ trait Trait {
 #[derive(Clone)]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     fn new() -> Self {
         Self

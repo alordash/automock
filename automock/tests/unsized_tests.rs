@@ -1,7 +1,7 @@
 #![allow(clippy::needless_maybe_sized)]
 use automock::*;
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 fn accept_unsized<T: ?Sized + Clone>(t: &T) {}
 
@@ -11,19 +11,19 @@ struct Struct<T: ?Sized + Clone> {
     t: Box<T>,
 }
 
-#[mock(base)]
+#[mock]
 impl<T: ?Sized + Clone> Struct<T> {
     #[allow(unused)]
     fn accept<F: ?Sized + Clone>(&self, _: Box<T>, _: &F) {}
 }
 
-#[mock(base)]
+#[mock]
 trait Trait<U: ?Sized + Clone> {
     #[allow(unused)]
     fn accept<V: ?Sized + Clone>(&self, _: Box<U>, _: &V) {}
 }
 
-#[mock(base)]
+#[mock]
 impl<T: ?Sized + Clone, U: ?Sized + Clone> Trait<U> for Struct<T> {
     fn accept<V: ?Sized + Clone>(&self, _: Box<U>, _: &V) {}
 }

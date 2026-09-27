@@ -7,7 +7,7 @@ use std::cell::{LazyCell, RefCell};
 use std::fmt::Debug;
 use std::sync::Arc;
 
-#[mock(base)]
+#[mock]
 fn global(number: i32) -> String {
     return format!("actual number: {number}");
 }

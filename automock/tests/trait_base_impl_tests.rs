@@ -1,6 +1,6 @@
 use automock::*;
 
-#[mock(base)]
+#[mock]
 trait Trait {
     fn get(&self) -> i32;
 

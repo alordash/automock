@@ -4,17 +4,17 @@ use std::fmt::{Debug, Display};
 
 mod common;
 
-#[mock(base)]
+#[mock]
 fn get_return<T: Clone>(value: T) -> T {
     return value;
 }
 
-#[mock(base)]
+#[mock]
 fn return_constraint<T: Default>() -> T {
     return T::default();
 }
 
-#[mock(base)]
+#[mock]
 fn return_where_constraint<T: Default>() -> T
 where
     T: Debug,
@@ -22,7 +22,7 @@ where
     return T::default();
 }
 
-#[mock(base)]
+#[mock]
 fn get_return_different<T1: Debug, T2>(_value: T1) -> T2
 where
     T1: Clone + Display,

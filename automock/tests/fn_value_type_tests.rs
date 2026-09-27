@@ -8,32 +8,32 @@ thread_local! {
     pub static BASE_CALLED_FLAG: Cell<bool> = const {Cell::new(false)};
 }
 
-#[mock(base)]
+#[mock]
 fn accept_value(v: i32) {
     BASE_CALLED_FLAG.set(true);
 }
 
 const BASE_RETURN_VALUE: i32 = 12321;
-#[mock(base)]
+#[mock]
 fn return_value() -> i32 {
     BASE_CALLED_FLAG.set(true);
     return BASE_RETURN_VALUE;
 }
 
 const BASE_ACCEPT_VALUE_RETURN_VALUE: f32 = 44.2;
-#[mock(base)]
+#[mock]
 fn accept_value_return_value(v: i32) -> f32 {
     BASE_CALLED_FLAG.set(true);
     return BASE_ACCEPT_VALUE_RETURN_VALUE;
 }
 
-#[mock(base)]
+#[mock]
 fn accept_two_values(v1: i32, v2: f32) {
     BASE_CALLED_FLAG.set(true);
 }
 
 const BASE_ACCEPT_TWO_VALUES_RETURN_VALUE: &str = "quo vadis";
-#[mock(base)]
+#[mock]
 fn accept_two_values_return_value(v1: i32, v2: f32) -> &'static str {
     BASE_CALLED_FLAG.set(true);
     return BASE_ACCEPT_TWO_VALUES_RETURN_VALUE;

@@ -15,14 +15,14 @@ pub const DEFAULT_SECOND_TRAIT_GET_VALUE: &str = "quo vadis";
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new() -> Self {
         Self
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn get(&self) -> i32 {
         DEFAULT_STRUCT_GET_VALUE
@@ -34,14 +34,14 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl FirstTrait for Struct {
     fn get(&self) -> i32 {
         DEFAULT_FIRST_TRAIT_GET_VALUE
     }
 }
 
-#[mock(base)]
+#[mock]
 impl SecondTrait for Struct {
     fn get(&self) -> &str {
         DEFAULT_SECOND_TRAIT_GET_VALUE

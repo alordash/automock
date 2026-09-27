@@ -14,17 +14,17 @@ where
     pub number: i32,
 }
 
-#[mock(base)]
+#[mock]
 impl<'a, T1: ToString + Clone, T2: AsRef<[i32]>> Struct<'a, T1, T2> {
     pub fn new(t1: T1, t2_ref: &'a T2, number: i32) -> Self {
         Self { t1, t2_ref, number }
     }
 }
 
-#[mock(base)]
+#[mock]
 impl<'a, T1: ToString, T2: AsRef<[i32]>> Trait for Struct<'a, T1, T2> {}
 
-#[mock(base)]
+#[mock]
 impl<'a, T1: Debug + ToString, T2: Debug + AsRef<[i32]>> Struct<'a, T1, T2> {
     pub fn flex(&self) {}
 

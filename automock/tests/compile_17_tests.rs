@@ -4,12 +4,12 @@
 
 use automock::*;
 
-#[mock(base)]
+#[mock]
 fn f<'a, T: Clone>(v: &'a T) -> i32 {
     121
 }
 
-#[mock(base)]
+#[mock]
 fn flex<'a, 'b>(v: &'a &'b &()) {}
 
 struct Q;

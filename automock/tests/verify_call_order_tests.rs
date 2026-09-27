@@ -16,7 +16,7 @@ trait Trait {
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     fn new() -> Self {
         Self
@@ -25,7 +25,7 @@ impl Struct {
     fn structing(&self, _: i32) {}
 }
 
-#[mock(base)]
+#[mock]
 impl Trait for Struct {
     fn traiting(&self, _: i32) {}
 }

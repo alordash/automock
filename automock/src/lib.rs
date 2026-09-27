@@ -629,6 +629,7 @@
 //!
 //! ### Limitations
 //!
+//! TODO - there is no longer such thing as `mock(base)`, there is only `mock`
 //! TODO - this limitation is no longer valid, fix docs (basically now calls that were forwarded to
 //! base implementation won't be registered by mock and they can't be inspected by `received`)
 //! There is one limitation: all arguments of function must implement [`Clone`] for its base

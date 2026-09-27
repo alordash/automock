@@ -1,4 +1,3 @@
-use crate::common::models::*;
 use crate::common::*;
 use crate::generation::common::*;
 use crate::generation::fn_info::models::*;
@@ -18,7 +17,6 @@ pub(crate) struct Params<'a, T: Borrow<FnInfo>> {
 }
 
 pub(crate) fn generate<T: Borrow<FnInfo>>(
-    ctx: &Context,
     span: Span,
     Params {
         setup_struct_path,
@@ -33,7 +31,6 @@ pub(crate) fn generate<T: Borrow<FnInfo>>(
         .iter()
         .map(|fn_info| {
             generate_setup_fn(
-                ctx,
                 span,
                 mock_struct_path,
                 fn_info.borrow(),
@@ -63,7 +60,6 @@ pub(crate) fn generate<T: Borrow<FnInfo>>(
 }
 
 fn generate_setup_fn(
-    ctx: &Context,
     span: Span,
     mock_struct_path: &Path,
     fn_info: &FnInfo,
@@ -71,7 +67,6 @@ fn generate_setup_fn(
     is_static: bool,
 ) -> ImplItemFn {
     let generic_arguments = generic_arguments::new(
-        ctx,
         span,
         generic_arguments::Params {
             mock_struct_path: mock_struct_path.clone(),

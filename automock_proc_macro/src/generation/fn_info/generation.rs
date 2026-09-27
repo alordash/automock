@@ -1,26 +1,24 @@
-use crate::common::models::*;
 use crate::generation::fn_info::models::*;
 use crate::generation::fn_info::*;
 use crate::preparation::r#fn::models::*;
 use syn::*;
 
 #[inline(always)]
-pub(crate) fn generate(ctx: &Context, fn_syntax: FnSyntax) -> FnInfo {
+pub(crate) fn generate(fn_syntax: FnSyntax) -> FnInfo {
     let generics = fn_syntax.merged_generics.clone();
-    generate_core(ctx, fn_syntax, generics)
+    generate_core(fn_syntax, generics)
 }
 
 #[inline(always)]
 pub(crate) fn generate_with_impl_generics(
-    ctx: &Context,
     fn_syntax: FnSyntax,
     generics_for_impl: Generics,
 ) -> FnInfo {
-    generate_core(ctx, fn_syntax, generics_for_impl)
+    generate_core(fn_syntax, generics_for_impl)
 }
 
-fn generate_core(ctx: &Context, fn_syntax: FnSyntax, generics_for_impl: Generics) -> FnInfo {
-    let call_struct = call_struct::generate(ctx, &fn_syntax, generics_for_impl.clone());
+fn generate_core(fn_syntax: FnSyntax, generics_for_impl: Generics) -> FnInfo {
+    let call_struct = call_struct::generate(&fn_syntax, generics_for_impl.clone());
     let args_checker_struct = args_checker_struct::generate(
         &fn_syntax,
         Type::Path(TypePath {
