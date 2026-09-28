@@ -3,8 +3,8 @@ use crate::infrastructure::FnConfig;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-pub(crate) enum MatchingConfigSearchResult<'rs, TMock> {
-    Ok(Rc<RefCell<FnConfig<'rs, TMock>>>),
+pub(crate) enum MatchingConfigSearchResult<'am, TMock> {
+    Ok(Rc<RefCell<FnConfig<'am, TMock>>>),
     Err(MatchingConfigSearchErr),
 }
 

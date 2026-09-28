@@ -1,17 +1,17 @@
 use crate::fn_parameters::*;
 
 #[cfg_attr(test, automock::mock)]
-pub struct DynArgRefsTuple<'rs> {
-    inner: Option<Box<dyn IArgRefsTuple<'rs> + 'rs>>,
+pub struct DynArgRefsTuple<'am> {
+    inner: Option<Box<dyn IArgRefsTuple<'am> + 'am>>,
 }
 
 #[cfg_attr(test, automock::mock)]
-impl<'rs> DynArgRefsTuple<'rs> {
+impl<'am> DynArgRefsTuple<'am> {
     pub(crate) fn zero_size() -> Self {
         Self { inner: None }
     }
 
-    pub(crate) fn from_raw(raw_ptr: *mut (dyn IArgRefsTuple<'rs> + 'rs)) -> Self {
+    pub(crate) fn from_raw(raw_ptr: *mut (dyn IArgRefsTuple<'am> + 'am)) -> Self {
         Self {
             // SAFETY: for justification refer to module level documentation.
             inner: unsafe { Some(Box::from_raw(raw_ptr)) },
@@ -35,7 +35,7 @@ impl<'rs> DynArgRefsTuple<'rs> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     #![allow(non_snake_case)]
 
     use super::*;
@@ -133,5 +133,16 @@ mod tests {
         // Assert
         let expected_result = "[ERROR] Tuple of function arguments is null!";
         assert_eq!(result, Some(expected_result.to_owned()));
+    }
+    
+    pub mod utilities {
+        use super::*;
+        
+        pub fn dyn_arg_refs_tuple_mock<'am>() -> DynArgRefsTuple<'am> {
+            DynArgRefsTuple {
+                inner: None,
+                __am_data: Default::default()
+            }
+        }
     }
 }

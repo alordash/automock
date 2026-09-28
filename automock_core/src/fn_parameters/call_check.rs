@@ -14,14 +14,14 @@ fn get_next_call_order_number() -> usize {
     CALL_ORDER_NUMBER.fetch_add(1, Ordering::AcqRel)
 }
 
-pub struct CallCheck<'rs> {
+pub struct CallCheck<'am> {
     pub number: usize,
     verified: Cell<bool>,
-    call: Rc<DynCall<'rs>>,
+    call: Rc<DynCall<'am>>,
 }
 
-impl<'rs> CallCheck<'rs> {
-    pub fn new(call: Rc<DynCall<'rs>>) -> Self {
+impl<'am> CallCheck<'am> {
+    pub fn new(call: Rc<DynCall<'am>>) -> Self {
         Self {
             number: get_next_call_order_number(),
             verified: Cell::new(false),
@@ -37,7 +37,7 @@ impl<'rs> CallCheck<'rs> {
         !self.verified.get()
     }
 
-    pub fn get_call(&self) -> &DynCall<'rs> {
+    pub fn get_call(&self) -> &DynCall<'am> {
         &self.call
     }
 }

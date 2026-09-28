@@ -10,7 +10,7 @@ use std::rc::Rc;
 mod handling;
 
 pub struct FnData<
-    'rs,
+    'am,
     TMock,
     const HAS_RETURN_VALUE: bool,
     const SUPPORTS_BASE_CALLING: bool,
@@ -18,18 +18,18 @@ pub struct FnData<
 > {
     fn_name: &'static str,
     formatted_fn_name: String,
-    pub call_infos: RefCell<HashMap<GenericsHashKey, Vec<CallCheck<'rs>>>>,
+    pub call_infos: RefCell<HashMap<GenericsHashKey, Vec<CallCheck<'am>>>>,
     #[allow(clippy::type_complexity)]
-    pub configs: RefCell<HashMap<GenericsHashKey, Vec<Rc<RefCell<FnConfig<'rs, TMock>>>>>>,
+    pub configs: RefCell<HashMap<GenericsHashKey, Vec<Rc<RefCell<FnConfig<'am, TMock>>>>>>,
 }
 
 impl<
-    'rs,
+    'am,
     TMock,
     const HAS_RETURN_VALUE: bool,
     const SUPPORTS_BASE_CALLING: bool,
     const PASSES_MOCK_TO_CALLBACK: bool,
-> FnData<'rs, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
+> FnData<'am, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
 {
     pub(crate) fn new(maybe_owner_name: Option<&'static str>, fn_name: &'static str) -> Self {
         let formatted_fn_name = match maybe_owner_name {
@@ -145,13 +145,13 @@ impl<
 
 // For static fns
 impl<
-    'rs,
+    'am,
     TMock,
     const HAS_RETURN_VALUE: bool,
     const SUPPORTS_BASE_CALLING: bool,
     const PASSES_MOCK_TO_CALLBACK: bool,
 > IMockData
-    for FnData<'rs, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
+    for FnData<'am, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
 {
     fn get_received_nothing_else_error_msgs(&self) -> Vec<Vec<String>> {
         vec![self.get_unexpected_calls_error_msgs()]
@@ -162,14 +162,14 @@ mod internal {
     use super::*;
 
     impl<
-        'rs,
+        'am,
         TMock,
         const HAS_RETURN_VALUE: bool,
         const SUPPORTS_BASE_CALLING: bool,
         const PASSES_MOCK_TO_CALLBACK: bool,
-    > FnData<'rs, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
+    > FnData<'am, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
     {
-        pub(crate) fn register_call(&self, call: Rc<DynCall<'rs>>) -> &Self {
+        pub(crate) fn register_call(&self, call: Rc<DynCall<'am>>) -> &Self {
             let generics_hash_key = call.get_generics_hash_key();
             self.call_infos
                 .borrow_mut()
@@ -209,16 +209,16 @@ mod internal {
 
         // pub(crate) fn get_optional_matching_config(
         //     &self,
-        //     dyn_call: &DynCall<'rs>,
-        // ) -> MatchingConfigSearchResult<'rs, TMock> {
+        //     dyn_call: &DynCall<'am>,
+        // ) -> MatchingConfigSearchResult<'am, TMock> {
         //     let with_return_value = false;
         //     return self.try_get_matching_config(dyn_call, with_return_value);
         // }
         //
         // pub(crate) fn get_required_matching_config(
         //     &self,
-        //     dyn_call: &DynCall<'rs>,
-        // ) -> Rc<RefCell<FnConfig<'rs, TMock>>> {
+        //     dyn_call: &DynCall<'am>,
+        // ) -> Rc<RefCell<FnConfig<'am, TMock>>> {
         //     let with_return_value = true;
         //     let fn_config = match self.try_get_matching_config(dyn_call, with_return_value) {
         //         MatchingConfigSearchResult::Ok(matching_config) => matching_config,
@@ -237,9 +237,9 @@ mod internal {
 
         pub(super) fn try_get_matching_config<TReturnValue>(
             &self,
-            dyn_call: &DynCall<'rs>,
+            dyn_call: &DynCall<'am>,
             with_return_value: bool,
-        ) -> MatchingConfigSearchResult<'rs, TMock> {
+        ) -> MatchingConfigSearchResult<'am, TMock> {
             let generics_hash_key = dyn_call.get_generics_hash_key();
             let all_configs = self.configs.borrow();
             let Some(matching_configs) = all_configs.get(&generics_hash_key) else {

@@ -1,11 +1,11 @@
 use crate::fn_parameters::IReturnValue;
 
-pub struct DynReturnValue<'rs> {
-    inner: Box<dyn IReturnValue<'rs> + 'rs>,
+pub struct DynReturnValue<'am> {
+    inner: Box<dyn IReturnValue<'am> + 'am>,
 }
 
-impl<'rs> DynReturnValue<'rs> {
-    pub(crate) fn new<T: IReturnValue<'rs> + 'rs>(value: T) -> Self {
+impl<'am> DynReturnValue<'am> {
+    pub(crate) fn new<T: IReturnValue<'am> + 'am>(value: T) -> Self {
         Self {
             inner: Box::new(value),
         }

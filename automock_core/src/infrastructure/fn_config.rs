@@ -5,18 +5,18 @@ use std::collections::VecDeque;
 use std::marker::PhantomData;
 use std::rc::Rc;
 
-pub struct FnConfig<'rs, TMock> {
+pub struct FnConfig<'am, TMock> {
     _phantom_mock: PhantomData<TMock>,
-    pub args_checker: DynArgsChecker<'rs>,
-    pub return_value_sources: VecDeque<ReturnValueSource<'rs>>,
-    pub calls: Vec<Rc<DynCall<'rs>>>,
+    pub args_checker: DynArgsChecker<'am>,
+    pub return_value_sources: VecDeque<ReturnValueSource<'am>>,
+    pub calls: Vec<Rc<DynCall<'am>>>,
     #[allow(clippy::type_complexity)]
-    pub callback: Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'rs>)>>>,
+    pub callback: Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>)>>>,
     pub call_base: bool,
 }
 
-impl<'rs, TMock> FnConfig<'rs, TMock> {
-    pub(crate) fn new(args_checker: DynArgsChecker<'rs>) -> Self {
+impl<'am, TMock> FnConfig<'am, TMock> {
+    pub(crate) fn new(args_checker: DynArgsChecker<'am>) -> Self {
         FnConfig {
             _phantom_mock: PhantomData,
             args_checker,
@@ -27,13 +27,13 @@ impl<'rs, TMock> FnConfig<'rs, TMock> {
         }
     }
 
-    pub(crate) fn add_return_value_source(&mut self, return_value: ReturnValueSource<'rs>) {
+    pub(crate) fn add_return_value_source(&mut self, return_value: ReturnValueSource<'am>) {
         self.return_value_sources.push_back(return_value);
     }
 
     pub(crate) fn add_return_value_sources(
         &mut self,
-        return_values: impl IntoIterator<Item = ReturnValueSource<'rs>>,
+        return_values: impl IntoIterator<Item = ReturnValueSource<'am>>,
     ) {
         self.return_value_sources.extend(return_values);
     }
@@ -42,7 +42,7 @@ impl<'rs, TMock> FnConfig<'rs, TMock> {
         &mut self,
         mut callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'static,
     ) {
-        let dyn_callback = move |raw_mock_ptr: *const (), dyn_call: &DynCall<'rs>| {
+        let dyn_callback = move |raw_mock_ptr: *const (), dyn_call: &DynCall<'am>| {
             let arg_refs_tuple = if size_of::<TArgRefsTuple>() == 0 {
                 // SAFETY: target type is ZST, it is safe to initialize it using zeroed memory
                 unsafe { core::mem::zeroed() }
@@ -69,11 +69,11 @@ impl<'rs, TMock> FnConfig<'rs, TMock> {
         self.callback = Some(Rc::new(RefCell::new(dyn_callback)));
     }
 
-    pub(crate) fn register_call(&mut self, call: Rc<DynCall<'rs>>) {
+    pub(crate) fn register_call(&mut self, call: Rc<DynCall<'am>>) {
         self.calls.push(call);
     }
 
-    pub(crate) fn check_call(&self, call: &DynCall<'rs>) -> Vec<ArgCheckResult> {
+    pub(crate) fn check_call(&self, call: &DynCall<'am>) -> Vec<ArgCheckResult> {
         self.args_checker.check(call)
     }
 
@@ -83,8 +83,8 @@ impl<'rs, TMock> FnConfig<'rs, TMock> {
 
     pub(crate) fn select_next_return_value(
         &mut self,
-        call: &DynCall<'rs>,
-    ) -> Option<DynReturnValue<'rs>> {
+        call: &DynCall<'am>,
+    ) -> Option<DynReturnValue<'am>> {
         let return_value_source = self.return_value_sources.front()?;
 
         return match return_value_source {
@@ -111,7 +111,7 @@ impl<'rs, TMock> FnConfig<'rs, TMock> {
     }
 
     #[allow(clippy::type_complexity)]
-    pub(crate) fn get_callback(&self) -> Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'rs>)>>> {
+    pub(crate) fn get_callback(&self) -> Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>)>>> {
         self.callback.clone()
     }
 

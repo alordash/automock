@@ -2,11 +2,11 @@ use crate::args::*;
 use crate::fn_parameters::*;
 use crate::*;
 
-pub struct DynCall<'rs> {
-    inner: Box<dyn ICall + 'rs>,
+pub struct DynCall<'am> {
+    inner: Box<dyn ICall + 'am>,
 }
 
-impl<'rs> ICall for DynCall<'rs> {
+impl<'am> ICall for DynCall<'am> {
     fn is_zst(&self) -> bool {
         size_of_val(self.inner.as_ref()) == 0
     }
@@ -15,12 +15,12 @@ impl<'rs> ICall for DynCall<'rs> {
         self.inner.get_arg_infos()
     }
 
-    fn get_ptr_to_boxed_tuple_of_refs(&self) -> *mut () {
+    fn get_ptr_to_boxed_tuple_of_refs<'art>(&self) -> *mut dyn IArgRefsTuple<'art> {
         self.inner.get_ptr_to_boxed_tuple_of_refs()
     }
 }
 
-impl<'rs> IGenericsInfoProvider for DynCall<'rs> {
+impl<'am> IGenericsInfoProvider for DynCall<'am> {
     fn get_generic_parameter_infos(&self) -> Vec<GenericParameterInfo> {
         self.inner.get_generic_parameter_infos()
     }
@@ -34,14 +34,14 @@ impl<'rs> IGenericsInfoProvider for DynCall<'rs> {
     }
 }
 
-impl<'rs> DynCall<'rs> {
-    pub(crate) fn new<'a, T: ICall + 'rs>(value: T) -> DynCall<'a> {
+impl<'am> DynCall<'am> {
+    pub(crate) fn new<'a, T: ICall + 'am>(value: T) -> DynCall<'a> {
         transmute_lifetime!(Self {
             inner: Box::new(value),
         })
     }
 
-    pub fn downcast_to<T: 'rs>(&self) -> &T {
+    pub fn downcast_to<T: 'am>(&self) -> &T {
         let dyn_ref = self.inner.as_ref();
         // SAFETY: for justification refer to module level documentation.
         let t_ref = unsafe { &*(dyn_ref as *const _ as *const T) };

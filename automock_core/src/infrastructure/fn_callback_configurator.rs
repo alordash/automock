@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 /// Controls callback of mocked function that has return value.
 pub struct FnCallbackConfigurator<
-    'rs,
+    'am,
     TMock,
     TOwner,
     TArgRefsTuple,
@@ -15,14 +15,14 @@ pub struct FnCallbackConfigurator<
 > {
     _phantom_args_tuple: PhantomData<TArgRefsTuple>,
     _phantom_mock_arg: PhantomData<TMockArg>,
-    fn_config: Rc<RefCell<FnConfig<'rs, TMock>>>,
-    owner: &'rs TOwner,
+    fn_config: Rc<RefCell<FnConfig<'am, TMock>>>,
+    owner: &'am TOwner,
 }
 
-impl<'rs, TMock, TOwner, TArgRefsTuple, TMockArg, const PASSES_MOCK_TO_CALLBACK: bool>
-    FnCallbackConfigurator<'rs, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+impl<'am, TMock, TOwner, TArgRefsTuple, TMockArg, const PASSES_MOCK_TO_CALLBACK: bool>
+    FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
 {
-    pub(crate) fn new(fn_config: Rc<RefCell<FnConfig<'rs, TMock>>>, owner: &'rs TOwner) -> Self {
+    pub(crate) fn new(fn_config: Rc<RefCell<FnConfig<'am, TMock>>>, owner: &'am TOwner) -> Self {
         Self {
             _phantom_args_tuple: PhantomData,
             _phantom_mock_arg: PhantomData,
@@ -32,10 +32,10 @@ impl<'rs, TMock, TOwner, TArgRefsTuple, TMockArg, const PASSES_MOCK_TO_CALLBACK:
     }
 }
 
-impl<'rs, TMock, TOwner, TArgRefsTuple, TMockArg>
-    FnCallbackConfigurator<'rs, TMock, TOwner, TArgRefsTuple, TMockArg, false>
+impl<'am, TMock, TOwner, TArgRefsTuple, TMockArg>
+    FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, false>
 {
-    pub fn and_does(&self, mut callback: impl FnMut(TArgRefsTuple) + 'static) -> &'rs TOwner {
+    pub fn and_does(&self, mut callback: impl FnMut(TArgRefsTuple) + 'static) -> &'am TOwner {
         let callback_with_mock =
             move |_mock: &TMock, arg_refs_tuple: TArgRefsTuple| callback(arg_refs_tuple);
         self.fn_config.borrow_mut().set_callback(callback_with_mock);
@@ -43,20 +43,20 @@ impl<'rs, TMock, TOwner, TArgRefsTuple, TMockArg>
     }
 }
 
-impl<'rs, TMock, TOwner, TArgRefsTuple, TMockArg>
-    FnCallbackConfigurator<'rs, TMock, TOwner, TArgRefsTuple, TMockArg, true>
+impl<'am, TMock, TOwner, TArgRefsTuple, TMockArg>
+    FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, true>
 {
     pub fn and_does(
         &self,
         callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'static,
-    ) -> &'rs TOwner {
+    ) -> &'am TOwner {
         self.fn_config.borrow_mut().set_callback(callback);
         return self.owner;
     }
 }
 
-impl<'rs, TMock, TOwner, TArgRefsTuple, TMockArg, const PASSES_MOCK_TO_CALLBACK: bool> Deref
-    for FnCallbackConfigurator<'rs, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+impl<'am, TMock, TOwner, TArgRefsTuple, TMockArg, const PASSES_MOCK_TO_CALLBACK: bool> Deref
+    for FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
 {
     type Target = TOwner;
 

@@ -1,3 +1,3 @@
-pub trait IReturnValue<'rs> {}
+pub trait IReturnValue<'am> {}
 
-impl<'rs, T: 'rs> IReturnValue<'rs> for T {}
+impl<'am, T: 'am> IReturnValue<'am> for T {}

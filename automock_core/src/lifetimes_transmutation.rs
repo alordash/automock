@@ -13,7 +13,7 @@
 /// In order to keep source lifetime constraints as is in mocked traits/structs/functions and to use
 /// [`DEFAULT_ARG_LIFETIME`] internally, lifetimes transmutation is used. Without it a trait
 /// `trait Trait { fn_info work<'a>(&'a self) -> &'a i32; }` will have in its mock extra generic
-/// constraint: `trait Trait<'rs> { fn_info work<'a: 'rs>(&'a self) -> &'a i32; }`
+/// constraint: `trait Trait<'am> { fn_info work<'a: 'am>(&'a self) -> &'a i32; }`
 ///
 /// For user it means that you just should keep your arguments alive for the duration of mock object.
 /// Not doing so will result in Undefined behavior as mock object will try to check whether given

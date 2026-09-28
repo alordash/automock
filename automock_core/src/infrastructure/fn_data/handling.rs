@@ -4,21 +4,21 @@ use crate::infrastructure::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-type SharedFnConfig<'rs, TMock> = Rc<RefCell<FnConfig<'rs, TMock>>>;
+type SharedFnConfig<'am, TMock> = Rc<RefCell<FnConfig<'am, TMock>>>;
 
 impl<
-    'rs,
+    'am,
     TMock,
     const HAS_RETURN_VALUE: bool,
     const SUPPORTS_BASE_CALLING: bool,
     const PASSES_MOCK_TO_CALLBACK: bool,
-> FnData<'rs, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
+> FnData<'am, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
 {
     fn handle_core_decide<'a, TMockArg, TCall: ICall, TReturnValue: IReturnValue<'a>>(
         &self,
         mock_arg: TMockArg,
         the_call: TCall,
-    ) -> HandleControlFlow<'rs, TMock, TMockArg, TReturnValue> {
+    ) -> HandleControlFlow<'am, TMock, TMockArg, TReturnValue> {
         let call = DynCall::new(the_call);
         let with_return_value = true;
         let fn_config = match self.try_get_matching_config::<TReturnValue>(&call, with_return_value)
@@ -56,8 +56,8 @@ impl<
 
     fn handle_core_continue<TReturnValue>(
         &self,
-        call: DynCall<'rs>,
-        fn_config: SharedFnConfig<'rs, TMock>,
+        call: DynCall<'am>,
+        fn_config: SharedFnConfig<'am, TMock>,
     ) -> TReturnValue {
         let rc_call = Rc::new(call);
         self.register_call(rc_call.clone());
@@ -134,8 +134,8 @@ impl<
     }
 }
 
-impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bool>
-    FnData<'rs, TMock, HAS_RETURN_VALUE, true, PASSES_MOCK_TO_CALLBACK>
+impl<'am, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bool>
+    FnData<'am, TMock, HAS_RETURN_VALUE, true, PASSES_MOCK_TO_CALLBACK>
 {
     pub fn handle_base<
         'a,
@@ -170,8 +170,8 @@ impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bo
     }
 }
 
-impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bool>
-    FnData<'rs, TMock, HAS_RETURN_VALUE, false, PASSES_MOCK_TO_CALLBACK>
+impl<'am, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bool>
+    FnData<'am, TMock, HAS_RETURN_VALUE, false, PASSES_MOCK_TO_CALLBACK>
 {
     pub fn handle<'a, 'b, TMockArg, TCall: ICall + 'a, TReturnValue: IReturnValue<'b>>(
         &self,
@@ -205,15 +205,15 @@ impl<'rs, TMock, const HAS_RETURN_VALUE: bool, const PASSES_MOCK_TO_CALLBACK: bo
     }
 }
 
-struct HandleContinue<'rs, TMock, TMockArg> {
+struct HandleContinue<'am, TMock, TMockArg> {
     mock_arg: TMockArg,
-    call: DynCall<'rs>,
-    fn_config: SharedFnConfig<'rs, TMock>,
+    call: DynCall<'am>,
+    fn_config: SharedFnConfig<'am, TMock>,
     should_call_base: bool,
 }
-enum HandleControlFlow<'rs, TMock, TMockArg, TReturnValue> {
+enum HandleControlFlow<'am, TMock, TMockArg, TReturnValue> {
     Break(TReturnValue),
-    Continue(HandleContinue<'rs, TMock, TMockArg>),
+    Continue(HandleContinue<'am, TMock, TMockArg>),
 }
 
 enum MaybeBaseCall<T> {

@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 /// Controls behavior of mocked function.
 pub struct FnConfigurator<
-    'rs,
+    'am,
     TMock,
     TOwner,
     TArgRefsTuple,
@@ -18,10 +18,10 @@ pub struct FnConfigurator<
     const PASSES_MOCK_TO_CALLBACK: bool,
 > {
     _phantom_return_value: PhantomData<TReturnValue>,
-    fn_config: Rc<RefCell<FnConfig<'rs, TMock>>>,
-    owner: &'rs TOwner,
+    fn_config: Rc<RefCell<FnConfig<'am, TMock>>>,
+    owner: &'am TOwner,
     fn_callback_configurator: FnCallbackConfigurator<
-        'rs,
+        'am,
         TMock,
         TOwner,
         TArgRefsTuple,
@@ -31,7 +31,7 @@ pub struct FnConfigurator<
 }
 
 impl<
-    'rs,
+    'am,
     TMock,
     TOwner,
     TArgRefsTuple,
@@ -42,7 +42,7 @@ impl<
     const PASSES_MOCK_TO_CALLBACK: bool,
 >
     FnConfigurator<
-        'rs,
+        'am,
         TMock,
         TOwner,
         TArgRefsTuple,
@@ -53,7 +53,7 @@ impl<
         PASSES_MOCK_TO_CALLBACK,
     >
 {
-    pub(crate) fn new(fn_config: Rc<RefCell<FnConfig<'rs, TMock>>>, owner: &'rs TOwner) -> Self {
+    pub(crate) fn new(fn_config: Rc<RefCell<FnConfig<'am, TMock>>>, owner: &'am TOwner) -> Self {
         Self {
             _phantom_return_value: PhantomData,
             fn_config: fn_config.clone(),
@@ -64,7 +64,7 @@ impl<
 }
 
 impl<
-    'rs,
+    'am,
     TMock,
     TOwner,
     TArgRefsTuple,
@@ -74,7 +74,7 @@ impl<
     const PASSES_MOCK_TO_CALLBACK: bool,
 >
     FnConfigurator<
-        'rs,
+        'am,
         TMock,
         TOwner,
         TArgRefsTuple,
@@ -89,7 +89,7 @@ impl<
     pub fn returns<'a>(
         &self,
         return_value: TReturnValue,
-    ) -> &FnCallbackConfigurator<'rs, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+    ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     where
         TReturnValue: IReturnValue<'a> + 'a,
     {
@@ -106,7 +106,7 @@ impl<
     pub fn returns_many<'a>(
         &self,
         return_values: impl IntoIterator<Item = TReturnValue>,
-    ) -> &FnCallbackConfigurator<'rs, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+    ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     where
         TReturnValue: IReturnValue<'a> + 'a,
     {
@@ -125,9 +125,9 @@ impl<
     pub fn always_returns<'a>(
         &self,
         return_value: TReturnValue,
-    ) -> &FnCallbackConfigurator<'rs, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+    ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     where
-        TReturnValue: 'rs + 'a + IReturnValue<'a> + Clone,
+        TReturnValue: 'am + 'a + IReturnValue<'a> + Clone,
     {
         let return_value_source = ReturnValueSource::Perpetual(Box::new(move || {
             transmute_lifetime!(DynReturnValue::new(return_value.clone()))
@@ -142,11 +142,11 @@ impl<
     /// references to source function argument values. Never ends.
     pub fn returns_with<'a>(
         &self,
-        f: impl Fn(TArgRefsTuple) -> TReturnValue + 'rs,
-    ) -> &FnCallbackConfigurator<'rs, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+        f: impl Fn(TArgRefsTuple) -> TReturnValue + 'am,
+    ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     {
         let return_value_source = ReturnValueSource::Factory(Box::new(
-            move |dyn_arg_refs_tuple: DynArgRefsTuple<'rs>| {
+            move |dyn_arg_refs_tuple: DynArgRefsTuple<'am>| {
                 let arg_refs_tuple: TArgRefsTuple =
                     dyn_arg_refs_tuple.downcast_into::<TArgRefsTuple>();
                 let result = f(arg_refs_tuple);
@@ -160,9 +160,9 @@ impl<
     }
 }
 
-impl<'rs, TMock, TOwner, TArgRefsTuple, TReturnValue, TMockArg, const SUPPORTS_BASE_CALLING: bool>
+impl<'am, TMock, TOwner, TArgRefsTuple, TReturnValue, TMockArg, const SUPPORTS_BASE_CALLING: bool>
     FnConfigurator<
-        'rs,
+        'am,
         TMock,
         TOwner,
         TArgRefsTuple,
@@ -176,7 +176,7 @@ impl<'rs, TMock, TOwner, TArgRefsTuple, TReturnValue, TMockArg, const SUPPORTS_B
     /// Adds callback that is called after source function was called. Callback receives references
     /// to source function argument values. If function has enabled base implementation, this
     /// callback is called BEFORE the base implementation.
-    pub fn does(&self, mut callback: impl FnMut(TArgRefsTuple) + 'static) -> &'rs TOwner {
+    pub fn does(&self, mut callback: impl FnMut(TArgRefsTuple) + 'static) -> &'am TOwner {
         let callback_with_mock =
             move |_mock: &TMock, arg_refs_tuple: TArgRefsTuple| callback(arg_refs_tuple);
         self.fn_config.borrow_mut().set_callback(callback_with_mock);
@@ -185,7 +185,7 @@ impl<'rs, TMock, TOwner, TArgRefsTuple, TReturnValue, TMockArg, const SUPPORTS_B
 }
 
 impl<
-    'rs,
+    'am,
     TMock,
     TOwner,
     TArgRefsTuple,
@@ -195,7 +195,7 @@ impl<
     const SUPPORTS_BASE_CALLING: bool,
 >
     FnConfigurator<
-        'rs,
+        'am,
         TMock,
         TOwner,
         TArgRefsTuple,
@@ -209,14 +209,14 @@ impl<
     /// Adds callback that is called after source function was called. Callback receives reference
     /// to mock object and references to source function argument values. If function has enabled
     /// base implementation, this callback is called BEFORE the base implementation.
-    pub fn does(&self, callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'static) -> &'rs TOwner {
+    pub fn does(&self, callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'static) -> &'am TOwner {
         self.fn_config.borrow_mut().set_callback(callback);
         return self.owner;
     }
 }
 
 impl<
-    'rs,
+    'am,
     TMock,
     TOwner,
     TArgRefsTuple,
@@ -226,7 +226,7 @@ impl<
     const PASSES_MOCK_TO_CALLBACK: bool,
 >
     FnConfigurator<
-        'rs,
+        'am,
         TMock,
         TOwner,
         TArgRefsTuple,
@@ -241,7 +241,7 @@ impl<
     /// then it will return value returned by base implementation.
     pub fn call_base(
         &self,
-    ) -> &FnCallbackConfigurator<'rs, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+    ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     {
         self.fn_config.borrow_mut().set_call_base();
         return &self.fn_callback_configurator;

@@ -2,8 +2,8 @@ use automock::*;
 use std::fmt::Debug;
 
 #[mock]
-trait Trait<'rs, T1> {
-    fn work<T2, T3, const B: bool, const N: usize>(&self, t1: T1, t2: &'rs T2) -> T3;
+trait Trait<'am, T1> {
+    fn work<T2, T3, const B: bool, const N: usize>(&self, t1: T1, t2: &'am T2) -> T3;
 }
 
 #[derive(Clone, Debug)]

@@ -10,8 +10,8 @@ pub trait ICall: IGenericsInfoProvider {
         Vec::new()
     }
 
-    fn get_ptr_to_boxed_tuple_of_refs(&self) -> *mut () {
-        core::ptr::null_mut()
+    fn get_ptr_to_boxed_tuple_of_refs<'art>(&self) -> *mut dyn IArgRefsTuple<'art> {
+        core::ptr::null_mut::<()>() as *mut dyn IArgRefsTuple
     }
 
     #[doc(hidden)]
@@ -29,13 +29,23 @@ pub trait ICall: IGenericsInfoProvider {
 pub(crate) mod tests {
     #![allow(non_snake_case)]
     use super::*;
-    use automock::{AsTimes, Mockable, mock};
+    use crate::fn_parameters::dyn_arg_refs_tuple::tests::utilities::*;
+    use automock::{Mockable, mock};
     use utilities::*;
+
+    #[test]
+    fn is_zst_ReturnsTrue() {
+        // Act
+        let result = DefaultCall.is_zst();
+
+        // Assert
+        assert!(result);
+    }
 
     #[test]
     fn get_arg_infos_ReturnsEmptyVec() {
         // Act
-        let result = StubCall.get_arg_infos();
+        let result = DefaultCall.get_arg_infos();
 
         // Assert
         assert!(result.is_empty());
@@ -44,47 +54,91 @@ pub(crate) mod tests {
     #[test]
     fn get_ptr_to_boxed_tuple_of_refs_ReturnsNullPtr() {
         // Act
-        let result = StubCall.get_ptr_to_boxed_tuple_of_refs();
+        let result = DefaultCall.get_ptr_to_boxed_tuple_of_refs();
 
         // Assert
-        assert_eq!(result, core::ptr::null_mut());
+        assert!(result.is_null());
     }
 
     #[test]
-    fn get_dyn_tuple_of_refs_Ok() {
+    fn get_dyn_tuple_of_refs_IsZst_ReturnsZeroSize() {
         // Arrange
-        // TODO - rewrite this test
-        type ArgRefsTupleType = (i32, i32, i32);
-        let arg_refs_tuple: ArgRefsTupleType = (1, 2, 3);
-        let boxed: Box<dyn IArgRefsTuple> = Box::new(arg_refs_tuple);
-        let ptr = Box::leak(boxed) as *mut _;
-        let mut dyn_arg_refs_tuple_mock = DynArgRefsTuple::from_raw(ptr);
-        dyn_arg_refs_tuple_mock
-            .setup()
-            .downcast_into::<ArgRefsTupleType>()
-            .call_base();
+        let mut call = IsZstCall::new();
+        call.setup().as_ICall().is_zst().returns(true);
+        let dyn_arg_refs_tuple = dyn_arg_refs_tuple_mock();
         DynArgRefsTuple::static_setup()
             .zero_size()
-            .returns(dyn_arg_refs_tuple_mock);
+            .returns(dyn_arg_refs_tuple);
 
         // Act
-        let result = StubCall.get_dyn_tuple_of_refs();
+        _ = call.get_dyn_tuple_of_refs();
 
         // Assert
-        let actual_arg_refs_tuple: ArgRefsTupleType = result.downcast_into();
-        assert_eq!(actual_arg_refs_tuple, arg_refs_tuple);
-
         DynArgRefsTuple::static_received()
-            .zero_size(1.time())
+            .zero_size(automock::Times::Once)
+            .no_other_calls();
+        call.received()
+            .as_ICall()
+            .is_zst(automock::Times::Once)
+            .no_other_calls();
+    }
+
+    #[test]
+    fn get_dyn_tuple_of_refs_IsNotZst_ReturnsFromRawPtr() {
+        // Arrange
+        let mut call = IsZstCall::new();
+        let raw_ptr = 1234usize as *mut ();
+        call.setup()
+            .as_ICall()
+            .is_zst()
+            .returns(false)
+            .get_ptr_to_boxed_tuple_of_refs()
+            .returns(raw_ptr);
+        let dyn_arg_refs_tuple = dyn_arg_refs_tuple_mock();
+        DynArgRefsTuple::static_setup()
+            .from_raw(automock::Arg::Any)
+            .returns(dyn_arg_refs_tuple);
+
+        // Act
+        _ = call.get_dyn_tuple_of_refs();
+
+        // Assert
+        DynArgRefsTuple::static_received()
+            .from_raw(raw_ptr as *mut dyn IArgRefsTuple, automock::Times::Once)
+            .no_other_calls();
+        call.received()
+            .as_ICall()
+            .is_zst(automock::Times::Once)
+            .get_ptr_to_boxed_tuple_of_refs(automock::Times::Once)
             .no_other_calls();
     }
 
     pub mod utilities {
         use super::*;
 
-        pub struct StubCall;
-        impl IGenericsInfoProvider for StubCall {}
-        impl ICall for StubCall {}
+        pub struct DefaultCall;
+        impl IGenericsInfoProvider for DefaultCall {}
+        impl ICall for DefaultCall {}
+
+        #[mock]
+        pub struct IsZstCall;
+        impl IGenericsInfoProvider for IsZstCall {}
+        #[mock]
+        impl ICall for IsZstCall {
+            fn is_zst(&self) -> bool {
+                unreachable!()
+            }
+            fn get_ptr_to_boxed_tuple_of_refs<'art>(&self) -> *mut dyn IArgRefsTuple<'art> {
+                unreachable!()
+            }
+        }
+        impl IsZstCall {
+            pub fn new() -> Self {
+                Self {
+                    __am_data: Default::default(),
+                }
+            }
+        }
 
         #[mock]
         #[derive(Clone)]
@@ -125,7 +179,7 @@ pub(crate) mod tests {
             fn get_arg_infos(&self) -> Vec<ArgInfo> {
                 unreachable!()
             }
-            fn get_ptr_to_boxed_tuple_of_refs(&self) -> *mut () {
+            fn get_ptr_to_boxed_tuple_of_refs<'art>(&self) -> *mut dyn IArgRefsTuple<'art> {
                 unreachable!()
             }
             fn get_dyn_tuple_of_refs<'a>(&self) -> DynArgRefsTuple<'a> {

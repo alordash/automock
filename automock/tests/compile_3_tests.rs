@@ -1,7 +1,7 @@
 use automock::*;
 
 #[mock]
-trait Trait<'rs> {
+trait Trait<'am> {
     fn work(&self, v: i32) -> i32;
 }
 

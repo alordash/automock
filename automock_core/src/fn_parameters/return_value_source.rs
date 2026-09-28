@@ -1,7 +1,7 @@
 use crate::fn_parameters::*;
 
-pub enum ReturnValueSource<'rs> {
-    SingleTime(DynReturnValue<'rs>),
-    Perpetual(Box<dyn Fn() -> DynReturnValue<'rs> + 'rs>),
-    Factory(Box<dyn Fn(DynArgRefsTuple<'rs>) -> DynReturnValue<'rs> + 'rs>),
+pub enum ReturnValueSource<'am> {
+    SingleTime(DynReturnValue<'am>),
+    Perpetual(Box<dyn Fn() -> DynReturnValue<'am> + 'am>),
+    Factory(Box<dyn Fn(DynArgRefsTuple<'am>) -> DynReturnValue<'am> + 'am>),
 }

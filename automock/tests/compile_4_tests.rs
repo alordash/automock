@@ -3,11 +3,11 @@ use std::fmt::Debug;
 
 #[mock]
 #[allow(unused)]
-trait Trait<'rs, T1> {
+trait Trait<'am, T1> {
     fn work<T2: Clone, T3: Default, const B: bool, const N: usize>(
         &self,
         t1: &T1,
-        t2: &'rs T2,
+        t2: &'am T2,
     ) -> T3
     where
         T1: Clone,
