@@ -10,8 +10,8 @@ pub trait ICall: IGenericsInfoProvider {
         Vec::new()
     }
 
-    fn get_ptr_to_boxed_tuple_of_refs<'art>(&self) -> *mut dyn IArgRefsTuple<'art> {
-        core::ptr::null_mut::<()>() as *mut dyn IArgRefsTuple
+    fn get_ptr_to_boxed_tuple_of_refs(&self) -> *mut () {
+        core::ptr::null_mut()
     }
 
     #[doc(hidden)]
@@ -104,7 +104,12 @@ pub(crate) mod tests {
 
         // Assert
         DynArgRefsTuple::static_received()
-            .from_raw(raw_ptr as *mut dyn IArgRefsTuple, automock::Times::Once)
+            .from_raw(
+                automock::Arg::is(|actual_raw_ptr: &*mut (dyn IArgRefsTuple + '_)| {
+                    actual_raw_ptr.addr() == raw_ptr.addr()
+                }),
+                automock::Times::Once,
+            )
             .no_other_calls();
         call.received()
             .as_ICall()
@@ -128,7 +133,7 @@ pub(crate) mod tests {
             fn is_zst(&self) -> bool {
                 unreachable!()
             }
-            fn get_ptr_to_boxed_tuple_of_refs<'art>(&self) -> *mut dyn IArgRefsTuple<'art> {
+            fn get_ptr_to_boxed_tuple_of_refs(&self) -> *mut () {
                 unreachable!()
             }
         }
@@ -179,7 +184,7 @@ pub(crate) mod tests {
             fn get_arg_infos(&self) -> Vec<ArgInfo> {
                 unreachable!()
             }
-            fn get_ptr_to_boxed_tuple_of_refs<'art>(&self) -> *mut dyn IArgRefsTuple<'art> {
+            fn get_ptr_to_boxed_tuple_of_refs(&self) -> *mut () {
                 unreachable!()
             }
             fn get_dyn_tuple_of_refs<'a>(&self) -> DynArgRefsTuple<'a> {

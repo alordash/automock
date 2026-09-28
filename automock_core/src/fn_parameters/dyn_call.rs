@@ -15,7 +15,7 @@ impl<'am> ICall for DynCall<'am> {
         self.inner.get_arg_infos()
     }
 
-    fn get_ptr_to_boxed_tuple_of_refs<'art>(&self) -> *mut dyn IArgRefsTuple<'art> {
+    fn get_ptr_to_boxed_tuple_of_refs(&self) -> *mut () {
         self.inner.get_ptr_to_boxed_tuple_of_refs()
     }
 }
