@@ -13,8 +13,8 @@ default = []
 debug_naming = ["automock_core/debug_naming"]
 
 [dependencies]
-automock_core = { path = "../automock_core" }
-automock_proc_macro = { path = "../automock_proc_macro" }
+automock_core = { workspace = true }
+automock_proc_macro = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
