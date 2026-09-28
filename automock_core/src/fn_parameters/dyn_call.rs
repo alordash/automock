@@ -63,7 +63,7 @@ mod tests {
     #![allow(non_snake_case)]
 
     use super::*;
-    use crate::fn_parameters::tests::*;
+    use crate::fn_parameters::i_call::tests::utilities::*;
     use automock::{AsTimes, Mockable};
 
     #[test]
@@ -85,7 +85,7 @@ mod tests {
     }
 
     #[test]
-    fn downcast_ref_Ok() {
+    fn downcast_to_Ok() {
         // Arrange
         let mut call_mock = CallMock::new();
         call_mock.id = 123;
@@ -93,6 +93,20 @@ mod tests {
 
         // Act
         let result: &CallMock = dyn_call.downcast_to();
+
+        // Assert
+        assert_eq!(result.id, call_mock.id);
+    }
+
+    #[test]
+    fn downcast_into_Ok() {
+        // Arrange
+        let mut call_mock = CallMock::new();
+        call_mock.id = 123;
+        let dyn_call = DynCall::new(call_mock.clone());
+
+        // Act
+        let result: CallMock = dyn_call.downcast_into();
 
         // Assert
         assert_eq!(result.id, call_mock.id);

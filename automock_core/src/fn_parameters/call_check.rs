@@ -47,7 +47,7 @@ mod tests {
     #![allow(non_snake_case)]
 
     use super::*;
-    use crate::fn_parameters::tests::CallMock;
+    use crate::fn_parameters::i_call::tests::utilities::*;
     use crate::fn_parameters::*;
 
     #[test]

@@ -8,7 +8,7 @@ pub(crate) struct DerefInfo {
     deref_vtable_ptr: *const (),
 }
 
-#[cfg_attr(test, automock::mock(base))]
+#[cfg_attr(test, automock::mock)]
 impl DerefInfo {
     pub fn new(expected_value_deref_ptr: *const (), deref_vtable_ptr: *const ()) -> Self {
         Self {

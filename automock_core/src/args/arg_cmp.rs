@@ -16,33 +16,37 @@ fn ptr_cmp<U: ?Sized, T: Deref<Target = U>>(a: &T, b: &T) -> bool {
 
 #[cfg_attr(test, automock::mock)]
 impl<T> ArgCmp<T> {
-    pub fn new_eq(value: T, print_arg: String) -> Self
-    where
-        T: PartialEq,
-    {
+    pub(crate) fn new(
+        print_arg: String,
+        value: T,
+        comparator: fn(&T, &T) -> bool,
+        maybe_deref_info: Option<DerefInfo>,
+    ) -> Self {
         Self {
             print_arg,
             value: Box::new(value),
-            comparator: <T as PartialEq>::eq,
-            maybe_deref_info: None,
+            comparator,
+            maybe_deref_info,
         }
     }
 
-    pub fn new_ref_eq<U: ?Sized>(value: T, print_arg: String) -> Self
+    pub fn new_eq(print_arg: String, value: T) -> Self
+    where
+        T: PartialEq,
+    {
+        Self::new(print_arg, value, <T as PartialEq>::eq, None)
+    }
+
+    pub fn new_ref_eq<U: ?Sized>(print_arg: String, value: T) -> Self
     where
         T: Deref<Target = U>,
     {
         let deref_info = DerefInfo::from_ref(&value);
-        Self {
-            print_arg,
-            value: Box::new(value),
-            comparator: ptr_cmp,
-            maybe_deref_info: Some(deref_info),
-        }
+        Self::new(print_arg, value, ptr_cmp, Some(deref_info))
     }
 }
 
-#[cfg_attr(test, automock::mock(base))]
+#[cfg_attr(test, automock::mock)]
 impl<T: ?Sized> ArgCmp<T> {
     pub fn print_arg(&self) -> &str {
         self.print_arg.as_ref()
@@ -95,6 +99,7 @@ impl PtrInfo {
 pub(crate) mod tests {
     #![allow(non_snake_case)]
     use super::*;
+    use automock::Mockable;
     use std::rc::Rc;
 
     #[test]
@@ -130,7 +135,7 @@ pub(crate) mod tests {
         let print_arg = "quo vadis".to_owned();
 
         // Act
-        todo!()
+        // todo!()
     }
 
     pub mod utilities {
@@ -142,7 +147,7 @@ pub(crate) mod tests {
                 value: Box::new(T::default()),
                 comparator: |_, _| false,
                 maybe_deref_info: None,
-                __rs_data: Default::default(),
+                __am_data: Default::default(),
             }
         }
     }

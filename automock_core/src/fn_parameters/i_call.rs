@@ -26,10 +26,11 @@ pub trait ICall: IGenericsInfoProvider {
 }
 
 #[cfg(test)]
-pub mod tests {
+pub(crate) mod tests {
     #![allow(non_snake_case)]
     use super::*;
     use automock::{AsTimes, Mockable, mock};
+    use utilities::*;
 
     #[test]
     fn get_arg_infos_ReturnsEmptyVec() {
@@ -52,6 +53,7 @@ pub mod tests {
     #[test]
     fn get_dyn_tuple_of_refs_Ok() {
         // Arrange
+        // TODO - rewrite this test
         type ArgRefsTupleType = (i32, i32, i32);
         let arg_refs_tuple: ArgRefsTupleType = (1, 2, 3);
         let boxed: Box<dyn IArgRefsTuple> = Box::new(arg_refs_tuple);
@@ -77,52 +79,58 @@ pub mod tests {
             .no_other_calls();
     }
 
-    struct StubCall;
-    impl IGenericsInfoProvider for StubCall {}
-    impl ICall for StubCall {}
+    pub mod utilities {
+        use super::*;
 
-    #[mock]
-    #[derive(Clone)]
-    pub struct CallMock {
-        pub id: usize,
-    }
+        pub struct StubCall;
+        impl IGenericsInfoProvider for StubCall {}
+        impl ICall for StubCall {}
 
-    #[mock(base)]
-    impl CallMock {
-        pub fn new() -> Self {
-            Self { id: 0 }
+        #[mock]
+        #[derive(Clone)]
+        pub struct CallMock {
+            pub id: usize,
         }
-    }
 
-    #[mock]
-    impl IGenericsInfoProvider for CallMock {
-        fn get_generic_parameter_infos(&self) -> Vec<GenericParameterInfo> {
-            unreachable!()
+        impl CallMock {
+            pub fn new() -> Self {
+                Self {
+                    id: 0,
+                    __am_data: Default::default(),
+                }
+            }
         }
-        fn hash_generics_type_ids(&self, hasher: &mut GenericsHasher) {
-            unreachable!()
-        }
-        fn hash_const_values(&self, hasher: &mut GenericsHasher) {
-            unreachable!()
-        }
-        fn get_generics_hash_key(&self) -> GenericsHashKey {
-            unreachable!()
-        }
-    }
 
-    #[mock]
-    impl ICall for CallMock {
-        fn is_zst(&self) -> bool {
-            unreachable!()
+        #[mock]
+        impl IGenericsInfoProvider for CallMock {
+            fn get_generic_parameter_infos(&self) -> Vec<GenericParameterInfo> {
+                unreachable!()
+            }
+            fn hash_generics_type_ids(&self, hasher: &mut GenericsHasher) {
+                unreachable!()
+            }
+            fn hash_const_values(&self, hasher: &mut GenericsHasher) {
+                unreachable!()
+            }
+            fn get_generics_hash_key(&self) -> GenericsHashKey {
+                unreachable!()
+            }
         }
-        fn get_arg_infos(&self) -> Vec<ArgInfo> {
-            unreachable!()
-        }
-        fn get_ptr_to_boxed_tuple_of_refs(&self) -> *mut () {
-            unreachable!()
-        }
-        fn get_dyn_tuple_of_refs<'a>(&self) -> DynArgRefsTuple<'a> {
-            unreachable!()
+
+        #[mock]
+        impl ICall for CallMock {
+            fn is_zst(&self) -> bool {
+                unreachable!()
+            }
+            fn get_arg_infos(&self) -> Vec<ArgInfo> {
+                unreachable!()
+            }
+            fn get_ptr_to_boxed_tuple_of_refs(&self) -> *mut () {
+                unreachable!()
+            }
+            fn get_dyn_tuple_of_refs<'a>(&self) -> DynArgRefsTuple<'a> {
+                unreachable!()
+            }
         }
     }
 }

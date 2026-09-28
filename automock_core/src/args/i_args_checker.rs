@@ -13,20 +13,10 @@ pub trait IArgsChecker: IGenericsInfoProvider {
 }
 
 #[cfg(test)]
-pub mod tests {
+pub(crate) mod tests {
     use super::*;
     use automock::mock;
-
-    #[mock]
-    #[derive(Clone)]
-    pub struct ArgsCheckerMock;
-
-    #[mock(base)]
-    impl ArgsCheckerMock {
-        pub fn new() -> Self {
-            Self
-        }
-    }
+    use utilities::*;
 
     #[mock]
     impl IGenericsInfoProvider for ArgsCheckerMock {
@@ -51,6 +41,21 @@ pub mod tests {
         }
         fn fmt_args(&self) -> String {
             unreachable!()
+        }
+    }
+
+    pub mod utilities {
+        use super::*;
+        #[mock]
+        #[derive(Clone)]
+        pub struct ArgsCheckerMock;
+
+        impl ArgsCheckerMock {
+            pub fn new() -> Self {
+                Self {
+                    __am_data: Default::default(),
+                }
+            }
         }
     }
 }

@@ -8,7 +8,7 @@ pub trait IntoArg<T> {
 impl<T: PartialEq> IntoArg<T> for T {
     fn into_arg(self, format_debug_string: impl Fn(&T) -> String) -> Arg<T> {
         let print_arg = format_debug_string(&self);
-        let arg_cmp = ArgCmp::new_eq(self, print_arg);
+        let arg_cmp = ArgCmp::new_eq(print_arg, self);
         return Arg::Eq(arg_cmp, Internal);
     }
 }

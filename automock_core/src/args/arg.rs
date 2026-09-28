@@ -66,7 +66,7 @@ impl<T> Arg<T> {
     where
         T: PartialEq,
     {
-        let arg_cmp = ArgCmp::new_eq(value, UNINITIALIZED_ARG_PRINT_STRING.to_owned());
+        let arg_cmp = ArgCmp::new_eq(UNINITIALIZED_ARG_PRINT_STRING.to_owned(), value);
         return Self::Eq(arg_cmp, Internal);
     }
 
@@ -75,7 +75,7 @@ impl<T> Arg<T> {
     where
         T: PartialEq,
     {
-        let arg_cmp = ArgCmp::new_eq(value, UNINITIALIZED_ARG_PRINT_STRING.to_owned());
+        let arg_cmp = ArgCmp::new_eq(UNINITIALIZED_ARG_PRINT_STRING.to_owned(), value);
         return Self::NotEq(arg_cmp, Internal);
     }
 
@@ -86,7 +86,7 @@ impl<T> Arg<T> {
     where
         T: Deref<Target = U>,
     {
-        let arg_cmp = ArgCmp::new_ref_eq(value, UNINITIALIZED_ARG_PRINT_STRING.to_owned());
+        let arg_cmp = ArgCmp::new_ref_eq(UNINITIALIZED_ARG_PRINT_STRING.to_owned(), value);
         return Self::Eq(arg_cmp, Internal);
     }
 
@@ -97,7 +97,7 @@ impl<T> Arg<T> {
     where
         T: Deref<Target = U>,
     {
-        let arg_cmp = ArgCmp::new_ref_eq(value, UNINITIALIZED_ARG_PRINT_STRING.to_owned());
+        let arg_cmp = ArgCmp::new_ref_eq(UNINITIALIZED_ARG_PRINT_STRING.to_owned(), value);
         return Self::NotEq(arg_cmp, Internal);
     }
 }
@@ -267,8 +267,8 @@ mod tests {
 
         ArgCmp::static_received()
             .new_eq(
-                custom_type,
                 UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
+                custom_type,
                 automock::Times::Once,
             )
             .no_other_calls();
@@ -293,8 +293,8 @@ mod tests {
 
         ArgCmp::static_received()
             .new_eq(
-                custom_type,
                 UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
+                custom_type,
                 automock::Times::Once,
             )
             .no_other_calls();
@@ -319,8 +319,8 @@ mod tests {
 
         ArgCmp::<Rc<CustomType>>::static_received()
             .new_ref_eq(
-                custom_type,
                 UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
+                custom_type,
                 automock::Times::Once,
             )
             .no_other_calls();
@@ -345,8 +345,8 @@ mod tests {
 
         ArgCmp::<Rc<CustomType>>::static_received()
             .new_ref_eq(
-                custom_type,
                 UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
+                custom_type,
                 automock::Times::Once,
             )
             .no_other_calls();

@@ -15,6 +15,7 @@ cfg-if = { workspace = true }
 
 [dev-dependencies]
 automock = { workspace = true }
+not_enough_asserts = { workspace = true }
 
 [features]
 debug_naming = []
