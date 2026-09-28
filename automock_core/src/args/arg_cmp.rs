@@ -89,8 +89,8 @@ pub(crate) struct PtrInfo {
 impl PtrInfo {
     pub fn empty() -> Self {
         Self {
-            expected_ptr_info_suffix: "".to_string(),
-            actual_ptr_info_suffix: ":  ".to_string(),
+            expected_ptr_info_suffix: "".to_owned(),
+            actual_ptr_info_suffix: ":  ".to_owned(),
         }
     }
 }
@@ -242,18 +242,189 @@ pub(crate) mod tests {
             .from_ref::<T, U>(automock::Arg::Any, automock::Times::Once)
             .no_other_calls();
     }
-    
-    // #[test]
-    // fn print_arg_Ok() {
-    //     // Arrange
-    //     let print_arg = "quo vadis".to_owned();
-    //     let arg_cmp = ArgCmp {print_arg,value: Box::new(1), comparator: |_, _| false,
-    //     maybe_deref_info: None,
-    //     __mock_data: Default::default()}
-    // }
+
+    #[test]
+    fn print_arg_Ok() {
+        // Arrange
+        let print_arg = "quo vadis".to_owned();
+        let mut arg_cmp = ArgCmp {
+            print_arg: print_arg.clone(),
+            value: Box::new(1),
+            comparator: |_, _| false,
+            maybe_deref_info: None,
+            __mock_data: Default::default(),
+        };
+        arg_cmp.setup().print_arg().call_base();
+
+        // Act
+        let result = arg_cmp.print_arg();
+
+        // Assert
+        assert_eq!(result, print_arg);
+    }
+
+    #[test]
+    fn set_print_arg_Ok() {
+        // Arrange
+        let mut arg_cmp = ArgCmp {
+            print_arg: "quo vadis".to_owned(),
+            value: Box::new(1),
+            comparator: |_, _| false,
+            maybe_deref_info: None,
+            __mock_data: Default::default(),
+        };
+        arg_cmp
+            .setup()
+            .set_print_arg(automock::Arg::Any)
+            .call_base();
+        let print_arg = "veridis quo".to_owned();
+
+        // Act
+        arg_cmp.set_print_arg(print_arg.clone());
+
+        // Assert
+        assert_eq!(arg_cmp.print_arg, print_arg);
+    }
+
+    #[test]
+    fn value_Ok() {
+        // Arrange
+        let value = 5;
+        let mut arg_cmp = ArgCmp {
+            print_arg: "quo vadis".to_owned(),
+            value: Box::new(value),
+            comparator: |_, _| false,
+            maybe_deref_info: None,
+            __mock_data: Default::default(),
+        };
+        arg_cmp.setup().value().call_base();
+
+        // Act
+        let result = arg_cmp.value();
+
+        // Assert
+        assert_eq!(*result, value);
+    }
+
+    #[test]
+    fn is_arg_equal_to_Ok() {
+        // Arrange
+        type T = i32;
+        let own_value: T = 5;
+        let mut arg_cmp = ArgCmp {
+            print_arg: "quo vadis".to_owned(),
+            value: Box::new(own_value),
+            comparator,
+            maybe_deref_info: None,
+            __mock_data: Default::default(),
+        };
+        arg_cmp
+            .setup()
+            .is_arg_equal_to(automock::Arg::Any)
+            .call_base();
+        let expected_result = false;
+        let other = 10;
+        comparator::setup::<T>(automock::Arg::Any, automock::Arg::Any).returns(expected_result);
+
+        // Act
+        let result = arg_cmp.is_arg_equal_to(&other);
+
+        // Assert
+        assert_eq!(result, expected_result);
+        comparator::received::<T>(
+            automock::Arg::ref_eq(arg_cmp.value.as_ref()),
+            automock::Arg::ref_eq(&other),
+            automock::Times::Once,
+        )
+        .no_other_calls();
+    }
+
+    #[test]
+    fn get_ptrs_info_suffix_EmptyDerefInfo_ReturnsEmptyStrings() {
+        // Arrange
+        let mut arg_cmp = ArgCmp {
+            print_arg: "quo vadis".to_owned(),
+            value: Box::new(1),
+            comparator,
+            maybe_deref_info: None,
+            __mock_data: Default::default(),
+        };
+        arg_cmp
+            .setup()
+            .get_ptrs_info_suffix(automock::Arg::Any)
+            .call_base();
+
+        // Act
+        let result = arg_cmp.get_ptrs_info_suffix(&5);
+
+        // Assert
+        let expected_expected_ptr_info_suffix = String::new();
+        let expected_actual_ptr_info_suffix = ":  ".to_owned();
+        assert_eq!(
+            result.expected_ptr_info_suffix,
+            expected_expected_ptr_info_suffix
+        );
+        assert_eq!(
+            result.actual_ptr_info_suffix,
+            expected_actual_ptr_info_suffix
+        );
+    }
+
+    #[test]
+    fn get_ptrs_info_suffix_WithDerefInfo_ReturnsFormattedStrings() {
+        // Arrange
+        type T = i32;
+        let mut deref_info = deref_info_mock();
+        let expected_ptr = 1234usize as *const ();
+        let actual_ptr = 5678usize as *const ();
+        deref_info
+            .setup()
+            .expected_value_deref_ptr()
+            .returns(expected_ptr)
+            .get_actual_value_deref_ptr::<T>(automock::Arg::Any)
+            .returns(actual_ptr);
+        let mut arg_cmp = ArgCmp {
+            print_arg: "quo vadis".to_owned(),
+            value: Box::new(1),
+            comparator,
+            maybe_deref_info: Some(deref_info.clone()),
+            __mock_data: Default::default(),
+        };
+        arg_cmp
+            .setup()
+            .get_ptrs_info_suffix(automock::Arg::Any)
+            .call_base();
+        let actual_value: T = 5;
+
+        // Act
+        let result = arg_cmp.get_ptrs_info_suffix(&actual_value);
+
+        // Assert
+        let expected_expected_ptr_info_suffix = format!(" (ptr: {expected_ptr:?})");
+        let expected_actual_ptr_info_suffix = format!("   (ptr: {actual_ptr:?}):");
+        assert_eq!(
+            result.expected_ptr_info_suffix,
+            expected_expected_ptr_info_suffix
+        );
+        assert_eq!(
+            result.actual_ptr_info_suffix,
+            expected_actual_ptr_info_suffix
+        );
+
+        deref_info
+            .received()
+            .expected_value_deref_ptr(automock::Times::Once)
+            .get_actual_value_deref_ptr(&actual_value, automock::Times::Once)
+            .no_other_calls();
+    }
 
     pub mod utilities {
         use super::*;
+
+        #[automock::mock]
+        pub fn comparator<T>(_: &T, _: &T) -> bool {
+            unreachable!()
+        }
 
         pub fn arg_cmp_mock<T: Default>() -> ArgCmp<T> {
             ArgCmp {
