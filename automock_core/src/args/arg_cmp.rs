@@ -99,8 +99,10 @@ impl PtrInfo {
 pub(crate) mod tests {
     #![allow(non_snake_case)]
     use super::*;
+    use crate::args::deref_info::tests::utilities::*;
     use automock::Mockable;
     use std::rc::Rc;
+    use utilities::*;
 
     #[test]
     fn ptr_cmp_DerefsToSame_ReturnsTrue() {
@@ -129,14 +131,126 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn new_eq_Ok() {
+    fn new_Ok() {
         // Arrange
-        let value = 5;
+        type T = i32;
         let print_arg = "quo vadis".to_owned();
+        let value: T = 5;
+        fn comparator(_: &T, _: &T) -> bool {
+            false
+        }
+        ArgCmp::<T>::static_setup()
+            .new(
+                automock::Arg::Any,
+                automock::Arg::Any,
+                automock::Arg::Any,
+                automock::Arg::Any,
+            )
+            .call_base();
 
         // Act
-        // todo!()
+        let result = ArgCmp::new(print_arg.clone(), value, comparator, None);
+
+        // Assert
+        assert_eq!(result.print_arg, print_arg);
+        assert_eq!(*result.value, value);
+        assert_eq!(result.comparator as *const (), comparator as *const ());
+        assert!(result.maybe_deref_info.is_none());
     }
+
+    #[test]
+    fn new_eq_Ok() {
+        // Arrange
+        type T = i32;
+        let print_arg = "quo vadis".to_owned();
+        let value: T = 5;
+        let arg_cmp_mock = arg_cmp_mock();
+        ArgCmp::<T>::static_setup()
+            .new(
+                automock::Arg::Any,
+                automock::Arg::Any,
+                automock::Arg::Any,
+                automock::Arg::Any,
+            )
+            .returns(arg_cmp_mock)
+            .new_eq(automock::Arg::Any, automock::Arg::Any)
+            .call_base();
+
+        // Act
+        _ = ArgCmp::new_eq(print_arg.clone(), value);
+
+        // Assert
+        ArgCmp::<T>::static_received()
+            .new(
+                print_arg,
+                value,
+                automock::Arg::is(|comparator| {
+                    core::ptr::eq(*comparator as *const (), <T as PartialEq>::eq as *const ())
+                }),
+                automock::Arg::is(|maybe_deref_info: &Option<DerefInfo>| {
+                    maybe_deref_info.is_none()
+                }),
+                automock::Times::Once,
+            )
+            .no_other_calls();
+    }
+
+    #[test]
+    fn new_ref_eq_Ok() {
+        // Arrange
+        type U = i32;
+        type T = Rc<U>;
+        let print_arg = "quo vadis".to_owned();
+        let value: T = Rc::new(5);
+
+        let deref_info_mock = deref_info_mock();
+        DerefInfo::static_setup()
+            .from_ref(automock::Arg::<&T>::Any)
+            .returns(deref_info_mock);
+
+        let arg_cmp_mock = arg_cmp_mock();
+        ArgCmp::<T>::static_setup()
+            .new(
+                automock::Arg::Any,
+                automock::Arg::Any,
+                automock::Arg::Any,
+                automock::Arg::Any,
+            )
+            .returns(arg_cmp_mock)
+            .new_ref_eq(automock::Arg::Any, automock::Arg::Any)
+            .call_base();
+
+        // Act
+        _ = ArgCmp::new_ref_eq(print_arg.clone(), value.clone());
+
+        // Assert
+        ArgCmp::<T>::static_received()
+            .new(
+                print_arg,
+                automock::Arg::ref_eq(value.clone()),
+                automock::Arg::is(|comparator| {
+                    core::ptr::eq(*comparator as *const (), ptr_cmp::<U, T> as *const ())
+                }),
+                automock::Arg::is(|maybe_deref_info: &Option<DerefInfo>| {
+                    maybe_deref_info.is_some()
+                }),
+                automock::Times::Once,
+            )
+            .no_other_calls();
+
+        DerefInfo::static_received()
+            .from_ref::<T, U>(automock::Arg::Any, automock::Times::Once)
+            .no_other_calls();
+    }
+    
+    // #[test]
+    // fn print_arg_Ok() {
+    //     // Arrange
+    //     let print_arg = "quo vadis".to_owned();
+    //     let arg_cmp = ArgCmp {print_arg,value: Box::new(1), comparator: |_, _| false,
+    //     maybe_deref_info: None,
+    //     __mock_data: Default::default()}
+    // }
 
     pub mod utilities {
         use super::*;
@@ -147,7 +261,7 @@ pub(crate) mod tests {
                 value: Box::new(T::default()),
                 comparator: |_, _| false,
                 maybe_deref_info: None,
-                __am_data: Default::default(),
+                __mock_data: Default::default(),
             }
         }
     }

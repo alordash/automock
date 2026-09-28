@@ -78,7 +78,7 @@ pub(crate) mod tests {
         type ArgRefsTupleType = ();
         let mut dyn_arg_refs_tuple = DynArgRefsTuple {
             inner: None,
-            __am_data: Default::default(),
+            __mock_data: Default::default(),
         };
         dyn_arg_refs_tuple
             .setup()
@@ -100,7 +100,7 @@ pub(crate) mod tests {
         let boxed: Box<dyn IArgRefsTuple> = Box::new(arg_refs_tuple);
         let mut dyn_arg_refs_tuple = DynArgRefsTuple {
             inner: Some(boxed),
-            __am_data: Default::default(),
+            __mock_data: Default::default(),
         };
         dyn_arg_refs_tuple
             .setup()
@@ -120,7 +120,7 @@ pub(crate) mod tests {
         type ArgRefsTupleType = (i32, i32, i32);
         let mut dyn_arg_refs_tuple = DynArgRefsTuple {
             inner: None,
-            __am_data: Default::default(),
+            __mock_data: Default::default(),
         };
         dyn_arg_refs_tuple
             .setup()
@@ -141,7 +141,7 @@ pub(crate) mod tests {
         pub fn dyn_arg_refs_tuple_mock<'am>() -> DynArgRefsTuple<'am> {
             DynArgRefsTuple {
                 inner: None,
-                __am_data: Default::default()
+                __mock_data: Default::default()
             }
         }
     }

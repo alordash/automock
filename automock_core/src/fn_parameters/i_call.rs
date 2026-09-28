@@ -140,7 +140,7 @@ pub(crate) mod tests {
         impl IsZstCall {
             pub fn new() -> Self {
                 Self {
-                    __am_data: Default::default(),
+                    __mock_data: Default::default(),
                 }
             }
         }
@@ -155,7 +155,7 @@ pub(crate) mod tests {
             pub fn new() -> Self {
                 Self {
                     id: 0,
-                    __am_data: Default::default(),
+                    __mock_data: Default::default(),
                 }
             }
         }

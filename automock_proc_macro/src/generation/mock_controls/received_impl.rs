@@ -283,7 +283,7 @@ fn generate_regular_fn_no_other_calls(span: Span) -> ImplItemFn {
             and_token: Token![&](span),
             mutability: None,
             expr: Box::new(Expr::Field(expr::field::new_self(Ident::new(
-                "__am_data",
+                "__mock_data",
                 span,
             )))),
         })],

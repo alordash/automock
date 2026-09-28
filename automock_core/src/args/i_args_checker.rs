@@ -53,7 +53,7 @@ pub(crate) mod tests {
         impl ArgsCheckerMock {
             pub fn new() -> Self {
                 Self {
-                    __am_data: Default::default(),
+                    __mock_data: Default::default(),
                 }
             }
         }

@@ -22,19 +22,12 @@ impl DerefInfo {
         let dyn_ref: &dyn Deref<Target = U> = expected_value;
         // SAFETY: refer to `FatPointer` safety comment.
         let fat_ptr: FatPointer = unsafe { core::mem::transmute(dyn_ref) };
-        let result = Self {
-            expected_value_deref_ptr,
-            deref_vtable_ptr: fat_ptr.metadata_pointer,
-        };
+        let result = Self::new(expected_value_deref_ptr, fat_ptr.metadata_pointer);
         return result;
     }
 
     pub fn expected_value_deref_ptr(&self) -> *const () {
         self.expected_value_deref_ptr
-    }
-
-    pub fn deref_vtable_ptr(&self) -> *const () {
-        self.deref_vtable_ptr
     }
 
     pub fn get_actual_value_deref_ptr<T: ?Sized>(&self, actual_value: &T) -> *const () {
@@ -50,5 +43,21 @@ impl DerefInfo {
             unsafe { core::mem::transmute(raw_fat_pointer) };
         let result = actual_value_as_dyn_ref_ref.deref() as *const ();
         return result;
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use super::*;
+
+    pub mod utilities {
+        use super::*;
+        pub fn deref_info_mock() -> DerefInfo {
+            DerefInfo {
+                expected_value_deref_ptr: core::ptr::null(),
+                deref_vtable_ptr: core::ptr::null(),
+                __mock_data: Default::default(),
+            }
+        }
     }
 }
