@@ -1,5 +1,7 @@
 use std::hash::{DefaultHasher, Hasher};
 
+pub trait SizedHasher: Hasher + Sized {}
+
 #[cfg_attr(test, automock::mock)]
 #[derive(Clone)]
 pub struct GenericsHasher {
@@ -25,6 +27,8 @@ impl Hasher for GenericsHasher {
         self.inner.write(bytes);
     }
 }
+
+impl SizedHasher for GenericsHasher {}
 
 #[cfg(test)]
 pub(crate) mod tests {

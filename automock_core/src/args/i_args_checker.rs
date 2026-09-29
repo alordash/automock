@@ -81,10 +81,10 @@ pub(crate) mod tests {
             fn get_generic_parameter_infos(&self) -> Vec<GenericParameterInfo> {
                 unreachable!()
             }
-            fn hash_generics_type_ids(&self, hasher: &mut dyn Hasher) {
+            fn hash_generics_type_ids(&self, hasher: &mut GenericsHasher) {
                 unreachable!()
             }
-            fn hash_const_values(&self, hasher: &mut dyn Hasher) {
+            fn hash_const_values(&self, hasher: &mut GenericsHasher) {
                 unreachable!()
             }
             fn get_generics_hash_key(&self) -> GenericsHashKey {

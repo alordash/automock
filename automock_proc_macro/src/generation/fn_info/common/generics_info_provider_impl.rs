@@ -271,17 +271,10 @@ fn generate_hash_fn_sig(span: Span, fn_name: &'static str) -> Signature {
                 and_token: Token![&](span),
                 lifetime: None,
                 mutability: Some(Token![mut](span)),
-                elem: Box::new(Type::TraitObject(TypeTraitObject {
-                    attrs: Vec::new(),
-                    dyn_token: Some(Token![dyn](span)),
-                    bounds: punctuated([TypeParamBound::Trait(TraitBound {
-                        paren_token: None,
-                        lifetimes: None,
-                        modifiers: TraitBoundModifiers::default(),
-                        maybe: None,
-                        path: path::new_global(span, ["std", "hash", "Hasher"]),
-                    })]),
-                })),
+                elem: Box::new(Type::Path(r#type::path::new_global(
+                    span,
+                    for_generated::new("GenericsHasher"),
+                ))),
             })),
         }),
     ]);

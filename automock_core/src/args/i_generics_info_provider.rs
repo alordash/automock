@@ -8,9 +8,9 @@ pub trait IGenericsInfoProvider {
         Vec::new()
     }
 
-    fn hash_generics_type_ids(&self, #[allow(unused_variables)] hasher: &mut dyn Hasher) {}
+    fn hash_generics_type_ids(&self, #[allow(unused_variables)] hasher: &mut GenericsHasher) {}
 
-    fn hash_const_values(&self, #[allow(unused_variables)] hasher: &mut dyn Hasher) {}
+    fn hash_const_values(&self, #[allow(unused_variables)] hasher: &mut GenericsHasher) {}
 
     fn get_generics_hash_key(&self) -> GenericsHashKey {
         let mut hasher = GenericsHasher::new();
@@ -128,14 +128,14 @@ mod tests {
             .received()
             .as_IGenericsInfoProvider()
             .hash_generics_type_ids(
-                automock::Arg::ref_eq(&mut generics_hasher_mock as &mut dyn Hasher),
+                automock::Arg::ref_eq(&mut generics_hasher_mock as &mut GenericsHasher),
                 automock::Times::Once,
             );
         generics_info_provider
             .received()
             .as_IGenericsInfoProvider()
             .hash_const_values(
-                automock::Arg::ref_eq(&mut generics_hasher_mock as &mut dyn Hasher),
+                automock::Arg::ref_eq(&mut generics_hasher_mock as &mut GenericsHasher),
                 automock::Times::Once,
             )
             .no_other_calls();
@@ -184,9 +184,9 @@ mod tests {
         }
         #[automock::mock]
         impl IGenericsInfoProvider for GenericsInfoProviderWithoutGetGenericsHashKey {
-            fn hash_generics_type_ids(&self, hasher: &mut dyn Hasher) {}
+            fn hash_generics_type_ids(&self, hasher: &mut GenericsHasher) {}
 
-            fn hash_const_values(&self, hasher: &mut dyn Hasher) {}
+            fn hash_const_values(&self, hasher: &mut GenericsHasher) {}
         }
     }
 }
