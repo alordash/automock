@@ -6,6 +6,7 @@ use std::fmt::Formatter;
 // Two layer map: fn name + fn generics
 type Map = IndexMap<String, IndexMap<GenericsHashKey, *const ()>>;
 
+// TODO - add `id` field that uniquely identifies each mock. Write about it in the docs
 pub struct MockData {
     map: Map,
 }

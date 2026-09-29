@@ -87,7 +87,7 @@ pub(crate) mod tests {
     fn get_dyn_tuple_of_refs_IsNotZst_ReturnsFromRawPtr() {
         // Arrange
         let mut call = IsZstCall::new();
-        let raw_ptr = 1234usize as *mut ();
+        let raw_ptr = 1234 as *mut ();
         call.setup()
             .as_ICall()
             .is_zst()
@@ -120,6 +120,7 @@ pub(crate) mod tests {
 
     pub mod utilities {
         use super::*;
+        use std::hash::Hasher;
 
         pub struct DefaultCall;
         impl IGenericsInfoProvider for DefaultCall {}
@@ -165,10 +166,10 @@ pub(crate) mod tests {
             fn get_generic_parameter_infos(&self) -> Vec<GenericParameterInfo> {
                 unreachable!()
             }
-            fn hash_generics_type_ids(&self, hasher: &mut GenericsHasher) {
+            fn hash_generics_type_ids(&self, hasher: &mut dyn Hasher) {
                 unreachable!()
             }
-            fn hash_const_values(&self, hasher: &mut GenericsHasher) {
+            fn hash_const_values(&self, hasher: &mut dyn Hasher) {
                 unreachable!()
             }
             fn get_generics_hash_key(&self) -> GenericsHashKey {

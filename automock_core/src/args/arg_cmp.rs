@@ -375,8 +375,8 @@ pub(crate) mod tests {
         // Arrange
         type T = i32;
         let mut deref_info = deref_info_mock();
-        let expected_ptr = 1234usize as *const ();
-        let actual_ptr = 5678usize as *const ();
+        let expected_ptr = 1234 as *const ();
+        let actual_ptr = 5678 as *const ();
         deref_info
             .setup()
             .expected_value_deref_ptr()

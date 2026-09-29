@@ -3,6 +3,7 @@ use crate::transmute_lifetime;
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 
+#[derive(Clone)]
 pub(crate) struct Internal;
 
 /// Argument matcher, checks whether certain argument value matches some expectation.

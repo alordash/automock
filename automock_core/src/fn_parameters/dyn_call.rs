@@ -1,6 +1,7 @@
 use crate::args::*;
 use crate::fn_parameters::*;
 use crate::*;
+use std::hash::Hasher;
 
 pub struct DynCall<'am> {
     inner: Box<dyn ICall + 'am>,
@@ -25,11 +26,11 @@ impl<'am> IGenericsInfoProvider for DynCall<'am> {
         self.inner.get_generic_parameter_infos()
     }
 
-    fn hash_generics_type_ids(&self, hasher: &mut GenericsHasher) {
+    fn hash_generics_type_ids(&self, hasher: &mut dyn Hasher) {
         self.inner.hash_generics_type_ids(hasher)
     }
 
-    fn hash_const_values(&self, hasher: &mut GenericsHasher) {
+    fn hash_const_values(&self, hasher: &mut dyn Hasher) {
         self.inner.hash_const_values(hasher)
     }
 }
@@ -207,7 +208,10 @@ mod tests {
         call_mock
             .received()
             .as_IGenericsInfoProvider()
-            .hash_generics_type_ids(automock::Arg::ref_eq(&mut generics_hasher), 1.time())
+            .hash_generics_type_ids(
+                automock::Arg::ref_eq(&mut generics_hasher as &mut dyn Hasher),
+                1.time(),
+            )
             .no_other_calls();
     }
 
@@ -225,7 +229,10 @@ mod tests {
         call_mock
             .received()
             .as_IGenericsInfoProvider()
-            .hash_const_values(automock::Arg::ref_eq(&mut generics_hasher), 1.time())
+            .hash_const_values(
+                automock::Arg::ref_eq(&mut generics_hasher as &mut dyn Hasher),
+                1.time(),
+            )
             .no_other_calls();
     }
 }
