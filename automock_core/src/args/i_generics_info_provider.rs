@@ -67,30 +67,26 @@ mod tests {
     fn hash_generics_type_ids_DoesNothing() {
         // Arrange
         let generics_info_provider = DefaultGenericsInfoProvider::new();
-        let mut hasher = GenericsHasher::new();
-        let expected_hash = hasher.finish();
+        let mut hasher = generics_hasher_mock();
 
         // Act
         generics_info_provider.hash_generics_type_ids(&mut hasher);
 
         // Assert
-        let hash = hasher.finish();
-        assert_eq!(hash, expected_hash);
+        hasher.received().no_other_calls();
     }
 
     #[test]
     fn hash_const_values_ids_DoesNothing() {
         // Arrange
         let generics_info_provider = DefaultGenericsInfoProvider::new();
-        let mut hasher = GenericsHasher::new();
-        let expected_hash = hasher.finish();
+        let mut hasher = generics_hasher_mock();
 
         // Act
         generics_info_provider.hash_const_values(&mut hasher);
 
         // Assert
-        let hash = hasher.finish();
-        assert_eq!(hash, expected_hash);
+        hasher.received().no_other_calls();
     }
 
     #[test]

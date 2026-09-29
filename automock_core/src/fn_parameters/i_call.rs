@@ -120,7 +120,6 @@ pub(crate) mod tests {
 
     pub mod utilities {
         use super::*;
-        use std::hash::Hasher;
 
         pub struct DefaultCall;
         impl IGenericsInfoProvider for DefaultCall {}

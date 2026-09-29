@@ -1,7 +1,6 @@
 use crate::args::*;
 use crate::fn_parameters::*;
 use crate::*;
-use std::hash::Hasher;
 
 pub struct DynCall<'am> {
     inner: Box<dyn ICall + 'am>,

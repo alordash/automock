@@ -1,6 +1,5 @@
 use crate::args::*;
 use crate::fn_parameters::DynCall;
-use std::hash::Hasher;
 
 pub struct DynArgsChecker<'am> {
     inner: Box<dyn IArgsChecker + 'am>,
