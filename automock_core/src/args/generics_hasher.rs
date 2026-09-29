@@ -15,7 +15,7 @@ impl GenericsHasher {
     }
 }
 
-#[automock::mock]
+#[cfg_attr(test, automock::mock)]
 impl Hasher for GenericsHasher {
     fn finish(&self) -> u64 {
         self.inner.finish()

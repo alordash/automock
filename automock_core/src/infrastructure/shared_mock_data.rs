@@ -1,6 +1,6 @@
 use crate::args::*;
 use crate::infrastructure::*;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 pub trait ISharedMockData {
     fn get_shared_fn_data<
@@ -17,7 +17,7 @@ pub trait ISharedMockData {
     ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>;
 }
 
-pub type SharedMockData = Arc<RwLock<MockData>>;
+pub type SharedMockData = Arc<IdMockData>;
 
 impl ISharedMockData for SharedMockData {
     fn get_shared_fn_data<
@@ -34,7 +34,8 @@ impl ISharedMockData for SharedMockData {
     ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
     {
         let unique_fn_ident = format!("{owner_name}_{fn_ident}");
-        self.write()
+        self.inner()
+            .write()
             .expect(UNABLE_TO_LOCK_FOR_WRITING_ERROR)
             .get_or_create_fn_data(
                 Some(owner_name),
@@ -47,7 +48,8 @@ impl ISharedMockData for SharedMockData {
 
 impl IMockData for SharedMockData {
     fn get_received_nothing_else_error_msgs(&self) -> Vec<Vec<String>> {
-        self.read()
+        self.inner()
+            .read()
             .expect(UNABLE_TO_LOCK_FOR_READING_ERROR)
             .get_received_nothing_else_error_msgs()
     }
