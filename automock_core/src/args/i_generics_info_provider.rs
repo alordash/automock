@@ -124,14 +124,14 @@ mod tests {
             .received()
             .as_IGenericsInfoProvider()
             .hash_generics_type_ids(
-                automock::Arg::ref_eq(&mut generics_hasher_mock as &mut GenericsHasher),
+                automock::Arg::ref_eq(&mut generics_hasher_mock),
                 automock::Times::Once,
             );
         generics_info_provider
             .received()
             .as_IGenericsInfoProvider()
             .hash_const_values(
-                automock::Arg::ref_eq(&mut generics_hasher_mock as &mut GenericsHasher),
+                automock::Arg::ref_eq(&mut generics_hasher_mock),
                 automock::Times::Once,
             )
             .no_other_calls();

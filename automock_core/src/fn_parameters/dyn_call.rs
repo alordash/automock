@@ -208,7 +208,7 @@ mod tests {
             .received()
             .as_IGenericsInfoProvider()
             .hash_generics_type_ids(
-                automock::Arg::ref_eq(&mut generics_hasher as &mut GenericsHasher),
+                automock::Arg::ref_eq(&mut generics_hasher),
                 1.time(),
             )
             .no_other_calls();
@@ -229,7 +229,7 @@ mod tests {
             .received()
             .as_IGenericsInfoProvider()
             .hash_const_values(
-                automock::Arg::ref_eq(&mut generics_hasher as &mut GenericsHasher),
+                automock::Arg::ref_eq(&mut generics_hasher),
                 1.time(),
             )
             .no_other_calls();
