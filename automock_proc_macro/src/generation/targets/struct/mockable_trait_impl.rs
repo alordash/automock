@@ -53,6 +53,7 @@ pub(crate) fn generate(
         qself: None,
         path: path::from_ident_with_generics(static_received_struct_ident, &generics),
     });
+    let id_impl = id_impl(span);
     let type_setup = associated_type_impl(span, "Setup", setup_struct_type);
     let fn_setup = fn_control(span, ControlType::Setup);
     let type_received = associated_type_impl(span, "Received", received_struct_type);
@@ -84,6 +85,7 @@ pub(crate) fn generate(
         self_ty: Box::new(struct_type),
         brace_token: token::Brace(span),
         items: vec![
+            ImplItem::Fn(id_impl),
             ImplItem::Type(type_setup),
             ImplItem::Fn(fn_setup),
             ImplItem::Type(type_received),
@@ -93,6 +95,44 @@ pub(crate) fn generate(
             ImplItem::Type(type_static_received),
             ImplItem::Fn(fn_static_received),
         ],
+    };
+    return result;
+}
+
+fn id_impl(span: Span) -> ImplItemFn {
+    let id_stmt = expr::method_call::new(
+        span,
+        Expr::Field(expr::field::new(
+            Expr::Path(self_expr_path(span)),
+            Ident::new("__mock_data", span),
+        )),
+        Ident::new("id", span),
+        [],
+    );
+    let result = ImplItemFn {
+        attrs: Vec::new(),
+        vis: Visibility::Inherited,
+        modifiers: FnModifiers::default(),
+        sig: Signature {
+            constness: None,
+            asyncness: None,
+            safety: Safety::Default,
+            abi: None,
+            fn_token: Token![fn](span),
+            ident: Ident::new("id", span),
+            generics: Generics::default(),
+            paren_token: token::Paren(span),
+            inputs: punctuated([ref_self_fn_arg(span)]),
+            variadic: None,
+            output: ReturnType::Type(
+                Token!(->)(span),
+                Box::new(Type::Path(r#type::path::new(span, ["usize"]))),
+            ),
+        },
+        block: Block {
+            brace_token: token::Brace(span),
+            stmts: vec![Stmt::Expr(Expr::MethodCall(id_stmt), None)],
+        },
     };
     return result;
 }
