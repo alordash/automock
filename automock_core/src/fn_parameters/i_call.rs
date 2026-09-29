@@ -71,6 +71,7 @@ pub(crate) mod tests {
             .returns(dyn_arg_refs_tuple);
 
         // Act
+        todo!();
         _ = call.get_dyn_tuple_of_refs();
 
         // Assert
@@ -100,6 +101,7 @@ pub(crate) mod tests {
             .returns(dyn_arg_refs_tuple);
 
         // Act
+        todo!();
         _ = call.get_dyn_tuple_of_refs();
 
         // Assert
