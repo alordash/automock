@@ -19,7 +19,7 @@ pub(crate) fn new(
         format_ident!("{ident}{ident_suffix}")
     };
     let result = ItemStruct {
-        attrs: vec![attributes::doc_hidden(span)],
+        attrs: Vec::new(),
         vis: Visibility::Public(Token![pub](span)),
         struct_token: Token![struct](span),
         ident: result_ident,
@@ -51,7 +51,7 @@ pub(crate) fn new_static(
         format_ident!("{ident}Static{ident_suffix}")
     };
     let result = ItemStruct {
-        attrs: vec![attributes::doc_hidden(span)],
+        attrs: Vec::new(),
         vis: Visibility::Public(Token![pub](span)),
         struct_token: Token![struct](span),
         ident: result_ident,

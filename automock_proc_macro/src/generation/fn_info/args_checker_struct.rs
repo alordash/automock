@@ -15,7 +15,7 @@ pub(crate) fn generate(
     let span = fn_syntax.spans.inputs;
     let fields_named = generate_fields(fn_syntax);
     let item_struct = ItemStruct {
-        attrs: vec![attributes::doc_hidden(span)],
+        attrs: Vec::new(),
         vis: Visibility::Inherited,
         struct_token: Token![struct](span),
         ident: format_ident!("{}_ArgsChecker", fn_syntax.fn_ident),

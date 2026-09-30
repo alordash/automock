@@ -22,10 +22,7 @@ pub(crate) fn generate_static_fn(
     let result = ItemFn {
         attrs: fn_info
             .attributes
-            .clone()
-            .into_iter()
-            .chain([attributes::doc_hidden(span)])
-            .collect(),
+            .clone(),
         vis: Visibility::Public(Token![pub](span)),
         modifiers: FnModifiers::default(),
         sig,
@@ -56,10 +53,7 @@ pub(crate) fn generate_associated(
     let result = ImplItemFn {
         attrs: fn_info
             .attributes
-            .clone()
-            .into_iter()
-            .chain([attributes::doc_hidden(span)])
-            .collect(),
+            .clone(),
         vis: Visibility::Inherited,
         modifiers: FnModifiers::default(),
         sig,

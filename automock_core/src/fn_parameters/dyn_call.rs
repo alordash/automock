@@ -196,6 +196,7 @@ mod tests {
     #[test]
     fn IGenericsInfoProvider_hash_generics_type_ids_ForwardsToInner() {
         // Arrange
+        GenericsHasher::static_setup().new().call_base();
         let mut generics_hasher = GenericsHasher::new();
         let mut call_mock = CallMock::new();
         let dyn_call = DynCall::new(call_mock.clone());
@@ -217,6 +218,7 @@ mod tests {
     #[test]
     fn IGenericsInfoProvider_hash_const_values_ids_ForwardsToInner() {
         // Arrange
+        GenericsHasher::static_setup().new().call_base();
         let mut generics_hasher = GenericsHasher::new();
         let mut call_mock = CallMock::new();
         let dyn_call = DynCall::new(call_mock.clone());

@@ -5,7 +5,7 @@ use syn::*;
 
 pub(crate) fn new_field(span: Span) -> Field {
     let result = Field {
-        attrs: vec![attributes::doc_hidden(span)],
+        attrs: Vec::new(),
         vis: Visibility::Public(Token![pub](span)),
         modifiers: FieldModifiers::default(),
         ident: Some(Ident::new("__mock_data", span)),

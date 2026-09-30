@@ -78,6 +78,7 @@ pub(crate) mod tests {
         type T = Rc<U>;
         type U = i32;
         let deref_info_mock = deref_info_mock();
+        let deref_info_mock_id = deref_info_mock.id();
         DerefInfo::static_setup()
             .new(automock::Arg::Any, automock::Arg::Any)
             .returns(deref_info_mock)
@@ -87,10 +88,11 @@ pub(crate) mod tests {
         let value = T::new(5);
 
         // Act
-        todo!();
-        _ = DerefInfo::from_ref(&value);
+        let result = DerefInfo::from_ref(&value);
 
         // Assert
+        assert_eq!(result.id(), deref_info_mock_id);
+        
         let expected_expected_value_deref_ptr = value.deref() as *const _ as *const ();
         DerefInfo::static_received()
             .new(

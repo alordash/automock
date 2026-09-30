@@ -119,21 +119,11 @@ mod tests {
 
         // Assert
         assert_eq!(result.0, hash);
-        // TODO - UB from dangling reference - use `Arg::is` that checks mock object id instead
         generics_info_provider
             .received()
             .as_IGenericsInfoProvider()
-            .hash_generics_type_ids(
-                automock::Arg::ref_eq(&mut generics_hasher_mock),
-                automock::Times::Once,
-            );
-        generics_info_provider
-            .received()
-            .as_IGenericsInfoProvider()
-            .hash_const_values(
-                automock::Arg::ref_eq(&mut generics_hasher_mock),
-                automock::Times::Once,
-            )
+            .hash_generics_type_ids(automock::Arg::Any, automock::Times::Once)
+            .hash_const_values(automock::Arg::Any, automock::Times::Once)
             .no_other_calls();
 
         GenericsHasher::static_received()

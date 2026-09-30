@@ -47,7 +47,6 @@ pub(crate) mod tests {
 
     pub mod utilities {
         use super::*;
-        use std::hash::Hasher;
 
         #[mock]
         pub struct DefaultArgsChecker;

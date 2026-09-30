@@ -165,6 +165,7 @@ pub(crate) mod tests {
         let print_arg = "quo vadis".to_owned();
         let value: T = 5;
         let arg_cmp_mock = arg_cmp_mock();
+        let arg_cmp_mock_id = arg_cmp_mock.id();
         ArgCmp::<T>::static_setup()
             .new(
                 automock::Arg::Any,
@@ -177,10 +178,11 @@ pub(crate) mod tests {
             .call_base();
 
         // Act
-        todo!();
-        _ = ArgCmp::new_eq(print_arg.clone(), value);
+        let result = ArgCmp::new_eq(print_arg.clone(), value);
 
         // Assert
+        assert_eq!(result.id(), arg_cmp_mock_id);
+        
         ArgCmp::<T>::static_received()
             .new(
                 print_arg,
@@ -210,6 +212,7 @@ pub(crate) mod tests {
             .returns(deref_info_mock);
 
         let arg_cmp_mock = arg_cmp_mock();
+        let arg_cmp_mock_id = arg_cmp_mock.id();
         ArgCmp::<T>::static_setup()
             .new(
                 automock::Arg::Any,
@@ -222,10 +225,11 @@ pub(crate) mod tests {
             .call_base();
 
         // Act
-        todo!();
-        _ = ArgCmp::new_ref_eq(print_arg.clone(), value.clone());
+        let result = ArgCmp::new_ref_eq(print_arg.clone(), value.clone());
 
         // Assert
+        assert_eq!(result.id(), arg_cmp_mock_id);
+        
         ArgCmp::<T>::static_received()
             .new(
                 print_arg,

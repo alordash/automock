@@ -101,13 +101,13 @@ fn generate_trait_impl(
             trait_info
                 .associated_fns
                 .iter()
-                .map(|x| map_fn( mock_struct_path.clone(), x, mod_ident.clone(), false)),
+                .map(|x| map_fn(mock_struct_path.clone(), x, mod_ident.clone(), false)),
         )
         .chain(
             trait_info
                 .static_fns
                 .iter()
-                .map(|x| map_fn( mock_struct_path.clone(), x, mod_ident.clone(), true)),
+                .map(|x| map_fn(mock_struct_path.clone(), x, mod_ident.clone(), true)),
         )
         .collect();
     items_with_order.sort_by_key(|a| a.order_number);
@@ -237,6 +237,7 @@ fn generate_inner_impl(
     maybe_associated_controls: &Option<AssociatedControls>,
     maybe_static_controls: &Option<StaticControls>,
 ) -> ItemImpl {
+    let id_fn_impl = id_fn_impl::new(span, id_fn_impl::Params { public: true });
     let mock_struct_fn_new = mock_struct_fn_new::new(span);
     let associated_controls_creation_fns =
         maybe_associated_controls
@@ -280,7 +281,8 @@ fn generate_inner_impl(
         .iter()
         .chain(trait_info.static_fns.iter())
         .filter_map(|fn_info| try_extract_base_fn(span, trait_info, fn_info, mod_ident));
-    let items = core::iter::once(mock_struct_fn_new)
+    let items = [id_fn_impl, mock_struct_fn_new]
+        .into_iter()
         .chain(associated_controls_creation_fns.into_iter().flatten())
         .chain(static_controls_creation_fns.into_iter().flatten())
         .chain(base_fns.into_iter())

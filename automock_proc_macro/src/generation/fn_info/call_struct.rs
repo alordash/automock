@@ -15,7 +15,7 @@ pub(crate) fn generate(fn_syntax: &FnSyntax, generics_for_impl: Generics) -> Cal
     let path = path::from_ident_with_generics(struct_ident.clone(), &generics);
 
     let item_struct = ItemStruct {
-        attrs: vec![attributes::doc_hidden(span)],
+        attrs: Vec::new(),
         vis: Visibility::Public(Token![pub](span)),
         struct_token: Token![struct](span),
         ident: struct_ident.clone(),
