@@ -5,16 +5,18 @@ use std::collections::VecDeque;
 use std::marker::PhantomData;
 use std::rc::Rc;
 
+#[cfg_attr(test, automock::mock)]
 pub struct FnConfig<'am, TMock> {
     _phantom_mock: PhantomData<TMock>,
     pub args_checker: DynArgsChecker<'am>,
     pub return_value_sources: VecDeque<ReturnValueSource<'am>>,
     pub calls: Vec<Rc<DynCall<'am>>>,
     #[allow(clippy::type_complexity)]
-    pub callback: Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>)>>>,
+    pub callback: Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>) + 'am>>>,
     pub call_base: bool,
 }
 
+#[cfg_attr(test, automock::mock)]
 impl<'am, TMock> FnConfig<'am, TMock> {
     pub(crate) fn new(args_checker: DynArgsChecker<'am>) -> Self {
         FnConfig {
@@ -31,16 +33,16 @@ impl<'am, TMock> FnConfig<'am, TMock> {
         self.return_value_sources.push_back(return_value);
     }
 
-    pub(crate) fn add_return_value_sources(
+    pub(crate) fn add_return_value_sources<T: IntoIterator<Item = ReturnValueSource<'am>>>(
         &mut self,
-        return_values: impl IntoIterator<Item = ReturnValueSource<'am>>,
+        return_values: T,
     ) {
         self.return_value_sources.extend(return_values);
     }
 
-    pub(crate) fn set_callback<TArgRefsTuple, TMockArg>(
+    pub(crate) fn set_callback<TArgRefsTuple: 'am, TMockArg: 'am>(
         &mut self,
-        mut callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'static,
+        mut callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'am,
     ) {
         let dyn_callback = move |raw_mock_ptr: *const (), dyn_call: &DynCall<'am>| {
             let arg_refs_tuple = if size_of::<TArgRefsTuple>() == 0 {
@@ -111,7 +113,9 @@ impl<'am, TMock> FnConfig<'am, TMock> {
     }
 
     #[allow(clippy::type_complexity)]
-    pub(crate) fn get_callback(&self) -> Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>)>>> {
+    pub(crate) fn get_callback(
+        &self,
+    ) -> Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>) + 'am>>> {
         self.callback.clone()
     }
 

@@ -191,8 +191,10 @@ mod internal {
             for call_info in specific_call_infos.iter_mut() {
                 let call_args_check_results = dyn_args_checker.check(call_info.get_call());
                 let is_matching = call_args_check_results.iter().all(ArgCheckResult::is_ok);
-                let ordered_call_check_result =
-                    OrderedCallCheckResult::new(call_info.number, call_args_check_results);
+                let ordered_call_check_result = OrderedCallCheckResult {
+                    call_order_number: call_info.number,
+                    args_check_results: call_args_check_results,
+                };
                 if is_matching {
                     call_info.mark_as_verified();
                     matching_calls_args_check_results.push(ordered_call_check_result);
@@ -200,10 +202,12 @@ mod internal {
                     non_matching_calls_args_check_results.push(ordered_call_check_result);
                 }
             }
-            let matching_calls_check_result =
-                OrderedCallsCheckResult::new(matching_calls_args_check_results);
-            let non_matching_calls_check_result =
-                OrderedCallsCheckResult::new(non_matching_calls_args_check_results);
+            let matching_calls_check_result = OrderedCallsCheckResult {
+                calls_args_check_results: matching_calls_args_check_results,
+            };
+            let non_matching_calls_check_result = OrderedCallsCheckResult {
+                calls_args_check_results: non_matching_calls_args_check_results,
+            };
             return (matching_calls_check_result, non_matching_calls_check_result);
         }
 

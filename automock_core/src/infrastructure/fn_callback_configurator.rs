@@ -35,7 +35,11 @@ impl<'am, TMock, TOwner, TArgRefsTuple, TMockArg, const PASSES_MOCK_TO_CALLBACK:
 impl<'am, TMock, TOwner, TArgRefsTuple, TMockArg>
     FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, false>
 {
-    pub fn and_does(&self, mut callback: impl FnMut(TArgRefsTuple) + 'static) -> &'am TOwner {
+    pub fn and_does(&self, mut callback: impl FnMut(TArgRefsTuple) + 'static) -> &'am TOwner
+    where
+        TMock: 'am,
+        TArgRefsTuple: 'am,
+    {
         let callback_with_mock =
             move |_mock: &TMock, arg_refs_tuple: TArgRefsTuple| callback(arg_refs_tuple);
         self.fn_config.borrow_mut().set_callback(callback_with_mock);
@@ -46,10 +50,11 @@ impl<'am, TMock, TOwner, TArgRefsTuple, TMockArg>
 impl<'am, TMock, TOwner, TArgRefsTuple, TMockArg>
     FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, true>
 {
-    pub fn and_does(
-        &self,
-        callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'static,
-    ) -> &'am TOwner {
+    pub fn and_does(&self, callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'am) -> &'am TOwner
+    where
+        TMockArg: 'am,
+        TArgRefsTuple: 'am,
+    {
         self.fn_config.borrow_mut().set_callback(callback);
         return self.owner;
     }

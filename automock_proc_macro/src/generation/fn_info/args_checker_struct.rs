@@ -3,7 +3,7 @@ mod args_checker_impl;
 use crate::generation::fn_info::models::*;
 use crate::generation::fn_info::*;
 use crate::preparation::r#fn::models::*;
-use not_enough_syntax::{attributes, path};
+use not_enough_syntax::path;
 use quote::format_ident;
 use syn::*;
 

@@ -176,7 +176,11 @@ impl<'am, TMock, TOwner, TArgRefsTuple, TReturnValue, TMockArg, const SUPPORTS_B
     /// Adds callback that is called after source function was called. Callback receives references
     /// to source function argument values. If function has enabled base implementation, this
     /// callback is called BEFORE the base implementation.
-    pub fn does(&self, mut callback: impl FnMut(TArgRefsTuple) + 'static) -> &'am TOwner {
+    pub fn does(&self, mut callback: impl FnMut(TArgRefsTuple) + 'static) -> &'am TOwner
+    where
+        TMock: 'am,
+        TArgRefsTuple: 'am,
+    {
         let callback_with_mock =
             move |_mock: &TMock, arg_refs_tuple: TArgRefsTuple| callback(arg_refs_tuple);
         self.fn_config.borrow_mut().set_callback(callback_with_mock);
@@ -209,7 +213,11 @@ impl<
     /// Adds callback that is called after source function was called. Callback receives reference
     /// to mock object and references to source function argument values. If function has enabled
     /// base implementation, this callback is called BEFORE the base implementation.
-    pub fn does(&self, callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'static) -> &'am TOwner {
+    pub fn does(&self, callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'static) -> &'am TOwner
+    where
+        TMockArg: 'am,
+        TArgRefsTuple: 'am,
+    {
         self.fn_config.borrow_mut().set_callback(callback);
         return self.owner;
     }
