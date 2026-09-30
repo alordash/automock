@@ -163,7 +163,7 @@ impl<T: ?Sized> Arg<T> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     #![allow(non_snake_case)]
 
     use super::*;
@@ -615,7 +615,7 @@ mod tests {
             .no_other_calls();
     }
 
-    mod utilities {
+    pub mod utilities {
         use super::*;
 
         #[derive(Debug, PartialEq, Clone, Default)]
