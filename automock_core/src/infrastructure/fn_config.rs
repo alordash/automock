@@ -129,20 +129,16 @@ impl<'am, TMock> FnConfig<'am, TMock> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     #![allow(non_snake_case)]
     use super::*;
     use crate::args::i_args_checker::tests::utilities::*;
     use crate::fn_parameters::dyn_arg_refs_tuple::tests::utilities::*;
     use crate::fn_parameters::i_call::tests::utilities::*;
+    use crate::infrastructure::fn_callback_configurator::tests::utilities::*;
+    use crate::infrastructure::fn_configurator::tests::utilities::*;
     use automock::Mockable;
     use utilities::*;
-
-    struct Mock;
-    type MockArg = i32;
-    struct ZeroSizeArgRefsTuple;
-    #[derive(Clone, PartialEq)]
-    struct ArgRefsTuple(i32);
 
     #[test]
     fn new_Ok() {
@@ -219,7 +215,7 @@ mod tests {
             .setup()
             .set_callback::<ZeroSizeArgRefsTuple, MockArg>(automock::Arg::Any)
             .call_base();
-        let mock_arg: MockArg = 5;
+        let mock_arg = MockArg(5);
         let raw_mock_arg_ptr = &mock_arg as *const _ as *const ();
         let dyn_call = DynCall::new(CallMock::new());
 
@@ -246,12 +242,11 @@ mod tests {
             .setup()
             .set_callback::<ArgRefsTuple, MockArg>(automock::Arg::Any)
             .call_base();
-        let mock_arg: MockArg = 5;
+        let mock_arg = MockArg(5);
         let raw_mock_arg_ptr = &mock_arg as *const _ as *const ();
         let mut call_mock = CallMock::new();
         let arg_refs_tuple = ArgRefsTuple(10);
-        let raw_arg_refs_tuple_ptr =
-            Box::leak(Box::new(arg_refs_tuple.clone())) as *mut _ as *mut ();
+        let raw_arg_refs_tuple_ptr = Box::leak(Box::new(arg_refs_tuple)) as *mut _ as *mut ();
         call_mock
             .setup()
             .as_ICall()
@@ -427,8 +422,7 @@ mod tests {
         let existed_return_value: TExistedReturnValue = "whatever";
         let existed_return_value_source =
             ReturnValueSource::SingleTime(DynReturnValue::new(existed_return_value));
-        type TReturnValue = i32;
-        let return_value: TReturnValue = 5;
+        let return_value = ReturnValue(5);
         let return_value_source = ReturnValueSource::SingleTime(DynReturnValue::new(return_value));
         fn_config
             .return_value_sources
@@ -448,7 +442,7 @@ mod tests {
 
         // Assert
         let dyn_return_value = result.expect("Result must contain return value.");
-        let actual_return_value: TReturnValue = dyn_return_value.downcast_into();
+        let actual_return_value: ReturnValue = dyn_return_value.downcast_into();
         assert_eq!(actual_return_value, return_value);
 
         let expected_return_value_sources_length = initial_return_value_sources_length - 1;
@@ -623,8 +617,9 @@ mod tests {
         assert_eq!(result, call_base);
     }
 
-    mod utilities {
+    pub mod utilities {
         use super::*;
+        pub struct ZeroSizeArgRefsTuple;
 
         pub fn fn_config_mock<'am>() -> FnConfig<'am, Mock> {
             FnConfig {
@@ -639,17 +634,19 @@ mod tests {
         }
 
         #[automock::mock]
-        pub fn callback<TArgRefsTuple>(_: &MockArg, _: TArgRefsTuple) {
+        pub(super) fn callback<TArgRefsTuple>(_: &MockArg, _: TArgRefsTuple) {
             unreachable!()
         }
 
         #[automock::mock]
-        pub fn inner_callback<'am>(_: *const (), _: &DynCall<'am>) {
+        pub(super) fn inner_callback<'am>(_: *const (), _: &DynCall<'am>) {
             unreachable!();
         }
 
         #[automock::mock]
-        pub fn return_value_source_factory<'am>(_: DynArgRefsTuple<'am>) -> DynReturnValue<'am> {
+        pub(super) fn return_value_source_factory<'am>(
+            _: DynArgRefsTuple<'am>,
+        ) -> DynReturnValue<'am> {
             unreachable!()
         }
     }

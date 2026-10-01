@@ -11,6 +11,13 @@ impl<'am> DynReturnValue<'am> {
         }
     }
 
+    pub fn downcast_to<T: 'am>(&self) -> &T {
+        let dyn_ref = self.inner.as_ref();
+        // SAFETY: for justification refer to module level documentation.
+        let t_ref = unsafe { &*(dyn_ref as *const _ as *const T) };
+        return t_ref;
+    }
+
     pub fn downcast_into<'a, T: IReturnValue<'a>>(self) -> T {
         let raw_ptr = Box::into_raw(self.inner) as *mut T;
         // SAFETY: for justification refer to module level documentation.

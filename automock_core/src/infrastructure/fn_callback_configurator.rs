@@ -69,3 +69,138 @@ impl<'am, TMock, TOwner, TArgRefsTuple, TMockArg, const PASSES_MOCK_TO_CALLBACK:
         self.owner
     }
 }
+
+#[cfg(test)]
+pub(crate) mod tests {
+    #![allow(non_snake_case)]
+
+    use super::*;
+    use crate::transmute_lifetime;
+    use automock::Mockable;
+    use fn_config::tests::utilities::*;
+    use fn_configurator::tests::utilities::*;
+    use utilities::*;
+
+    const IRRELEVANT: bool = false;
+
+    #[test]
+    fn and_does_WithoutMock_Ok<'am>() {
+        // Arrange
+        let owner = Owner;
+        let fn_callback_configurator = fn_callback_configurator::<false>(&owner);
+        let arg_refs_tuple = ArgRefsTuple(5);
+
+        // Act
+        let result = fn_callback_configurator.and_does(mockless_callback);
+
+        // Assert
+        assert_eq!(result as *const Owner, &owner as *const Owner);
+
+        fn_callback_configurator
+            .fn_config
+            .borrow_mut()
+            .received()
+            .set_callback(
+                automock::Arg::is(|callback: &Box<dyn FnMut(&'am Mock, ArgRefsTuple)>| {
+                    #[allow(mutable_transmutes)]
+                    let mut_callback: &mut Box<dyn FnMut(&Mock, ArgRefsTuple)> =
+                        unsafe { core::mem::transmute(callback) };
+                    mut_callback.as_mut()(&Mock, arg_refs_tuple);
+                    mockless_callback::received(arg_refs_tuple, automock::Times::Once)
+                        .no_other_calls();
+                    return true;
+                }),
+                automock::Times::Once,
+            )
+            .no_other_calls();
+    }
+
+    #[test]
+    fn and_does_WithMock_Ok<'am>() {
+        // Arrange
+        let owner = Owner;
+        let fn_callback_configurator = fn_callback_configurator::<true>(&owner);
+        let mock_arg = MockArg(5);
+        let arg_refs_tuple = ArgRefsTuple(10);
+
+        // Act
+        let result = fn_callback_configurator.and_does(callback);
+
+        // Assert
+        assert_eq!(result as *const Owner, &owner as *const Owner);
+
+        fn_callback_configurator
+            .fn_config
+            .borrow_mut()
+            .received()
+            .set_callback(
+                automock::Arg::is(|callback: &Box<dyn FnMut(&'am MockArg, ArgRefsTuple)>| {
+                    #[allow(mutable_transmutes)]
+                    let mut_callback: &mut Box<
+                        dyn FnMut(&MockArg, ArgRefsTuple),
+                    > = unsafe { core::mem::transmute(callback) };
+                    mut_callback.as_mut()(&mock_arg, arg_refs_tuple);
+                    callback::received(
+                        automock::Arg::ref_eq(&mock_arg),
+                        arg_refs_tuple,
+                        automock::Times::Once,
+                    )
+                    .no_other_calls();
+                    return true;
+                }),
+                automock::Times::Once,
+            )
+            .no_other_calls();
+    }
+
+    #[test]
+    fn Deref_deref_Ok() {
+        // Arrange
+        let owner = Owner;
+        let fn_callback_configurator = fn_callback_configurator::<IRRELEVANT>(&owner);
+
+        // Act
+        let result = fn_callback_configurator.deref();
+
+        // Assert
+        assert_eq!(&owner as *const Owner, result as *const Owner);
+    }
+
+    pub mod utilities {
+        use super::*;
+
+        pub struct Owner;
+        #[derive(Clone, Copy, PartialEq)]
+        pub struct ArgRefsTuple(pub i32);
+        #[derive(Clone, Copy, PartialEq)]
+        pub struct MockArg(pub i32);
+
+        pub fn fn_callback_configurator<const PASSES_MOCK_TO_CALLBACK: bool>(
+            owner: &Owner,
+        ) -> FnCallbackConfigurator<
+            'static,
+            Mock,
+            Owner,
+            ArgRefsTuple,
+            MockArg,
+            PASSES_MOCK_TO_CALLBACK,
+        > {
+            FnCallbackConfigurator {
+                _phantom_args_tuple: PhantomData,
+                _phantom_mock_arg: PhantomData,
+                fn_config: Rc::new(RefCell::new(fn_config_mock())),
+                owner: transmute_lifetime!(owner),
+            }
+        }
+
+        #[automock::mock]
+        pub(super) fn callback(_: &MockArg, _: ArgRefsTuple) {
+            unreachable!()
+        }
+
+        #[automock::mock]
+        pub(super) fn mockless_callback(_: ArgRefsTuple) {
+            unreachable!()
+        }
+    }
+}

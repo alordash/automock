@@ -110,10 +110,11 @@ impl<
     where
         TReturnValue: IReturnValue<'a> + 'a,
     {
-        let return_value_sources = return_values
+        let return_value_sources: Vec<_> = return_values
             .into_iter()
             .map(|x| transmute_lifetime!(DynReturnValue::new(x)))
-            .map(ReturnValueSource::SingleTime);
+            .map(ReturnValueSource::SingleTime)
+            .collect();
         self.fn_config
             .borrow_mut()
             .add_return_value_sources(return_value_sources);
@@ -253,5 +254,107 @@ impl<
     {
         self.fn_config.borrow_mut().set_call_base();
         return &self.fn_callback_configurator;
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
+    #![allow(non_snake_case)]
+
+    use super::*;
+    use automock::Mockable;
+    use fn_callback_configurator::tests::utilities::*;
+    use fn_config::tests::utilities::*;
+    use utilities::*;
+
+    const IRRELEVANT: bool = false;
+
+    #[test]
+    fn returns_WithReturnValue_Ok() {
+        // Arrange
+        let owner = Owner;
+        let fn_configurator = fn_configurator::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let return_value = ReturnValue(5);
+
+        // Act
+        fn_configurator.returns(return_value);
+
+        // Assert
+        fn_configurator
+            .fn_config
+            .borrow_mut()
+            .received()
+            .add_return_value_source(automock::Arg::is(|return_value_source| {
+                let dyn_return_value = match return_value_source {
+                    ReturnValueSource::SingleTime(x) => x,
+                    _ => panic!("Return value source must be `SingleTime`, was instead: {return_value_source:?}")
+                };
+                let actual_return_value: &ReturnValue = dyn_return_value.downcast_to();
+                assert_eq!(*actual_return_value, return_value);
+                return true;
+            }), automock::Times::Once)
+            .no_other_calls();
+    }
+
+    #[test]
+    fn returns_many_WithReturnValue_Ok() {
+        // Arrange
+        let owner = Owner;
+        let fn_configurator = fn_configurator::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let return_values = [ReturnValue(5), ReturnValue(10)];
+
+        // Act
+        fn_configurator.returns_many(return_values);
+
+        // Assert
+        fn_configurator
+            .fn_config
+            .borrow_mut()
+            .received()
+            .add_return_value_sources(automock::Arg::is(|return_value_sources: &Vec<ReturnValueSource>| {
+            let actual_return_values: Vec<ReturnValue> = return_value_sources.iter().map(|return_value_source|
+            match return_value_source {
+                ReturnValueSource::SingleTime(x) => *x.downcast_to(),
+                _ => panic!("Return value source must be `SingleTime`, was instead: {return_value_source:?}")
+            }).collect();
+                assert_eq!(actual_return_values, return_values);
+                return true;
+            }), automock::Times::Once)
+            .no_other_calls();
+    }
+    
+    // TODO - other tests starting with always_returns
+
+    pub mod utilities {
+        use super::*;
+
+        pub struct Mock;
+        #[derive(Clone, Copy, PartialEq, Debug)]
+        pub struct ReturnValue(pub i32);
+
+        pub fn fn_configurator<
+            const HAS_RETURN_VALUE: bool,
+            const SUPPORTS_BASE_CALLING: bool,
+            const PASSES_MOCK_TO_CALLBACK: bool,
+        >(
+            owner: &Owner,
+        ) -> FnConfigurator<
+            'static,
+            Mock,
+            Owner,
+            ArgRefsTuple,
+            ReturnValue,
+            MockArg,
+            HAS_RETURN_VALUE,
+            SUPPORTS_BASE_CALLING,
+            PASSES_MOCK_TO_CALLBACK,
+        > {
+            FnConfigurator {
+                _phantom_return_value: PhantomData,
+                fn_config: Rc::new(RefCell::new(fn_config_mock())),
+                owner: transmute_lifetime!(owner),
+                fn_callback_configurator: fn_callback_configurator(owner),
+            }
+        }
     }
 }
