@@ -265,12 +265,13 @@ pub(crate) mod tests {
     use automock::Mockable;
     use fn_callback_configurator::tests::utilities::*;
     use fn_config::tests::utilities::*;
+    use fn_parameters::dyn_arg_refs_tuple::tests::utilities::*;
     use utilities::*;
 
     const IRRELEVANT: bool = false;
 
     #[test]
-    fn returns_WithReturnValue_Ok() {
+    fn returns_Ok() {
         // Arrange
         let owner = Owner;
         let fn_configurator = fn_configurator::<true, IRRELEVANT, IRRELEVANT>(&owner);
@@ -297,7 +298,7 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn returns_many_WithReturnValue_Ok() {
+    fn returns_many_Ok() {
         // Arrange
         let owner = Owner;
         let fn_configurator = fn_configurator::<true, IRRELEVANT, IRRELEVANT>(&owner);
@@ -312,18 +313,81 @@ pub(crate) mod tests {
             .borrow_mut()
             .received()
             .add_return_value_sources(automock::Arg::is(|return_value_sources: &Vec<ReturnValueSource>| {
-            let actual_return_values: Vec<ReturnValue> = return_value_sources.iter().map(|return_value_source|
-            match return_value_source {
-                ReturnValueSource::SingleTime(x) => *x.downcast_to(),
-                _ => panic!("Return value source must be `SingleTime`, was instead: {return_value_source:?}")
-            }).collect();
+                let actual_return_values: Vec<ReturnValue> = return_value_sources.iter().map(|return_value_source|
+                    match return_value_source {
+                        ReturnValueSource::SingleTime(x) => *x.downcast_to(),
+                        _ => panic!("Return value source must be `SingleTime`, was instead: {return_value_source:?}")
+                    }).collect();
                 assert_eq!(actual_return_values, return_values);
                 return true;
             }), automock::Times::Once)
             .no_other_calls();
     }
-    
-    // TODO - other tests starting with always_returns
+
+    #[test]
+    fn always_returns_Ok() {
+        // Arrange
+        let owner = Owner;
+        let fn_configurator = fn_configurator::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let return_value = ReturnValue(5);
+
+        // Act
+        fn_configurator.always_returns(return_value);
+
+        // Assert
+        fn_configurator
+            .fn_config
+            .borrow_mut()
+            .received()
+            .add_return_value_source(automock::Arg::is(|return_value_source| {
+                let perpetual_factory = match return_value_source {
+                    ReturnValueSource::Perpetual(x) => x,
+                    _ => panic!("Return value source must be `Perpetual`, was instead: {return_value_source:?}")
+                };
+                let actual_return_value: ReturnValue = perpetual_factory().downcast_into();
+                assert_eq!(actual_return_value, return_value);
+                return true;
+            }), automock::Times::Once)
+            .no_other_calls();
+    }
+
+    #[test]
+    fn returns_with_Ok() {
+        // Arrange
+        let owner = Owner;
+        let fn_configurator = fn_configurator::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let return_value = ReturnValue(5);
+        returns_with_factory::setup(automock::Arg::Any).returns(return_value);
+
+        // Act
+        fn_configurator.returns_with(returns_with_factory);
+
+        // Assert
+        fn_configurator
+            .fn_config
+            .borrow_mut()
+            .received()
+            .add_return_value_source(automock::Arg::is(|return_value_source| {
+                let factory = match return_value_source {
+                    ReturnValueSource::Factory(x) => x,
+                    _ => panic!("Return value source must be `Factory`, was instead: {return_value_source:?}")
+                };
+
+                let mut dyn_arg_refs_tuple_mock = dyn_arg_refs_tuple_mock();
+                let arg_refs_tuple = ArgRefsTuple(10);
+                dyn_arg_refs_tuple_mock.setup().downcast_into::<ArgRefsTuple>().returns(arg_refs_tuple.clone());
+
+                let actual_return_value: ReturnValue = factory(dyn_arg_refs_tuple_mock).downcast_into();
+                assert_eq!(actual_return_value, return_value);
+
+                returns_with_factory::received(arg_refs_tuple, automock::Times::Once).no_other_calls();
+
+                return true;
+            }), automock::Times::Once)
+            .no_other_calls();
+    }
+
+    // TODO - other tests starting with `does`
 
     pub mod utilities {
         use super::*;
@@ -355,6 +419,11 @@ pub(crate) mod tests {
                 owner: transmute_lifetime!(owner),
                 fn_callback_configurator: fn_callback_configurator(owner),
             }
+        }
+
+        #[automock::mock]
+        pub(super) fn returns_with_factory(_: ArgRefsTuple) -> ReturnValue {
+            unreachable!()
         }
     }
 }
