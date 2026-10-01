@@ -15,7 +15,6 @@ pub trait ICall: IGenericsInfoProvider {
     }
 
     #[doc(hidden)]
-    #[allow(private_interfaces)]
     fn get_dyn_tuple_of_refs<'a>(&self) -> DynArgRefsTuple<'a> {
         if self.is_zst() {
             return DynArgRefsTuple::zero_size();
@@ -153,14 +152,11 @@ pub(crate) mod tests {
 
         #[mock]
         #[derive(Clone)]
-        pub struct CallMock {
-            pub id: usize,
-        }
+        pub struct CallMock;
 
         impl CallMock {
             pub fn new() -> Self {
                 Self {
-                    id: 0,
                     __mock_data: Default::default(),
                 }
             }

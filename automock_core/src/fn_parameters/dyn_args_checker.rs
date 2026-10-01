@@ -88,10 +88,7 @@ mod tests {
         args_checker_mock
             .received()
             .as_IGenericsInfoProvider()
-            .hash_generics_type_ids(
-                automock::Arg::ref_eq(&mut generics_hasher),
-                1.time(),
-            )
+            .hash_generics_type_ids(automock::Arg::ref_eq(&mut generics_hasher), 1.time())
             .no_other_calls();
     }
 
@@ -110,10 +107,7 @@ mod tests {
         args_checker_mock
             .received()
             .as_IGenericsInfoProvider()
-            .hash_const_values(
-                automock::Arg::ref_eq(&mut generics_hasher),
-                1.time(),
-            )
+            .hash_const_values(automock::Arg::ref_eq(&mut generics_hasher), 1.time())
             .no_other_calls();
     }
 

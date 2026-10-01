@@ -18,6 +18,10 @@ impl<'am> ICall for DynCall<'am> {
     fn get_ptr_to_boxed_tuple_of_refs(&self) -> *mut () {
         self.inner.get_ptr_to_boxed_tuple_of_refs()
     }
+
+    fn get_dyn_tuple_of_refs<'a>(&self) -> DynArgRefsTuple<'a> {
+        self.inner.get_dyn_tuple_of_refs()
+    }
 }
 
 impl<'am> IGenericsInfoProvider for DynCall<'am> {
@@ -63,6 +67,7 @@ mod tests {
     #![allow(non_snake_case)]
 
     use super::*;
+    use crate::fn_parameters::dyn_arg_refs_tuple::tests::utilities::*;
     use crate::fn_parameters::i_call::tests::utilities::*;
     use automock::{AsTimes, Mockable};
 
@@ -87,29 +92,27 @@ mod tests {
     #[test]
     fn downcast_to_Ok() {
         // Arrange
-        let mut call_mock = CallMock::new();
-        call_mock.id = 123;
+        let call_mock = CallMock::new();
         let dyn_call = DynCall::new(call_mock.clone());
 
         // Act
         let result: &CallMock = dyn_call.downcast_to();
 
         // Assert
-        assert_eq!(result.id, call_mock.id);
+        assert_eq!(result.id(), call_mock.id());
     }
 
     #[test]
     fn downcast_into_Ok() {
         // Arrange
-        let mut call_mock = CallMock::new();
-        call_mock.id = 123;
+        let call_mock = CallMock::new();
         let dyn_call = DynCall::new(call_mock.clone());
 
         // Act
         let result: CallMock = dyn_call.downcast_into();
 
         // Assert
-        assert_eq!(result.id, call_mock.id);
+        assert_eq!(result.id(), call_mock.id());
     }
 
     #[test]
@@ -166,6 +169,32 @@ mod tests {
     }
 
     #[test]
+    fn ICall_get_dyn_tuple_of_refs_ForwardsToInner() {
+        // Arrange
+        let mut call_mock = CallMock::new();
+        let dyn_arg_refs_tuple = dyn_arg_refs_tuple_mock();
+        let dyn_arg_refs_tuple_id = dyn_arg_refs_tuple.id();
+        call_mock
+            .setup()
+            .as_ICall()
+            .get_dyn_tuple_of_refs()
+            .returns(dyn_arg_refs_tuple);
+
+        let dyn_call = DynCall::new(call_mock.clone());
+
+        // Act
+        let result = dyn_call.get_dyn_tuple_of_refs();
+
+        // Assert
+        assert_eq!(result.id(), dyn_arg_refs_tuple_id);
+        call_mock
+            .received()
+            .as_ICall()
+            .get_dyn_tuple_of_refs(1.time())
+            .no_other_calls();
+    }
+
+    #[test]
     fn IGenericsInfoProvider_get_generic_parameter_infos_ForwardsToInner() {
         // Arrange
         let generic_parameter_infos = vec![GenericParameterInfo::Type(GenericTypeInfo {
@@ -208,10 +237,7 @@ mod tests {
         call_mock
             .received()
             .as_IGenericsInfoProvider()
-            .hash_generics_type_ids(
-                automock::Arg::ref_eq(&mut generics_hasher),
-                1.time(),
-            )
+            .hash_generics_type_ids(automock::Arg::ref_eq(&mut generics_hasher), 1.time())
             .no_other_calls();
     }
 
@@ -230,10 +256,7 @@ mod tests {
         call_mock
             .received()
             .as_IGenericsInfoProvider()
-            .hash_const_values(
-                automock::Arg::ref_eq(&mut generics_hasher),
-                1.time(),
-            )
+            .hash_const_values(automock::Arg::ref_eq(&mut generics_hasher), 1.time())
             .no_other_calls();
     }
 }
