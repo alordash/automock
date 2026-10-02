@@ -402,10 +402,11 @@ pub(crate) mod tests {
             .borrow_mut()
             .received()
             .set_callback(
-                automock::Arg::is(|callback: &Box<dyn FnMut(&'am MockArg, ArgRefsTuple)>| {
-                    let mock_arg = MockArg(5);
+                automock::Arg::is_mut(|callback: &mut Box<dyn FnMut(&'am Mock, ArgRefsTuple)>| {
                     let arg_refs_tuple = ArgRefsTuple(10);
-                    // let q = callback.as_mut()(&mock_arg, arg_refs_tuple);
+                    callback.as_mut()(&Mock, arg_refs_tuple);
+                    callback_without_mock_object::received(arg_refs_tuple, automock::Times::Once)
+                        .no_other_calls();
                     return true;
                 }),
                 automock::Times::Once,
@@ -413,7 +414,62 @@ pub(crate) mod tests {
             .no_other_calls();
     }
 
-    // TODO - other tests starting with `does`
+    #[test]
+    fn does_WithMockObject_Ok<'am>() {
+        // Arrange
+        let owner = Owner;
+        let fn_configurator = fn_configurator::<IRRELEVANT, IRRELEVANT, true>(&owner);
+
+        // Act
+        fn_configurator.does(callback_with_mock_object);
+
+        // Assert
+        fn_configurator
+            .fn_config
+            .borrow_mut()
+            .received()
+            .set_callback(
+                automock::Arg::is_mut(
+                    |callback: &mut Box<dyn FnMut(&'am MockArg, ArgRefsTuple)>| {
+                        let mock_arg = MockArg(5);
+                        let arg_refs_tuple = ArgRefsTuple(10);
+                        callback.as_mut()(transmute_lifetime!(&mock_arg), arg_refs_tuple);
+                        callback_with_mock_object::received(
+                            automock::Arg::ref_eq(&mock_arg),
+                            arg_refs_tuple,
+                            automock::Times::Once,
+                        )
+                        .no_other_calls();
+                        return true;
+                    },
+                ),
+                automock::Times::Once,
+            )
+            .no_other_calls();
+    }
+
+    #[test]
+    fn call_base_Ok<'am>() {
+        // Arrange
+        let owner = Owner;
+        let fn_configurator = fn_configurator::<IRRELEVANT, true, IRRELEVANT>(&owner);
+
+        // Act
+        let result = fn_configurator.call_base();
+
+        // Assert
+        assert!(core::ptr::eq(
+            result,
+            &fn_configurator.fn_callback_configurator
+        ));
+
+        fn_configurator
+            .fn_config
+            .borrow_mut()
+            .received()
+            .set_call_base(automock::Times::Once)
+            .no_other_calls();
+    }
 
     pub mod utilities {
         use super::*;

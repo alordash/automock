@@ -63,6 +63,7 @@ impl<T> Arg<T> {
     }
 
     /// Checks that argument value matches some predicate. Receives mutable reference to argument.
+    /// Can be useful for matching [`FnMut`] arguments.
     pub fn is_mut<'a, TFn: Fn(&mut T) -> bool + 'a>(predicate: TFn) -> Self {
         let anonymous_predicate = move |ptr: *const ()| {
             // SAFETY: anonymous predicate is called only internally and passed pointer is always

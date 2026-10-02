@@ -101,11 +101,8 @@ pub(crate) mod tests {
             .borrow_mut()
             .received()
             .set_callback(
-                automock::Arg::is(|callback: &Box<dyn FnMut(&'am Mock, ArgRefsTuple)>| {
-                    #[allow(mutable_transmutes)]
-                    let mut_callback: &mut Box<dyn FnMut(&Mock, ArgRefsTuple)> =
-                        unsafe { core::mem::transmute(callback) };
-                    mut_callback.as_mut()(&Mock, arg_refs_tuple);
+                automock::Arg::is_mut(|callback: &mut Box<dyn FnMut(&'am Mock, ArgRefsTuple)>| {
+                    callback.as_mut()(&Mock, arg_refs_tuple);
                     mockless_callback::received(arg_refs_tuple, automock::Times::Once)
                         .no_other_calls();
                     return true;
@@ -120,8 +117,6 @@ pub(crate) mod tests {
         // Arrange
         let owner = Owner;
         let fn_callback_configurator = fn_callback_configurator::<true>(&owner);
-        let mock_arg = MockArg(5);
-        let arg_refs_tuple = ArgRefsTuple(10);
 
         // Act
         let result = fn_callback_configurator.and_does(callback);
@@ -134,20 +129,20 @@ pub(crate) mod tests {
             .borrow_mut()
             .received()
             .set_callback(
-                automock::Arg::is(|callback: &Box<dyn FnMut(&'am MockArg, ArgRefsTuple)>| {
-                    #[allow(mutable_transmutes)]
-                    let mut_callback: &mut Box<
-                        dyn FnMut(&MockArg, ArgRefsTuple),
-                    > = unsafe { core::mem::transmute(callback) };
-                    mut_callback.as_mut()(&mock_arg, arg_refs_tuple);
-                    callback::received(
-                        automock::Arg::ref_eq(&mock_arg),
-                        arg_refs_tuple,
-                        automock::Times::Once,
-                    )
-                    .no_other_calls();
-                    return true;
-                }),
+                automock::Arg::is_mut(
+                    |callback: &mut Box<dyn FnMut(&'am MockArg, ArgRefsTuple)>| {
+                        let mock_arg = MockArg(5);
+                        let arg_refs_tuple = ArgRefsTuple(10);
+                        callback.as_mut()(transmute_lifetime!(&mock_arg), arg_refs_tuple);
+                        callback::received(
+                            automock::Arg::ref_eq(&mock_arg),
+                            arg_refs_tuple,
+                            automock::Times::Once,
+                        )
+                        .no_other_calls();
+                        return true;
+                    },
+                ),
                 automock::Times::Once,
             )
             .no_other_calls();
