@@ -10,6 +10,7 @@ pub fn verify_call_order(mut verifications: impl FnMut()) {
     validate_actual_calls_order();
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) struct CallOrderEntry {
     pub call_order_number: usize,
     pub formatted_string: String,
@@ -60,16 +61,20 @@ fn validate_actual_calls_order() {
             .borrow()
             .is_sorted_by(|a, b| a.call_order_number < b.call_order_number);
         if !is_order_correct {
-            error_printing::panic_invalid_calls_order(
-                x.expected_calls_order.borrow_mut().as_mut_slice(),
-            );
+            panic_invalid_calls_order(x.expected_calls_order.borrow_mut().as_mut_slice());
         }
     });
+}
+
+#[cfg_attr(test, automock::mock)]
+fn panic_invalid_calls_order(expected_calls_order: &mut [CallOrderEntry]) {
+    error_printing::panic_invalid_calls_order(expected_calls_order);
 }
 
 #[cfg(test)]
 mod tests {
     #![allow(non_snake_case)]
+
     use super::*;
 
     #[test]
@@ -106,6 +111,81 @@ mod tests {
                 new_call_order_number
             );
             assert_eq!(new_call_order_entry.formatted_string, call_formatted_string);
+        });
+    }
+
+    #[test]
+    fn enable_Ok() {
+        // Arrange
+        CALL_ORDER_STATE.with(|x| x.perform_call_order_verification.set(false));
+
+        // Act
+        enable();
+
+        // Assert
+        CALL_ORDER_STATE.with(|x| assert!(x.perform_call_order_verification.get()));
+    }
+
+    #[test]
+    fn disable_Ok() {
+        // Arrange
+        CALL_ORDER_STATE.with(|x| x.perform_call_order_verification.set(true));
+
+        // Act
+        disable();
+
+        // Assert
+        CALL_ORDER_STATE.with(|x| assert!(!x.perform_call_order_verification.get()));
+    }
+
+    #[test]
+    fn validate_actual_calls_order_OrderIsCorrect_DoesNothing() {
+        // Arrange
+        let calls = vec![
+            CallOrderEntry {
+                call_order_number: 5,
+                formatted_string: "quo vadis".to_owned(),
+            },
+            CallOrderEntry {
+                call_order_number: 10,
+                formatted_string: "veridis quo".to_owned(),
+            },
+        ];
+        CALL_ORDER_STATE.with(|x| *x.expected_calls_order.borrow_mut() = calls);
+
+        // Act
+        validate_actual_calls_order();
+
+        // Assert
+        panic_invalid_calls_order::received_nothing();
+    }
+
+    #[test]
+    fn validate_actual_calls_order_OrderIsIncorrect_PrintsError() {
+        // Arrange
+        let calls = vec![
+            CallOrderEntry {
+                call_order_number: 10,
+                formatted_string: "quo vadis".to_owned(),
+            },
+            CallOrderEntry {
+                call_order_number: 5,
+                formatted_string: "veridis quo".to_owned(),
+            },
+        ];
+        CALL_ORDER_STATE.with(|x| *x.expected_calls_order.borrow_mut() = calls);
+
+        // Act
+        validate_actual_calls_order();
+
+        // Arrange
+        CALL_ORDER_STATE.with(|x| {
+            let mut mut_calls = x.expected_calls_order.borrow_mut();
+            panic_invalid_calls_order::received(
+                automock::Arg::ref_eq(mut_calls.as_mut_slice()),
+                automock::Times::Once,
+            )
+            .no_other_calls();
         });
     }
 }
