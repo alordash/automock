@@ -62,6 +62,24 @@ impl<T> Arg<T> {
         return Self::Is(transmute_lifetime!(boxed_anonymous_predicate), Internal);
     }
 
+    /// Checks that argument value matches some predicate. Receives mutable reference to argument.
+    pub fn is_mut<'a, TFn: Fn(&mut T) -> bool + 'a>(predicate: TFn) -> Self {
+        let anonymous_predicate = move |ptr: *const ()| {
+            // SAFETY: anonymous predicate is called only internally and passed pointer is always
+            // created by casting &mut T.
+            let t_ref = unsafe {
+                let t_ptr = ptr as *mut T;
+                t_ptr
+                    .as_mut()
+                    .expect("Pointer to argument in Arg::is must not be null.")
+            };
+            return predicate(t_ref);
+        };
+        let boxed_anonymous_predicate =
+            Box::new(anonymous_predicate) as Box<dyn Fn(*const ()) -> bool + 'a>;
+        return Self::Is(transmute_lifetime!(boxed_anonymous_predicate), Internal);
+    }
+
     /// Checks that argument value is equal to given value.
     pub fn eq(value: T) -> Self
     where
@@ -241,12 +259,31 @@ pub(crate) mod tests {
         // Assert
         let actual_predicate = match arg {
             Arg::Is(p, _) => p,
-            _ => panic!("`arg` must be `Arg::is`, instead is: {arg:?}"),
+            _ => panic!("`arg` must be `Arg::Is`, instead is: {arg:?}"),
         };
         let actual_predicate_result = actual_predicate(&CustomType(5) as *const _ as *const ());
         assert!(actual_predicate_result);
 
         predicate::received(automock::Arg::Any, automock::Times::Once);
+    }
+
+    #[test]
+    fn is_mut_Ok() {
+        // Arrange
+        predicate_mut::setup(automock::Arg::Any).returns(true);
+
+        // Act
+        let arg = Arg::is_mut(predicate_mut);
+
+        // Assert
+        let actual_predicate = match arg {
+            Arg::Is(p, _) => p,
+            _ => panic!("`arg` must be `Arg::Is`, instead is: {arg:?}"),
+        };
+        let actual_predicate_result = actual_predicate(&CustomType(5) as *const _ as *const ());
+        assert!(actual_predicate_result);
+
+        predicate_mut::received(automock::Arg::Any, automock::Times::Once);
     }
 
     #[test]
@@ -625,6 +662,11 @@ pub(crate) mod tests {
 
         #[automock::mock]
         pub fn predicate(_: &CustomType) -> bool {
+            unreachable!()
+        }
+
+        #[automock::mock]
+        pub fn predicate_mut(_: &mut CustomType) -> bool {
             unreachable!()
         }
 

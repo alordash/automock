@@ -420,6 +420,7 @@
 //!    `mock.setup(10)`.
 //! 2. [`Arg::is`] - checks that argument passes provided predicate. Usage example:
 //!    `mock.setup(Arg::is(|v: &i32| *v == 10))`. Requires specifying closure's argument type.
+//! // TODO - write about [`Arg::is_mut`]
 //! 3. [`Arg::not_eq`] - checks that argument is NOT equal to provided value. Uses [`PartialEq::eq`]
 //!    of `T`. Opposite of `Arg::eq`. Usage example: `mock.setup(Arg::not_eq(10))`.
 //! 4. [`Arg::ref_eq`] - checks that argument's reference points to the same location as provided

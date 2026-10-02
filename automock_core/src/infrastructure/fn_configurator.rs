@@ -387,6 +387,32 @@ pub(crate) mod tests {
             .no_other_calls();
     }
 
+    #[test]
+    fn does_WithoutMockObject_Ok<'am>() {
+        // Arrange
+        let owner = Owner;
+        let fn_configurator = fn_configurator::<false, IRRELEVANT, false>(&owner);
+
+        // Act
+        fn_configurator.does(callback_without_mock_object);
+
+        // Assert
+        fn_configurator
+            .fn_config
+            .borrow_mut()
+            .received()
+            .set_callback(
+                automock::Arg::is(|callback: &Box<dyn FnMut(&'am MockArg, ArgRefsTuple)>| {
+                    let mock_arg = MockArg(5);
+                    let arg_refs_tuple = ArgRefsTuple(10);
+                    // let q = callback.as_mut()(&mock_arg, arg_refs_tuple);
+                    return true;
+                }),
+                automock::Times::Once,
+            )
+            .no_other_calls();
+    }
+
     // TODO - other tests starting with `does`
 
     pub mod utilities {
@@ -423,6 +449,16 @@ pub(crate) mod tests {
 
         #[automock::mock]
         pub(super) fn returns_with_factory(_: ArgRefsTuple) -> ReturnValue {
+            unreachable!()
+        }
+
+        #[automock::mock]
+        pub(super) fn callback_without_mock_object(_: ArgRefsTuple) {
+            unreachable!()
+        }
+
+        #[automock::mock]
+        pub(super) fn callback_with_mock_object(_: &MockArg, _: ArgRefsTuple) {
             unreachable!()
         }
     }
