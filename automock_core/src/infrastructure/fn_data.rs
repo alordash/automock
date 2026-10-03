@@ -409,6 +409,13 @@ mod tests {
             )
             .call_base();
 
+        let fn_configurator_mock =
+            fn_configurator_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>(&fn_configurator_owner);
+        let fn_configurator_mock_id = fn_configurator_mock.id();
+        FnConfigurator::static_setup()
+            .new(automock::Arg::Any, automock::Arg::Any)
+            .returns(fn_configurator_mock);
+
         let fn_config_mock = fn_config_mock();
         let fn_config_mock_id = fn_config_mock.id();
         FnConfig::static_setup()
@@ -429,7 +436,7 @@ mod tests {
             .expect("Config should contain new `FnConfig`s map")[0];
         assert_eq!(inserted_fn_config.borrow().id(), fn_config_mock_id);
 
-        assert_eq!(result.fn_config().borrow().id(), fn_config_mock_id);
+        assert_eq!(result.id(), fn_configurator_mock_id);
 
         args_checker_mock
             .received()
@@ -445,6 +452,25 @@ mod tests {
                 automock::Times::Once,
             )
             .no_other_calls();
+
+        FnConfigurator::<
+            Mock,
+            Owner,
+            ArgRefsTuple,
+            ReturnValue,
+            MockArg,
+            IRRELEVANT,
+            IRRELEVANT,
+            IRRELEVANT,
+        >::static_received()
+        .new(
+            automock::Arg::is(|arc_config: &Rc<RefCell<FnConfig<Mock>>>| {
+                arc_config.borrow().id() == fn_config_mock_id
+            }),
+            automock::Arg::ref_eq(&fn_configurator_owner),
+            automock::Times::Once,
+        )
+        .no_other_calls();
     }
 
     #[test]
@@ -475,6 +501,13 @@ mod tests {
             )
             .call_base();
 
+        let fn_configurator_mock =
+            fn_configurator_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>(&fn_configurator_owner);
+        let fn_configurator_mock_id = fn_configurator_mock.id();
+        FnConfigurator::static_setup()
+            .new(automock::Arg::Any, automock::Arg::Any)
+            .returns(fn_configurator_mock);
+
         let fn_config_mock = fn_config_mock();
         let fn_config_mock_id = fn_config_mock.id();
         FnConfig::static_setup()
@@ -494,7 +527,7 @@ mod tests {
             .expect("Config should contain new `FnConfig`s map")[existing_fn_config_index];
         assert_eq!(inserted_fn_config.borrow().id(), fn_config_mock_id);
 
-        assert_eq!(result.fn_config().borrow().id(), fn_config_mock_id);
+        assert_eq!(result.id(), fn_configurator_mock_id);
 
         args_checker_mock
             .received()
@@ -510,6 +543,25 @@ mod tests {
                 automock::Times::Once,
             )
             .no_other_calls();
+
+        FnConfigurator::<
+            Mock,
+            Owner,
+            ArgRefsTuple,
+            ReturnValue,
+            MockArg,
+            IRRELEVANT,
+            IRRELEVANT,
+            IRRELEVANT,
+        >::static_received()
+        .new(
+            automock::Arg::is(|arc_config: &Rc<RefCell<FnConfig<Mock>>>| {
+                arc_config.borrow().id() == fn_config_mock_id
+            }),
+            automock::Arg::ref_eq(&fn_configurator_owner),
+            automock::Times::Once,
+        )
+        .no_other_calls();
     }
 
     #[test]
@@ -582,7 +634,7 @@ mod tests {
             .call_base();
 
         // Act
-        fn_data_mock.verify_received(args_checker_mock, times.clone());
+        fn_data_mock.verify_received(args_checker_mock, times);
 
         // Assert
         internal::panic_received_verification_error::received(

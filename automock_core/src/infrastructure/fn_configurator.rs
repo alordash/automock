@@ -6,6 +6,7 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 
 /// Controls behavior of mocked function.
+#[cfg_attr(test, automock::mock)]
 pub struct FnConfigurator<
     'am,
     TMock,
@@ -30,6 +31,7 @@ pub struct FnConfigurator<
     >,
 }
 
+#[cfg_attr(test, automock::mock)]
 impl<
     'am,
     TMock,
@@ -60,10 +62,6 @@ impl<
             owner,
             fn_callback_configurator: FnCallbackConfigurator::new(fn_config.clone(), owner),
         }
-    }
-
-    pub(crate) fn fn_config(&self) -> &Rc<RefCell<FnConfig<'am, TMock>>> {
-        &self.fn_config
     }
 }
 
@@ -278,15 +276,14 @@ pub(crate) mod tests {
     fn returns_Ok() {
         // Arrange
         let owner = Owner;
-        let fn_configurator = fn_configurator::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
         let return_value = ReturnValue(5);
 
         // Act
-        fn_configurator.returns(return_value);
+        fn_configurator_mock.returns(return_value);
 
         // Assert
-        fn_configurator
-            .fn_config
+        fn_configurator_mock.fn_config
             .borrow_mut()
             .received()
             .add_return_value_source(automock::Arg::is(|return_value_source| {
@@ -305,15 +302,14 @@ pub(crate) mod tests {
     fn returns_many_Ok() {
         // Arrange
         let owner = Owner;
-        let fn_configurator = fn_configurator::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
         let return_values = [ReturnValue(5), ReturnValue(10)];
 
         // Act
-        fn_configurator.returns_many(return_values);
+        fn_configurator_mock.returns_many(return_values);
 
         // Assert
-        fn_configurator
-            .fn_config
+        fn_configurator_mock.fn_config
             .borrow_mut()
             .received()
             .add_return_value_sources(automock::Arg::is(|return_value_sources: &Vec<ReturnValueSource>| {
@@ -332,15 +328,14 @@ pub(crate) mod tests {
     fn always_returns_Ok() {
         // Arrange
         let owner = Owner;
-        let fn_configurator = fn_configurator::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
         let return_value = ReturnValue(5);
 
         // Act
-        fn_configurator.always_returns(return_value);
+        fn_configurator_mock.always_returns(return_value);
 
         // Assert
-        fn_configurator
-            .fn_config
+        fn_configurator_mock.fn_config
             .borrow_mut()
             .received()
             .add_return_value_source(automock::Arg::is(|return_value_source| {
@@ -359,16 +354,15 @@ pub(crate) mod tests {
     fn returns_with_Ok() {
         // Arrange
         let owner = Owner;
-        let fn_configurator = fn_configurator::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
         let return_value = ReturnValue(5);
         returns_with_factory::setup(automock::Arg::Any).returns(return_value);
 
         // Act
-        fn_configurator.returns_with(returns_with_factory);
+        fn_configurator_mock.returns_with(returns_with_factory);
 
         // Assert
-        fn_configurator
-            .fn_config
+        fn_configurator_mock.fn_config
             .borrow_mut()
             .received()
             .add_return_value_source(automock::Arg::is(|return_value_source| {
@@ -395,13 +389,13 @@ pub(crate) mod tests {
     fn does_WithoutMockObject_Ok<'am>() {
         // Arrange
         let owner = Owner;
-        let fn_configurator = fn_configurator::<false, IRRELEVANT, false>(&owner);
+        let fn_configurator_mock = fn_configurator_mock::<false, IRRELEVANT, false>(&owner);
 
         // Act
-        fn_configurator.does(callback_without_mock_object);
+        fn_configurator_mock.does(callback_without_mock_object);
 
         // Assert
-        fn_configurator
+        fn_configurator_mock
             .fn_config
             .borrow_mut()
             .received()
@@ -422,13 +416,13 @@ pub(crate) mod tests {
     fn does_WithMockObject_Ok<'am>() {
         // Arrange
         let owner = Owner;
-        let fn_configurator = fn_configurator::<IRRELEVANT, IRRELEVANT, true>(&owner);
+        let fn_configurator_mock = fn_configurator_mock::<IRRELEVANT, IRRELEVANT, true>(&owner);
 
         // Act
-        fn_configurator.does(callback_with_mock_object);
+        fn_configurator_mock.does(callback_with_mock_object);
 
         // Assert
-        fn_configurator
+        fn_configurator_mock
             .fn_config
             .borrow_mut()
             .received()
@@ -456,18 +450,18 @@ pub(crate) mod tests {
     fn call_base_Ok<'am>() {
         // Arrange
         let owner = Owner;
-        let fn_configurator = fn_configurator::<IRRELEVANT, true, IRRELEVANT>(&owner);
+        let fn_configurator_mock = fn_configurator_mock::<IRRELEVANT, true, IRRELEVANT>(&owner);
 
         // Act
-        let result = fn_configurator.call_base();
+        let result = fn_configurator_mock.call_base();
 
         // Assert
         assert!(core::ptr::eq(
             result,
-            &fn_configurator.fn_callback_configurator
+            &fn_configurator_mock.fn_callback_configurator
         ));
 
-        fn_configurator
+        fn_configurator_mock
             .fn_config
             .borrow_mut()
             .received()
@@ -482,7 +476,7 @@ pub(crate) mod tests {
         #[derive(Clone, Copy, PartialEq, Debug)]
         pub struct ReturnValue(pub i32);
 
-        pub fn fn_configurator<
+        pub fn fn_configurator_mock<
             const HAS_RETURN_VALUE: bool,
             const SUPPORTS_BASE_CALLING: bool,
             const PASSES_MOCK_TO_CALLBACK: bool,
@@ -504,6 +498,7 @@ pub(crate) mod tests {
                 fn_config: Rc::new(RefCell::new(fn_config_mock())),
                 owner: transmute_lifetime!(owner),
                 fn_callback_configurator: fn_callback_configurator(owner),
+                __mock_data: Default::default(),
             }
         }
 
