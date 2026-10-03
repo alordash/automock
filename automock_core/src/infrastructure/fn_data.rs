@@ -122,7 +122,7 @@ impl<
         let unexpected_call_arg_infos = unexpected_call_infos
             .into_iter()
             .map(|x| {
-                let call = x.get_call();
+                let call = x.get_dyn_call();
                 error_printing::format_received_unexpected_call_error(
                     &self.formatted_fn_name,
                     call.get_arg_infos(),
@@ -181,14 +181,13 @@ mod internal {
         const PASSES_MOCK_TO_CALLBACK: bool,
     > FnData<'am, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
     {
-        pub(crate) fn register_call(&self, call: Rc<DynCall<'am>>) -> &Self {
-            let generics_hash_key = call.get_generics_hash_key();
+        pub(crate) fn register_call(&self, dyn_call: Rc<DynCall<'am>>) {
+            let generics_hash_key = dyn_call.get_generics_hash_key();
             self.call_checks
                 .borrow_mut()
                 .entry(generics_hash_key)
                 .or_default()
-                .push(CallCheck::new(call));
-            self
+                .push(CallCheck::new(dyn_call));
         }
 
         pub(crate) fn get_matching_and_non_matching_calls<'a>(
@@ -201,7 +200,7 @@ mod internal {
             let mut all_call_infos = self.call_checks.borrow_mut();
             let specific_call_infos = all_call_infos.entry(generics_hash_key).or_default();
             for call_info in specific_call_infos.iter_mut() {
-                let call_args_check_results = dyn_args_checker.check(call_info.get_call());
+                let call_args_check_results = dyn_args_checker.check(call_info.get_dyn_call());
                 let is_matching = call_args_check_results.iter().all(ArgCheckResult::is_ok);
                 let ordered_call_check_result = OrderedCallCheckResult {
                     call_order_number: call_info.number,
@@ -433,9 +432,7 @@ mod tests {
 
         // Assert
         let configs = fn_data_mock.configs.borrow();
-        let inserted_fn_config = &configs
-            .get(&generics_hash_key)
-            .expect("Config should contain new `FnConfig`s map")[0];
+        let inserted_fn_config = &configs[&generics_hash_key][0];
         assert_eq!(inserted_fn_config.borrow().id(), fn_config_mock_id);
 
         assert_eq!(result.id(), fn_configurator_mock_id);
@@ -524,9 +521,7 @@ mod tests {
 
         // Assert
         let configs = fn_data_mock.configs.borrow();
-        let inserted_fn_config = &configs
-            .get(&generics_hash_key)
-            .expect("Config should contain new `FnConfig`s map")[existing_fn_config_index];
+        let inserted_fn_config = &configs[&generics_hash_key][existing_fn_config_index];
         assert_eq!(inserted_fn_config.borrow().id(), fn_config_mock_id);
 
         assert_eq!(result.id(), fn_configurator_mock_id);
@@ -796,6 +791,85 @@ mod tests {
 
         // Assert
         assert_eq!(result, vec![unexpected_calls_error_msgs]);
+    }
+
+    #[test]
+    fn register_call_NoEntry_CreatesNewEntry() {
+        // Arrange
+        let generics_hash_key = GenericsHashKey(5);
+        let mut call_mock = CallMock::new();
+        call_mock
+            .setup()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key()
+            .returns(generics_hash_key);
+        let dyn_call = Rc::new(DynCall::new(call_mock));
+
+        let call_check_number = 5;
+        get_next_call_order_number::setup().returns(call_check_number);
+
+        let mut fn_data_mock = fn_data_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        fn_data_mock
+            .setup()
+            .register_call(automock::Arg::Any)
+            .call_base();
+        fn_data_mock
+            .call_checks
+            .borrow_mut()
+            .remove(&generics_hash_key);
+
+        // Act
+        fn_data_mock.register_call(dyn_call.clone());
+
+        // Assert
+        let all_call_checks = fn_data_mock.call_checks.borrow();
+        let call_check = &all_call_checks[&generics_hash_key][0];
+        let actual_dyn_call = call_check.get_dyn_call();
+        assert!(Rc::ptr_eq(actual_dyn_call, &dyn_call));
+
+        assert_eq!(call_check.number, call_check_number);
+        get_next_call_order_number::received(automock::Times::Once).no_other_calls();
+    }
+
+    #[test]
+    fn register_call_WithExistingEntry_CreatesNewEntry() {
+        // Arrange
+        let generics_hash_key = GenericsHashKey(5);
+        let mut call_mock = CallMock::new();
+        call_mock
+            .setup()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key()
+            .returns(generics_hash_key);
+        let dyn_call = Rc::new(DynCall::new(call_mock));
+
+        let call_check_number = 5;
+        get_next_call_order_number::setup().returns_many([2, call_check_number]);
+
+        let mut fn_data_mock = fn_data_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        fn_data_mock
+            .setup()
+            .register_call(automock::Arg::Any)
+            .call_base();
+        let existing_call_check_index = {
+            let mut call_checks = fn_data_mock.call_checks.borrow_mut();
+            let new_entry = call_checks
+                .entry(generics_hash_key)
+                .insert_entry(vec![CallCheck::new(Rc::new(DynCall::new(CallMock::new())))]);
+            new_entry.get().len()
+        };
+
+        // Act
+        fn_data_mock.register_call(dyn_call.clone());
+
+        // Assert
+        let all_call_checks = fn_data_mock.call_checks.borrow();
+        let call_check = &all_call_checks[&generics_hash_key][existing_call_check_index];
+        let actual_dyn_call = call_check.get_dyn_call();
+        assert!(Rc::ptr_eq(actual_dyn_call, &dyn_call));
+
+        assert_eq!(call_check.number, call_check_number);
+        get_next_call_order_number::received(automock::Times::Exactly(2)).no_other_calls();
     }
 
     mod utilities {

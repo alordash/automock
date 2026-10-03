@@ -38,7 +38,7 @@ impl<'am> CallCheck<'am> {
         !self.verified.get()
     }
 
-    pub fn get_call(&self) -> &DynCall<'am> {
+    pub fn get_dyn_call(&self) -> &Rc<DynCall<'am>> {
         &self.call
     }
 }
@@ -127,9 +127,9 @@ mod tests {
         };
 
         // Act
-        let result = call_check.get_call();
+        let result = call_check.get_dyn_call();
 
         // Assert
-        assert!(core::ptr::eq(result, call.as_ref()));
+        assert!(Rc::ptr_eq(result, &call));
     }
 }
