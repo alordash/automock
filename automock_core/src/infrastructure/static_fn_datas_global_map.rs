@@ -3,17 +3,18 @@ use std::any::TypeId;
 use std::cell::UnsafeCell;
 use std::collections::HashMap;
 
-type Map = HashMap<TypeId, HashMap<String, *const ()>>;
+// mock type (contains generics info) -> fn name -> mock data
+type StaticFnDataMap = HashMap<TypeId, HashMap<String, *const ()>>;
 
 // Used for storing static functions' mock data.
 #[derive(Default)]
 struct StaticFnDatasGlobalMap {
-    pub map: UnsafeCell<Map>,
+    pub map: UnsafeCell<StaticFnDataMap>,
 }
 
 impl StaticFnDatasGlobalMap {
     #[allow(clippy::mut_from_ref)]
-    fn get_mut_map(&self) -> &mut Map {
+    fn get_mut_map(&self) -> &mut StaticFnDataMap {
         // SAFETY: static functions data is stored in global TLS, which guarantees that there can't
         // be more than one mutable reference to given static function data at the same time.
         // This is why `UnsafeCell` can be safely used here.
