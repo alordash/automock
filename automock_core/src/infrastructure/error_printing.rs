@@ -143,6 +143,7 @@ List of existing configuration ordered by number of correctly matched arguments 
     panic!("{error_msg}");
 }
 
+#[cfg_attr(test, automock::mock)]
 pub(crate) fn format_received_unexpected_call_error(
     formatted_fn_name: &str,
     call_args: Vec<ArgInfo>,

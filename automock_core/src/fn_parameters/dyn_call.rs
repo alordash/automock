@@ -36,6 +36,10 @@ impl<'am> IGenericsInfoProvider for DynCall<'am> {
     fn hash_const_values(&self, hasher: &mut GenericsHasher) {
         self.inner.hash_const_values(hasher)
     }
+
+    fn get_generics_hash_key(&self) -> GenericsHashKey {
+        self.inner.get_generics_hash_key()
+    }
 }
 
 impl<'am> DynCall<'am> {
@@ -257,6 +261,31 @@ mod tests {
             .received()
             .as_IGenericsInfoProvider()
             .hash_const_values(automock::Arg::ref_eq(&mut generics_hasher), 1.time())
+            .no_other_calls();
+    }
+
+    #[test]
+    fn IGenericsInfoProvider_get_generics_hash_key_ForwardsToInner() {
+        // Arrange
+        let mut call_mock = CallMock::new();
+        let generics_hash_key = GenericsHashKey(5);
+        call_mock
+            .setup()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key()
+            .returns(generics_hash_key);
+        let dyn_call = DynCall::new(call_mock.clone());
+
+        // Act
+        let result = dyn_call.get_generics_hash_key();
+
+        // Assert
+        assert_eq!(result, generics_hash_key);
+
+        call_mock
+            .received()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key(automock::Times::Once)
             .no_other_calls();
     }
 }

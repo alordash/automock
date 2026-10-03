@@ -9,6 +9,7 @@ use std::rc::Rc;
 
 mod handling;
 
+#[cfg_attr(test, automock::mock)]
 pub struct FnData<
     'am,
     TMock,
@@ -18,11 +19,12 @@ pub struct FnData<
 > {
     fn_name: &'static str,
     formatted_fn_name: String,
-    pub call_infos: RefCell<HashMap<GenericsHashKey, Vec<CallCheck<'am>>>>,
+    pub call_checks: RefCell<HashMap<GenericsHashKey, Vec<CallCheck<'am>>>>,
     #[allow(clippy::type_complexity)]
     pub configs: RefCell<HashMap<GenericsHashKey, Vec<Rc<RefCell<FnConfig<'am, TMock>>>>>>,
 }
 
+#[cfg_attr(test, automock::mock)]
 impl<
     'am,
     TMock,
@@ -39,14 +41,14 @@ impl<
         Self {
             fn_name,
             formatted_fn_name,
-            call_infos: RefCell::new(HashMap::new()),
+            call_checks: RefCell::new(HashMap::new()),
             configs: RefCell::new(HashMap::new()),
         }
     }
 
     #[doc(hidden)]
     pub fn reset(&self) {
-        self.call_infos.borrow_mut().clear();
+        self.call_checks.borrow_mut().clear();
         self.configs.borrow_mut().clear();
     }
 
@@ -96,7 +98,7 @@ impl<
         let matching_calls_count = matching_calls_check_result.calls_args_check_results.len();
         let valid = times.matches(matching_calls_count);
         if !valid {
-            error_printing::panic_received_verification_error(
+            internal::panic_received_verification_error(
                 self.fn_name,
                 &self.formatted_fn_name,
                 &dyn_args_checker,
@@ -104,12 +106,13 @@ impl<
                 non_matching_calls_check_result,
                 times,
             );
+            return;
         }
         self.handle_call_order_verification(matching_calls_check_result.calls_args_check_results);
     }
 
     pub fn get_unexpected_calls_error_msgs(&self) -> Vec<String> {
-        let all_call_infos = self.call_infos.borrow();
+        let all_call_infos = self.call_checks.borrow();
         let mut unexpected_call_infos: Vec<_> = all_call_infos
             .values()
             .flatten()
@@ -132,6 +135,7 @@ impl<
 }
 
 // For static fns
+#[cfg_attr(test, automock::mock)]
 impl<
     'am,
     TMock,
@@ -156,7 +160,7 @@ mod internal {
         args_checker: &DynArgsChecker<'am>,
         matching_calls_check_result: OrderedCallsCheckResult,
         non_matching_calls_check_result: OrderedCallsCheckResult,
-        _times: Times,
+        times: Times,
     ) {
         error_printing::panic_received_verification_error(
             fn_name,
@@ -164,10 +168,11 @@ mod internal {
             args_checker,
             matching_calls_check_result,
             non_matching_calls_check_result,
-            _times,
+            times,
         );
     }
 
+    #[cfg_attr(test, automock::mock)]
     impl<
         'am,
         TMock,
@@ -178,7 +183,7 @@ mod internal {
     {
         pub(crate) fn register_call(&self, call: Rc<DynCall<'am>>) -> &Self {
             let generics_hash_key = call.get_generics_hash_key();
-            self.call_infos
+            self.call_checks
                 .borrow_mut()
                 .entry(generics_hash_key)
                 .or_default()
@@ -186,14 +191,14 @@ mod internal {
             self
         }
 
-        pub(crate) fn get_matching_and_non_matching_calls(
+        pub(crate) fn get_matching_and_non_matching_calls<'a>(
             &self,
-            dyn_args_checker: &DynArgsChecker,
+            dyn_args_checker: &DynArgsChecker<'a>,
         ) -> (OrderedCallsCheckResult, OrderedCallsCheckResult) {
             let mut matching_calls_args_check_results = Vec::new();
             let mut non_matching_calls_args_check_results = Vec::new();
             let generics_hash_key = dyn_args_checker.get_generics_hash_key();
-            let mut all_call_infos = self.call_infos.borrow_mut();
+            let mut all_call_infos = self.call_checks.borrow_mut();
             let specific_call_infos = all_call_infos.entry(generics_hash_key).or_default();
             for call_info in specific_call_infos.iter_mut() {
                 let call_args_check_results = dyn_args_checker.check(call_info.get_call());
@@ -316,6 +321,7 @@ mod tests {
     use fn_callback_configurator::tests::utilities::*;
     use fn_config::tests::utilities::*;
     use fn_configurator::tests::utilities::*;
+    use i_call::tests::utilities::*;
     use utilities::*;
 
     const IRRELEVANT: bool = false;
@@ -324,6 +330,9 @@ mod tests {
     fn new_NoOwnerName_Ok() {
         // Arrange
         let fn_name = "quo vadis";
+        FnData::<Mock, IRRELEVANT, IRRELEVANT, IRRELEVANT>::static_setup()
+            .new(automock::Arg::Any, automock::Arg::Any)
+            .call_base();
 
         // Act
         let result = FnData::<Mock, IRRELEVANT, IRRELEVANT, IRRELEVANT>::new(None, fn_name);
@@ -331,7 +340,7 @@ mod tests {
         // Assert
         assert_eq!(result.fn_name, fn_name);
         assert_eq!(result.formatted_fn_name, fn_name);
-        assert!(result.call_infos.borrow().is_empty());
+        assert!(result.call_checks.borrow().is_empty());
         assert!(result.configs.borrow().is_empty());
     }
 
@@ -340,6 +349,9 @@ mod tests {
         // Arrange
         let fn_name = "quo vadis";
         let owner_name = "veridis quo";
+        FnData::<Mock, IRRELEVANT, IRRELEVANT, IRRELEVANT>::static_setup()
+            .new(automock::Arg::Any, automock::Arg::Any)
+            .call_base();
 
         // Act
         let result =
@@ -349,29 +361,30 @@ mod tests {
         assert_eq!(result.fn_name, fn_name);
         let expected_formatted_fn_name = format!("{owner_name}::{fn_name}");
         assert_eq!(result.formatted_fn_name, expected_formatted_fn_name);
-        assert!(result.call_infos.borrow().is_empty());
+        assert!(result.call_checks.borrow().is_empty());
         assert!(result.configs.borrow().is_empty());
     }
 
     #[test]
     fn reset_Ok() {
         // Arrange
-        let fn_data = fn_data::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
-        fn_data
-            .call_infos
+        let mut fn_data_mock = fn_data_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        fn_data_mock
+            .call_checks
             .borrow_mut()
             .insert(GenericsHashKey(5), Vec::new());
-        fn_data
+        fn_data_mock
             .configs
             .borrow_mut()
             .insert(GenericsHashKey(10), Vec::new());
+        fn_data_mock.setup().reset().call_base();
 
         // Act
-        fn_data.reset();
+        fn_data_mock.reset();
 
         // Assert
-        assert!(fn_data.call_infos.borrow().is_empty());
-        assert!(fn_data.configs.borrow().is_empty());
+        assert!(fn_data_mock.call_checks.borrow().is_empty());
+        assert!(fn_data_mock.configs.borrow().is_empty());
     }
 
     #[test]
@@ -386,8 +399,15 @@ mod tests {
             .always_returns(generics_hash_key);
 
         let fn_configurator_owner = Owner;
-        let fn_data = fn_data::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
-        fn_data.configs.borrow_mut().clear();
+        let mut fn_data_mock = fn_data_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        fn_data_mock.configs.borrow_mut().clear();
+        fn_data_mock
+            .setup()
+            .add_config::<ArgsCheckerMock, Owner, ArgRefsTuple, ReturnValue, MockArg>(
+                automock::Arg::Any,
+                automock::Arg::Any,
+            )
+            .call_base();
 
         let fn_config_mock = fn_config_mock();
         let fn_config_mock_id = fn_config_mock.id();
@@ -396,13 +416,14 @@ mod tests {
             .returns(fn_config_mock);
 
         // Act
-        let result = fn_data.add_config::<_, _, ArgRefsTuple, ReturnValue, MockArg>(
-            args_checker_mock.clone(),
-            &fn_configurator_owner,
-        );
+        let result = fn_data_mock
+            .add_config::<ArgsCheckerMock, Owner, ArgRefsTuple, ReturnValue, MockArg>(
+                args_checker_mock.clone(),
+                &fn_configurator_owner,
+            );
 
         // Assert
-        let configs = fn_data.configs.borrow();
+        let configs = fn_data_mock.configs.borrow();
         let inserted_fn_config = &configs
             .get(&generics_hash_key)
             .expect("Config should contain new `FnConfig`s map")[0];
@@ -438,14 +459,21 @@ mod tests {
             .always_returns(generics_hash_key);
 
         let fn_configurator_owner = Owner;
-        let fn_data = fn_data::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        let mut fn_data_mock = fn_data_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
         let existing_fn_config_index = {
-            let mut configs = fn_data.configs.borrow_mut();
+            let mut configs = fn_data_mock.configs.borrow_mut();
             let new_entry = configs
                 .entry(generics_hash_key)
                 .insert_entry(vec![Rc::new(RefCell::new(fn_config_mock()))]);
             new_entry.get().len()
         };
+        fn_data_mock
+            .setup()
+            .add_config::<ArgsCheckerMock, Owner, ArgRefsTuple, ReturnValue, MockArg>(
+                automock::Arg::Any,
+                automock::Arg::Any,
+            )
+            .call_base();
 
         let fn_config_mock = fn_config_mock();
         let fn_config_mock_id = fn_config_mock.id();
@@ -454,13 +482,13 @@ mod tests {
             .returns(fn_config_mock);
 
         // Act
-        let result = fn_data.add_config::<_, _, ArgRefsTuple, ReturnValue, MockArg>(
+        let result = fn_data_mock.add_config::<_, _, ArgRefsTuple, ReturnValue, MockArg>(
             args_checker_mock.clone(),
             &fn_configurator_owner,
         );
 
         // Assert
-        let configs = fn_data.configs.borrow();
+        let configs = fn_data_mock.configs.borrow();
         let inserted_fn_config = &configs
             .get(&generics_hash_key)
             .expect("Config should contain new `FnConfig`s map")[existing_fn_config_index];
@@ -484,10 +512,242 @@ mod tests {
             .no_other_calls();
     }
 
+    #[test]
+    fn verify_received_Valid_DoesNotPanicAndHandlesCallOrderVerification() {
+        // Arrange
+        let args_checker_mock = ArgsCheckerMock::new();
+
+        let mut fn_data_mock = fn_data_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        let matching_calls_args_check_results = vec![OrderedCallCheckResult {
+            call_order_number: 5,
+            args_check_results: Vec::new(),
+        }];
+        let matching_calls_check_result = OrderedCallsCheckResult {
+            calls_args_check_results: matching_calls_args_check_results.clone(),
+        };
+        let times = Times::Exactly(matching_calls_check_result.calls_args_check_results.len());
+        let non_matching_calls_check_result = OrderedCallsCheckResult {
+            calls_args_check_results: Vec::new(),
+        };
+        fn_data_mock
+            .setup()
+            .get_matching_and_non_matching_calls(automock::Arg::Any)
+            .returns((matching_calls_check_result, non_matching_calls_check_result))
+            .verify_received(automock::Arg::<ArgsCheckerMock>::Any, automock::Arg::Any)
+            .call_base();
+
+        // Act
+        fn_data_mock.verify_received(args_checker_mock, times);
+
+        // Assert
+        internal::panic_received_verification_error::received_nothing();
+
+        fn_data_mock
+            .received()
+            .get_matching_and_non_matching_calls(automock::Arg::Any, automock::Times::Once)
+            .handle_call_order_verification(
+                matching_calls_args_check_results,
+                automock::Times::Once,
+            )
+            .no_other_calls();
+    }
+
+    #[test]
+    fn verify_received_Invalid_PanicsWithoutHandlingCallOrderVerification() {
+        // Arrange
+        let args_checker_mock = ArgsCheckerMock::new();
+
+        let mut fn_data_mock = fn_data_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        let matching_calls_check_result = OrderedCallsCheckResult {
+            calls_args_check_results: vec![OrderedCallCheckResult {
+                call_order_number: 5,
+                args_check_results: Vec::new(),
+            }],
+        };
+        let times = Times::Exactly(matching_calls_check_result.calls_args_check_results.len() + 10);
+        let non_matching_calls_check_result = OrderedCallsCheckResult {
+            calls_args_check_results: vec![OrderedCallCheckResult {
+                call_order_number: 15,
+                args_check_results: Vec::new(),
+            }],
+        };
+        fn_data_mock
+            .setup()
+            .get_matching_and_non_matching_calls(automock::Arg::Any)
+            .returns((
+                matching_calls_check_result.clone(),
+                non_matching_calls_check_result.clone(),
+            ))
+            .verify_received(automock::Arg::<ArgsCheckerMock>::Any, automock::Arg::Any)
+            .call_base();
+
+        // Act
+        fn_data_mock.verify_received(args_checker_mock, times.clone());
+
+        // Assert
+        internal::panic_received_verification_error::received(
+            fn_data_mock.fn_name,
+            automock::Arg::ref_eq(fn_data_mock.formatted_fn_name.as_str()),
+            automock::Arg::Any,
+            matching_calls_check_result,
+            non_matching_calls_check_result,
+            times,
+            automock::Times::Once,
+        )
+        .no_other_calls();
+
+        fn_data_mock
+            .received()
+            .get_matching_and_non_matching_calls(automock::Arg::Any, automock::Times::Once)
+            .no_other_calls();
+    }
+
+    #[test]
+    fn get_unexpected_calls_error_msgs_Ok() {
+        // Arrange
+        let call_order_numbers = [2, 4, 3, 1];
+        get_next_call_order_number::setup().returns_many(call_order_numbers);
+
+        fn call_check<'am>(
+            number: usize,
+            verified: bool,
+        ) -> (
+            CallMock,
+            Vec<ArgInfo>,
+            Vec<GenericParameterInfo>,
+            CallCheck<'am>,
+        ) {
+            let mut call_mock = CallMock::new();
+            let arg_infos = vec![ArgInfo::new(
+                format!("arg {number}").leak(),
+                format!("arg {number} value").leak(),
+                format!("arg {number} debug string"),
+            )];
+            let generic_parameter_infos = vec![GenericParameterInfo::Type(GenericTypeInfo {
+                name: format!("arg {number} generic name").leak(),
+                type_name: format!("arg {number} generic type name").leak(),
+            })];
+            call_mock
+                .setup()
+                .as_ICall()
+                .get_arg_infos()
+                .returns(arg_infos.clone());
+            call_mock
+                .setup()
+                .as_IGenericsInfoProvider()
+                .get_generic_parameter_infos()
+                .returns(generic_parameter_infos.clone());
+            let dyn_call = DynCall::new(call_mock.clone());
+            let result = CallCheck::new(Rc::new(dyn_call));
+            if verified {
+                result.mark_as_verified()
+            }
+            return (call_mock, arg_infos, generic_parameter_infos, result);
+        }
+        let (mut call_mock_1, arg_infos_1, generic_parameter_infos_1, call_check_1) =
+            call_check(1, false);
+        let (mut call_mock_2, arg_infos_2, generic_parameter_infos_2, call_check_2) =
+            call_check(2, false);
+        let (mut call_mock_3, _, _, call_check_3) = call_check(3, true);
+        let (mut call_mock_4, _, _, call_check_4) = call_check(4, true);
+
+        let mut fn_data_mock = fn_data_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        {
+            let mut call_checks_map = fn_data_mock.call_checks.borrow_mut();
+            call_checks_map
+                .entry(GenericsHashKey(5))
+                .insert_entry(vec![call_check_2, call_check_4]);
+            call_checks_map
+                .entry(GenericsHashKey(15))
+                .insert_entry(vec![call_check_3, call_check_1]);
+        }
+        fn_data_mock
+            .setup()
+            .get_unexpected_calls_error_msgs()
+            .call_base();
+
+        let received_unexpected_call_error_1 = "quo vadis".to_owned();
+        let received_unexpected_call_error_2 = "veridis quo".to_owned();
+        error_printing::format_received_unexpected_call_error::setup(
+            automock::Arg::Any,
+            automock::Arg::Any,
+            automock::Arg::Any,
+        )
+        .returns_many([
+            received_unexpected_call_error_1.clone(),
+            received_unexpected_call_error_2.clone(),
+        ]);
+
+        // Act
+        let result = fn_data_mock.get_unexpected_calls_error_msgs();
+
+        // Assert
+        let expected_result = [
+            received_unexpected_call_error_1,
+            received_unexpected_call_error_2,
+        ];
+        assert_eq!(result, expected_result);
+
+        call_mock_1
+            .received()
+            .as_ICall()
+            .get_arg_infos(automock::Times::Once);
+        call_mock_1
+            .received()
+            .as_IGenericsInfoProvider()
+            .get_generic_parameter_infos(automock::Times::Once)
+            .no_other_calls();
+        call_mock_2
+            .received()
+            .as_ICall()
+            .get_arg_infos(automock::Times::Once);
+        call_mock_2
+            .received()
+            .as_IGenericsInfoProvider()
+            .get_generic_parameter_infos(automock::Times::Once)
+            .no_other_calls();
+        call_mock_3.received().no_other_calls();
+        call_mock_4.received().no_other_calls();
+
+        error_printing::format_received_unexpected_call_error::received(
+            automock::Arg::ref_eq(fn_data_mock.formatted_fn_name.as_str()),
+            arg_infos_1,
+            generic_parameter_infos_1,
+            automock::Times::Once,
+        )
+        .received(
+            automock::Arg::ref_eq(fn_data_mock.formatted_fn_name.as_str()),
+            arg_infos_2,
+            generic_parameter_infos_2,
+            automock::Times::Once,
+        )
+        .no_other_calls();
+    }
+
+    #[test]
+    fn get_received_nothing_else_error_msgs_Ok() {
+        // Arrange
+        let mut fn_data_mock = fn_data_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        let unexpected_calls_error_msgs = vec!["quo vadis".to_owned(), "veridis quo".to_owned()];
+        fn_data_mock
+            .setup()
+            .get_unexpected_calls_error_msgs()
+            .returns(unexpected_calls_error_msgs.clone())
+            .as_IMockData()
+            .get_received_nothing_else_error_msgs()
+            .call_base();
+
+        // Act
+        let result = fn_data_mock.get_received_nothing_else_error_msgs();
+
+        // Assert
+        assert_eq!(result, vec![unexpected_calls_error_msgs]);
+    }
+
     mod utilities {
         use super::*;
 
-        pub fn fn_data<
+        pub fn fn_data_mock<
             const HAS_RETURN_VALUE: bool,
             const SUPPORTS_BASE_CALLING: bool,
             const PASSES_MOCK_TO_CALLBACK: bool,
@@ -497,8 +757,9 @@ mod tests {
             FnData {
                 fn_name: "quo vadis",
                 formatted_fn_name: "veridis quo".to_owned(),
-                call_infos: Default::default(),
+                call_checks: Default::default(),
                 configs: Default::default(),
+                __mock_data: Default::default(),
             }
         }
     }

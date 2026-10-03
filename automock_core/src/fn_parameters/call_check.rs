@@ -11,7 +11,7 @@ static CALL_ORDER_NUMBER: AtomicUsize = AtomicUsize::new(0);
 
 #[cfg_attr(test, automock::mock)]
 #[inline(always)]
-fn get_next_call_order_number() -> usize {
+pub(crate) fn get_next_call_order_number() -> usize {
     CALL_ORDER_NUMBER.fetch_add(1, Ordering::Relaxed)
 }
 
