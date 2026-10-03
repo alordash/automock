@@ -22,3 +22,24 @@ impl MatchingConfigSearchErr {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #![allow(non_snake_case)]
+    use super::*;
+
+    #[test]
+    fn empty_Ok() {
+        // Act
+        let result = MatchingConfigSearchErr::empty();
+
+        // Assert
+        assert!(
+            result
+                .args_check_results_sorted_by_number_of_correctly_matched_args_descending
+                .calls_args_check_results
+                .is_empty()
+        );
+        assert!(!result.needed_return_value)
+    }
+}

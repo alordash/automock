@@ -5,14 +5,14 @@ use std::fmt::Formatter;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, RwLock};
 
-// Two layer map: fn name + fn generics
-type Map = IndexMap<String, IndexMap<GenericsHashKey, *const ()>>;
+// fn name -> fn generics -> mock data
+type MockDataMap = IndexMap<String, IndexMap<GenericsHashKey, *const ()>>;
 
 static MOCK_ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 pub struct MockData {
     id: usize,
-    map: RwLock<Map>,
+    map: RwLock<MockDataMap>,
 }
 
 pub type SharedMockData = Arc<MockData>;

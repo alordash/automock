@@ -105,19 +105,7 @@ impl<
                 times,
             );
         }
-        if call_order_verification::should_perform() {
-            for matching_call in matching_calls_check_result.calls_args_check_results {
-                let formatted_string = fmt_call(
-                    &self.formatted_fn_name,
-                    matching_call.args_check_results,
-                    GenericParameterInfosFormattingPolicy::Skip,
-                );
-                call_order_verification::add_call(
-                    matching_call.call_order_number,
-                    formatted_string,
-                );
-            }
-        }
+        self.handle_call_order_verification(matching_calls_check_result.calls_args_check_results);
     }
 
     pub fn get_unexpected_calls_error_msgs(&self) -> Vec<String> {
@@ -160,6 +148,25 @@ impl<
 
 mod internal {
     use super::*;
+
+    #[cfg_attr(test, automock::mock)]
+    pub(super) fn panic_received_verification_error<'am>(
+        fn_name: &str,
+        formatted_fn_name: &str,
+        args_checker: &DynArgsChecker<'am>,
+        matching_calls_check_result: OrderedCallsCheckResult,
+        non_matching_calls_check_result: OrderedCallsCheckResult,
+        _times: Times,
+    ) {
+        error_printing::panic_received_verification_error(
+            fn_name,
+            formatted_fn_name,
+            args_checker,
+            matching_calls_check_result,
+            non_matching_calls_check_result,
+            _times,
+        );
+    }
 
     impl<
         'am,
@@ -211,7 +218,7 @@ mod internal {
             return (matching_calls_check_result, non_matching_calls_check_result);
         }
 
-// todo - remove?
+        // todo - remove?
         // pub(crate) fn get_optional_matching_config(
         //     &self,
         //     dyn_call: &DynCall<'am>,
@@ -277,6 +284,222 @@ mod internal {
                     calls_check_result,
                 needed_return_value: with_return_value,
             });
+        }
+
+        pub(super) fn handle_call_order_verification(
+            &self,
+            ordered_call_check_results: Vec<OrderedCallCheckResult>,
+        ) {
+            if call_order_verification::should_perform() {
+                for matching_call in ordered_call_check_results {
+                    let formatted_string = fmt_call(
+                        &self.formatted_fn_name,
+                        matching_call.args_check_results,
+                        GenericParameterInfosFormattingPolicy::Skip,
+                    );
+                    call_order_verification::add_call(
+                        matching_call.call_order_number,
+                        formatted_string,
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(non_snake_case)]
+    use super::*;
+    use args::i_args_checker::tests::utilities::*;
+    use automock::Mockable;
+    use fn_callback_configurator::tests::utilities::*;
+    use fn_config::tests::utilities::*;
+    use fn_configurator::tests::utilities::*;
+    use utilities::*;
+
+    const IRRELEVANT: bool = false;
+
+    #[test]
+    fn new_NoOwnerName_Ok() {
+        // Arrange
+        let fn_name = "quo vadis";
+
+        // Act
+        let result = FnData::<Mock, IRRELEVANT, IRRELEVANT, IRRELEVANT>::new(None, fn_name);
+
+        // Assert
+        assert_eq!(result.fn_name, fn_name);
+        assert_eq!(result.formatted_fn_name, fn_name);
+        assert!(result.call_infos.borrow().is_empty());
+        assert!(result.configs.borrow().is_empty());
+    }
+
+    #[test]
+    fn new_WithOwnerName_Ok() {
+        // Arrange
+        let fn_name = "quo vadis";
+        let owner_name = "veridis quo";
+
+        // Act
+        let result =
+            FnData::<Mock, IRRELEVANT, IRRELEVANT, IRRELEVANT>::new(Some(owner_name), fn_name);
+
+        // Assert
+        assert_eq!(result.fn_name, fn_name);
+        let expected_formatted_fn_name = format!("{owner_name}::{fn_name}");
+        assert_eq!(result.formatted_fn_name, expected_formatted_fn_name);
+        assert!(result.call_infos.borrow().is_empty());
+        assert!(result.configs.borrow().is_empty());
+    }
+
+    #[test]
+    fn reset_Ok() {
+        // Arrange
+        let fn_data = fn_data::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        fn_data
+            .call_infos
+            .borrow_mut()
+            .insert(GenericsHashKey(5), Vec::new());
+        fn_data
+            .configs
+            .borrow_mut()
+            .insert(GenericsHashKey(10), Vec::new());
+
+        // Act
+        fn_data.reset();
+
+        // Assert
+        assert!(fn_data.call_infos.borrow().is_empty());
+        assert!(fn_data.configs.borrow().is_empty());
+    }
+
+    #[test]
+    fn add_config_NoEntryForGenericsHashKey_CreatesNewEntry() {
+        // Arrange
+        let generics_hash_key = GenericsHashKey(5);
+        let mut args_checker_mock = ArgsCheckerMock::new();
+        args_checker_mock
+            .setup()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key()
+            .always_returns(generics_hash_key);
+
+        let fn_configurator_owner = Owner;
+        let fn_data = fn_data::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        fn_data.configs.borrow_mut().clear();
+
+        let fn_config_mock = fn_config_mock();
+        let fn_config_mock_id = fn_config_mock.id();
+        FnConfig::static_setup()
+            .new(automock::Arg::Any)
+            .returns(fn_config_mock);
+
+        // Act
+        let result = fn_data.add_config::<_, _, ArgRefsTuple, ReturnValue, MockArg>(
+            args_checker_mock.clone(),
+            &fn_configurator_owner,
+        );
+
+        // Assert
+        let configs = fn_data.configs.borrow();
+        let inserted_fn_config = &configs
+            .get(&generics_hash_key)
+            .expect("Config should contain new `FnConfig`s map")[0];
+        assert_eq!(inserted_fn_config.borrow().id(), fn_config_mock_id);
+
+        assert_eq!(result.fn_config().borrow().id(), fn_config_mock_id);
+
+        args_checker_mock
+            .received()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key(automock::Times::Once)
+            .no_other_calls();
+
+        FnConfig::<Mock>::static_received()
+            .new(
+                automock::Arg::is(|dyn_args_checker: &DynArgsChecker| {
+                    dyn_args_checker.get_generics_hash_key() == generics_hash_key
+                }),
+                automock::Times::Once,
+            )
+            .no_other_calls();
+    }
+
+    #[test]
+    fn add_config_WithEntryForGenericsHashKey_ModifiesExistingEntry() {
+        // Arrange
+        let generics_hash_key = GenericsHashKey(5);
+        let mut args_checker_mock = ArgsCheckerMock::new();
+        args_checker_mock
+            .setup()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key()
+            .always_returns(generics_hash_key);
+
+        let fn_configurator_owner = Owner;
+        let fn_data = fn_data::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        let existing_fn_config_index = {
+            let mut configs = fn_data.configs.borrow_mut();
+            let new_entry = configs
+                .entry(generics_hash_key)
+                .insert_entry(vec![Rc::new(RefCell::new(fn_config_mock()))]);
+            new_entry.get().len()
+        };
+
+        let fn_config_mock = fn_config_mock();
+        let fn_config_mock_id = fn_config_mock.id();
+        FnConfig::static_setup()
+            .new(automock::Arg::Any)
+            .returns(fn_config_mock);
+
+        // Act
+        let result = fn_data.add_config::<_, _, ArgRefsTuple, ReturnValue, MockArg>(
+            args_checker_mock.clone(),
+            &fn_configurator_owner,
+        );
+
+        // Assert
+        let configs = fn_data.configs.borrow();
+        let inserted_fn_config = &configs
+            .get(&generics_hash_key)
+            .expect("Config should contain new `FnConfig`s map")[existing_fn_config_index];
+        assert_eq!(inserted_fn_config.borrow().id(), fn_config_mock_id);
+
+        assert_eq!(result.fn_config().borrow().id(), fn_config_mock_id);
+
+        args_checker_mock
+            .received()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key(automock::Times::Once)
+            .no_other_calls();
+
+        FnConfig::<Mock>::static_received()
+            .new(
+                automock::Arg::is(|dyn_args_checker: &DynArgsChecker| {
+                    dyn_args_checker.get_generics_hash_key() == generics_hash_key
+                }),
+                automock::Times::Once,
+            )
+            .no_other_calls();
+    }
+
+    mod utilities {
+        use super::*;
+
+        pub fn fn_data<
+            const HAS_RETURN_VALUE: bool,
+            const SUPPORTS_BASE_CALLING: bool,
+            const PASSES_MOCK_TO_CALLBACK: bool,
+        >()
+        -> FnData<'static, Mock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
+        {
+            FnData {
+                fn_name: "quo vadis",
+                formatted_fn_name: "veridis quo".to_owned(),
+                call_infos: Default::default(),
+                configs: Default::default(),
+            }
         }
     }
 }

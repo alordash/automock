@@ -61,6 +61,10 @@ impl<
             fn_callback_configurator: FnCallbackConfigurator::new(fn_config.clone(), owner),
         }
     }
+
+    pub(crate) fn fn_config(&self) -> &Rc<RefCell<FnConfig<'am, TMock>>> {
+        &self.fn_config
+    }
 }
 
 impl<
