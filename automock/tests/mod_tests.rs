@@ -27,7 +27,7 @@ impl b::Trait for c::S {
         unreachable!()
     }
 }
-#[mock(base)]
+#[mock]
 impl c::S {
     pub fn new() -> Self {
         Self
@@ -41,6 +41,7 @@ mod tests {
     #[test]
     fn ok() {
         // Arrange
+        c::S::static_setup().new().call_base();
         let mut mock = c::S::new();
 
         let a_return_value = 10;

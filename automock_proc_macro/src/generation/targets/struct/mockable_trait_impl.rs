@@ -1,5 +1,5 @@
 use crate::common::*;
-use crate::generation::common::reset_fn_data_stmt;
+use crate::generation::common::*;
 use crate::generation::mock_controls::models::*;
 use not_enough_syntax::*;
 use proc_macro2::Span;
@@ -26,7 +26,7 @@ pub(crate) fn generate(
     }: Params,
 ) -> ItemImpl {
     let mut struct_generics = generics.clone();
-    struct_generics.params = struct_generics.params.into_iter().skip(1).collect(); // skipping '__rsa
+    struct_generics.params = struct_generics.params.into_iter().skip(1).collect(); // skipping '__ama
     let struct_path = path::from_ident_with_generics(struct_ident, &struct_generics);
     let struct_type = Type::Path(TypePath {
         attrs: Vec::new(),
@@ -53,6 +53,7 @@ pub(crate) fn generate(
         qself: None,
         path: path::from_ident_with_generics(static_received_struct_ident, &generics),
     });
+    let id_impl = id_fn_impl::new(span, id_fn_impl::Params { public: false });
     let type_setup = associated_type_impl(span, "Setup", setup_struct_type);
     let fn_setup = fn_control(span, ControlType::Setup);
     let type_received = associated_type_impl(span, "Received", received_struct_type);
@@ -84,6 +85,7 @@ pub(crate) fn generate(
         self_ty: Box::new(struct_type),
         brace_token: token::Brace(span),
         items: vec![
+            ImplItem::Fn(id_impl),
             ImplItem::Type(type_setup),
             ImplItem::Fn(fn_setup),
             ImplItem::Type(type_received),

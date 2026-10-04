@@ -4,14 +4,14 @@ use std::rc::Rc;
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new() -> Self {
         Self
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub(crate) fn accept_rc(&self, _: Rc<i32>) {}
 
@@ -41,6 +41,7 @@ mod tests {
         #[test]
         fn accept_rc_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let r = Rc::new(1);
 
@@ -54,6 +55,7 @@ mod tests {
         #[test]
         fn accept_rc_Panics() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let r = Rc::new(11);
             let r_ptr = Rc::as_ptr(&r);
@@ -62,11 +64,12 @@ mod tests {
             mock.accept_rc(r.clone());
 
             // Assert
+            let rc_type_name = std::any::type_name::<Rc<i32>>();
             assert_panics(
                 || mock.received().accept_rc(Arg::Any, Times::Never),
                 format!(
                     "Expected to never receive a call matching:
-	Struct::accept_rc((alloc::rc::Rc<i32>): any)
+	Struct::accept_rc(({rc_type_name}): any)
 Actually received 1 matching call:
 	accept_rc({r})
 Received no non-matching calls"
@@ -77,7 +80,7 @@ Received no non-matching calls"
                 || mock.received().accept_rc(Arg::Any, Times::Exactly(3)),
                 format!(
                     "Expected to receive a call 3 times matching:
-	Struct::accept_rc((alloc::rc::Rc<i32>): any)
+	Struct::accept_rc(({rc_type_name}): any)
 Actually received 1 matching call:
 	accept_rc({r})
 Received no non-matching calls"
@@ -93,11 +96,11 @@ Received no non-matching calls"
                 },
                 format!(
                     "Expected to receive a call exactly once matching:
-	Struct::accept_rc((alloc::rc::Rc<i32>): equal to {invalid_r})
+	Struct::accept_rc(({rc_type_name}): equal to {invalid_r})
 Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_rc(*{r}*)
-	1. __arg0 (alloc::rc::Rc<i32>):
+	1. __arg0 ({rc_type_name}):
 		Expected (ptr: {invalid_r_ptr:?}): {invalid_r}
 		Actual   (ptr: {r_ptr:?}): {r}"
                 ),
@@ -111,6 +114,7 @@ accept_rc(*{r}*)
         #[test]
         fn return_rc_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let r = Rc::new(10);
             mock.setup().return_rc().returns(r.clone());
@@ -129,6 +133,7 @@ accept_rc(*{r}*)
         #[test]
         fn accept_rc_return_rc_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let accepted_r = Rc::new(10);
             let returned_r = Rc::new(20);
@@ -155,6 +160,7 @@ accept_rc(*{r}*)
         #[test]
         fn accept_two_rcs_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let r1 = Rc::new(10);
             let r2 = Rc::new(20.2);
@@ -176,6 +182,7 @@ accept_rc(*{r}*)
         #[test]
         fn accept_two_rcs_return_rc_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let r1 = Rc::new(10);
             let r2 = Rc::new(20.2);

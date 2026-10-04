@@ -10,18 +10,19 @@ pub(crate) use formatting::*;
 static CALL_ORDER_NUMBER: AtomicUsize = AtomicUsize::new(0);
 
 #[cfg_attr(test, automock::mock)]
-fn get_next_call_order_number() -> usize {
-    CALL_ORDER_NUMBER.fetch_add(1, Ordering::AcqRel)
+#[inline(always)]
+pub(crate) fn get_next_call_order_number() -> usize {
+    CALL_ORDER_NUMBER.fetch_add(1, Ordering::Relaxed)
 }
 
-pub struct CallCheck<'rs> {
+pub struct CallCheck<'am> {
     pub number: usize,
     verified: Cell<bool>,
-    call: Rc<DynCall<'rs>>,
+    call: Rc<DynCall<'am>>,
 }
 
-impl<'rs> CallCheck<'rs> {
-    pub fn new(call: Rc<DynCall<'rs>>) -> Self {
+impl<'am> CallCheck<'am> {
+    pub fn new(call: Rc<DynCall<'am>>) -> Self {
         Self {
             number: get_next_call_order_number(),
             verified: Cell::new(false),
@@ -33,11 +34,11 @@ impl<'rs> CallCheck<'rs> {
         self.verified.set(true);
     }
 
-    pub fn is_not_verified(&self) -> bool {
-        !self.verified.get()
+    pub fn is_verified(&self) -> bool {
+        self.verified.get()
     }
 
-    pub fn get_call(&self) -> &DynCall<'rs> {
+    pub fn get_dyn_call(&self) -> &Rc<DynCall<'am>> {
         &self.call
     }
 }
@@ -47,7 +48,7 @@ mod tests {
     #![allow(non_snake_case)]
 
     use super::*;
-    use crate::fn_parameters::tests::CallMock;
+    use crate::fn_parameters::i_call::tests::utilities::*;
     use crate::fn_parameters::*;
 
     #[test]
@@ -83,7 +84,7 @@ mod tests {
     }
 
     #[test]
-    fn is_not_verified_WhenNotVerified_ReturnsTrue() {
+    fn is_verified_WhenNotVerified_ReturnsFalse() {
         // Arrange
         let call_check = CallCheck {
             number: 1,
@@ -92,14 +93,14 @@ mod tests {
         };
 
         // Act
-        let result = call_check.is_not_verified();
+        let result = call_check.is_verified();
 
         // Assert
-        assert!(result);
+        assert!(!result);
     }
 
     #[test]
-    fn is_not_verified_WhenVerified_ReturnsFalse() {
+    fn is_verified_WhenVerified_ReturnsTrue() {
         // Arrange
         let call_check = CallCheck {
             number: 1,
@@ -108,10 +109,10 @@ mod tests {
         };
 
         // Act
-        let result = call_check.is_not_verified();
+        let result = call_check.is_verified();
 
         // Assert
-        assert!(!result);
+        assert!(result);
     }
 
     #[test]
@@ -126,9 +127,9 @@ mod tests {
         };
 
         // Act
-        let result = call_check.get_call();
+        let result = call_check.get_dyn_call();
 
         // Assert
-        assert!(core::ptr::eq(result, call.as_ref()));
+        assert!(Rc::ptr_eq(result, &call));
     }
 }

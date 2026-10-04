@@ -7,7 +7,7 @@ use quote::format_ident;
 use syn::*;
 
 pub(crate) fn get_base_fn_ident(fn_ident: &Ident) -> Ident {
-    format_ident!("__rs_base_{}", fn_ident)
+    format_ident!("__am_base_{}", fn_ident)
 }
 
 pub(crate) struct StaticFnParams<'a> {
@@ -20,12 +20,7 @@ pub(crate) fn generate_static_fn(
 ) -> ItemFn {
     let (sig, block) = generate_core(span, fn_info, *base_impl, None);
     let result = ItemFn {
-        attrs: fn_info
-            .attributes
-            .clone()
-            .into_iter()
-            .chain([attributes::doc_hidden(span)])
-            .collect(),
+        attrs: fn_info.attributes.clone(),
         vis: Visibility::Public(Token![pub](span)),
         modifiers: FnModifiers::default(),
         sig,
@@ -54,12 +49,7 @@ pub(crate) fn generate_associated(
         (sig, block) = normalization::normalize_associated_items(associated_items_info, sig, block);
     }
     let result = ImplItemFn {
-        attrs: fn_info
-            .attributes
-            .clone()
-            .into_iter()
-            .chain([attributes::doc_hidden(span)])
-            .collect(),
+        attrs: fn_info.attributes.clone(),
         vis: Visibility::Inherited,
         modifiers: FnModifiers::default(),
         sig,
@@ -178,13 +168,18 @@ fn generate_core(
         semi_token: Token![;](span),
     };
     let cast_args_stmts = fn_info.arguments.iter().map(|x| {
-        let mut source_pat_type = x.source_pat_type.clone();
-        let attrs = core::mem::take(&mut source_pat_type.attrs);
+        let pat_type = PatType {
+            attrs: Vec::new(),
+            pat: x.source_pat_type.pat.clone(),
+            colon_token: x.source_pat_type.colon_token,
+            ty: x.ident_pat_type.ty.clone(),
+        };
+        let attrs = x.source_pat_type.attrs.clone();
         Local {
             attrs,
             let_token: Token![let](span),
             modifiers: LocalModifiers::default(),
-            pat: Pat::Type(source_pat_type),
+            pat: Pat::Type(pat_type),
             init: Some(LocalInit {
                 eq_token: Token![=](span),
                 expr: Box::new(Expr::Macro(transmute_lifetime_expr::new(Expr::Path(

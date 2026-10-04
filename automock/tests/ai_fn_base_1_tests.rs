@@ -7,17 +7,17 @@ use automock::*;
 // ============================================================================
 //
 
-#[mock(base)]
+#[mock]
 fn transform(value: i32) -> i32 {
     value * 2
 }
 
-#[mock(base)]
+#[mock]
 fn adjust(value: i32) -> i32 {
     transform(value) + 10
 }
 
-#[mock(base)]
+#[mock]
 fn calculate(value: i32) -> i32 {
     let transformed = transform(value);
     let adjusted = adjust(value);
@@ -58,11 +58,11 @@ mod tests {
         //
         assert_eq!(result, 50);
 
-        calculate::received(10, Times::Once);
+        calculate::received_nothing();
 
-        adjust::received(10, Times::Once);
+        adjust::received_nothing();
 
-        transform::received(10, Times::Exactly(2));
+        transform::received_nothing();
     }
 
     #[test]
@@ -89,11 +89,11 @@ mod tests {
         //
         assert_eq!(result, 210);
 
-        calculate::received(10, Times::Once);
-
-        adjust::received(10, Times::Once);
+        calculate::received_nothing();
 
         transform::received(10, Times::Exactly(2));
+
+        adjust::received_nothing();
     }
 
     #[test]
@@ -118,7 +118,7 @@ mod tests {
         //
         assert_eq!(result, 600);
 
-        calculate::received(10, Times::Once);
+        calculate::received_nothing();
 
         adjust::received(10, Times::Once);
 

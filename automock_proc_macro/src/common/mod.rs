@@ -1,12 +1,9 @@
 pub(crate) mod models {
     mod associated_items_info;
-    mod context;
 
     pub(crate) use associated_items_info::*;
-    pub(crate) use context::*;
 }
 
-pub(crate) mod context;
 pub(crate) mod data_field;
 pub(crate) mod for_generated;
 pub(crate) mod generics_field;

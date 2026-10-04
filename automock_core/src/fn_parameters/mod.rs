@@ -14,12 +14,12 @@
 // Types that are stored in and loaded from `Dyn*` structs are both controlled by procedure macros.
 // This guarantees that down- and upcasting are performed safely.
 mod call_check;
-mod dyn_arg_refs_tuple;
+pub(crate) mod dyn_arg_refs_tuple;
 mod dyn_args_checker;
 mod dyn_call;
 mod dyn_return_value;
 mod i_arg_refs_tuple;
-mod i_call;
+pub(crate) mod i_call;
 mod i_return_value;
 mod return_value_source;
 

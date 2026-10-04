@@ -2,11 +2,11 @@ use crate::args::*;
 use crate::fn_parameters::*;
 use crate::*;
 
-pub struct DynCall<'rs> {
-    inner: Box<dyn ICall + 'rs>,
+pub struct DynCall<'am> {
+    inner: Box<dyn ICall + 'am>,
 }
 
-impl<'rs> ICall for DynCall<'rs> {
+impl<'am> ICall for DynCall<'am> {
     fn is_zst(&self) -> bool {
         size_of_val(self.inner.as_ref()) == 0
     }
@@ -18,9 +18,13 @@ impl<'rs> ICall for DynCall<'rs> {
     fn get_ptr_to_boxed_tuple_of_refs(&self) -> *mut () {
         self.inner.get_ptr_to_boxed_tuple_of_refs()
     }
+
+    fn get_dyn_tuple_of_refs<'a>(&self) -> DynArgRefsTuple<'a> {
+        self.inner.get_dyn_tuple_of_refs()
+    }
 }
 
-impl<'rs> IGenericsInfoProvider for DynCall<'rs> {
+impl<'am> IGenericsInfoProvider for DynCall<'am> {
     fn get_generic_parameter_infos(&self) -> Vec<GenericParameterInfo> {
         self.inner.get_generic_parameter_infos()
     }
@@ -32,20 +36,33 @@ impl<'rs> IGenericsInfoProvider for DynCall<'rs> {
     fn hash_const_values(&self, hasher: &mut GenericsHasher) {
         self.inner.hash_const_values(hasher)
     }
+
+    fn get_generics_hash_key(&self) -> GenericsHashKey {
+        self.inner.get_generics_hash_key()
+    }
 }
 
-impl<'rs> DynCall<'rs> {
-    pub(crate) fn new<'a, T: ICall + 'rs>(value: T) -> DynCall<'a> {
+impl<'am> DynCall<'am> {
+    pub(crate) fn new<'a, T: ICall + 'am>(value: T) -> DynCall<'a> {
         transmute_lifetime!(Self {
             inner: Box::new(value),
         })
     }
 
-    pub fn downcast_ref<T: 'rs>(&self) -> &T {
+    pub fn downcast_to<T: 'am>(&self) -> &T {
         let dyn_ref = self.inner.as_ref();
         // SAFETY: for justification refer to module level documentation.
         let t_ref = unsafe { &*(dyn_ref as *const _ as *const T) };
         return t_ref;
+    }
+
+    pub(crate) fn downcast_into<T>(self) -> T {
+        let dyn_ptr = Box::leak(self.inner) as *mut _;
+        let dyn_fat_ptr: FatPointer = unsafe { core::mem::transmute(dyn_ptr) };
+        let t_ptr = dyn_fat_ptr.data_pointer as *mut T;
+        let t_box: Box<T> = unsafe { Box::from_raw(t_ptr) };
+        let t = *t_box;
+        return t;
     }
 }
 
@@ -54,7 +71,8 @@ mod tests {
     #![allow(non_snake_case)]
 
     use super::*;
-    use crate::fn_parameters::tests::*;
+    use crate::fn_parameters::dyn_arg_refs_tuple::tests::utilities::*;
+    use crate::fn_parameters::i_call::tests::utilities::*;
     use automock::{AsTimes, Mockable};
 
     #[test]
@@ -76,17 +94,29 @@ mod tests {
     }
 
     #[test]
-    fn downcast_ref_Ok() {
+    fn downcast_to_Ok() {
         // Arrange
-        let mut call_mock = CallMock::new();
-        call_mock.id = 123;
+        let call_mock = CallMock::new();
         let dyn_call = DynCall::new(call_mock.clone());
 
         // Act
-        let result: &CallMock = dyn_call.downcast_ref();
+        let result: &CallMock = dyn_call.downcast_to();
 
         // Assert
-        assert_eq!(result.id, call_mock.id);
+        assert_eq!(result.id(), call_mock.id());
+    }
+
+    #[test]
+    fn downcast_into_Ok() {
+        // Arrange
+        let call_mock = CallMock::new();
+        let dyn_call = DynCall::new(call_mock.clone());
+
+        // Act
+        let result: CallMock = dyn_call.downcast_into();
+
+        // Assert
+        assert_eq!(result.id(), call_mock.id());
     }
 
     #[test]
@@ -143,6 +173,32 @@ mod tests {
     }
 
     #[test]
+    fn ICall_get_dyn_tuple_of_refs_ForwardsToInner() {
+        // Arrange
+        let mut call_mock = CallMock::new();
+        let dyn_arg_refs_tuple = dyn_arg_refs_tuple_mock();
+        let dyn_arg_refs_tuple_id = dyn_arg_refs_tuple.id();
+        call_mock
+            .setup()
+            .as_ICall()
+            .get_dyn_tuple_of_refs()
+            .returns(dyn_arg_refs_tuple);
+
+        let dyn_call = DynCall::new(call_mock.clone());
+
+        // Act
+        let result = dyn_call.get_dyn_tuple_of_refs();
+
+        // Assert
+        assert_eq!(result.id(), dyn_arg_refs_tuple_id);
+        call_mock
+            .received()
+            .as_ICall()
+            .get_dyn_tuple_of_refs(1.time())
+            .no_other_calls();
+    }
+
+    #[test]
     fn IGenericsInfoProvider_get_generic_parameter_infos_ForwardsToInner() {
         // Arrange
         let generic_parameter_infos = vec![GenericParameterInfo::Type(GenericTypeInfo {
@@ -173,7 +229,11 @@ mod tests {
     #[test]
     fn IGenericsInfoProvider_hash_generics_type_ids_ForwardsToInner() {
         // Arrange
-        let mut generics_hasher = GenericsHasher::new();
+        GenericsHasher::static_setup()
+            .as_Default()
+            .default()
+            .call_base();
+        let mut generics_hasher = GenericsHasher::default();
         let mut call_mock = CallMock::new();
         let dyn_call = DynCall::new(call_mock.clone());
 
@@ -191,7 +251,11 @@ mod tests {
     #[test]
     fn IGenericsInfoProvider_hash_const_values_ids_ForwardsToInner() {
         // Arrange
-        let mut generics_hasher = GenericsHasher::new();
+        GenericsHasher::static_setup()
+            .as_Default()
+            .default()
+            .call_base();
+        let mut generics_hasher = GenericsHasher::default();
         let mut call_mock = CallMock::new();
         let dyn_call = DynCall::new(call_mock.clone());
 
@@ -203,6 +267,31 @@ mod tests {
             .received()
             .as_IGenericsInfoProvider()
             .hash_const_values(automock::Arg::ref_eq(&mut generics_hasher), 1.time())
+            .no_other_calls();
+    }
+
+    #[test]
+    fn IGenericsInfoProvider_get_generics_hash_key_ForwardsToInner() {
+        // Arrange
+        let mut call_mock = CallMock::new();
+        let generics_hash_key = GenericsHashKey(5);
+        call_mock
+            .setup()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key()
+            .returns(generics_hash_key);
+        let dyn_call = DynCall::new(call_mock.clone());
+
+        // Act
+        let result = dyn_call.get_generics_hash_key();
+
+        // Assert
+        assert_eq!(result, generics_hash_key);
+
+        call_mock
+            .received()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key(automock::Times::Once)
             .no_other_calls();
     }
 }

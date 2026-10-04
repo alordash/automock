@@ -1,11 +1,21 @@
 use crate::args::CallsCheckResult;
 use crate::infrastructure::FnConfig;
 use std::cell::RefCell;
+use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 
-pub(crate) enum MatchingConfigSearchResult<'rs, TMock> {
-    Ok(Rc<RefCell<FnConfig<'rs, TMock>>>),
+pub(crate) enum MatchingConfigSearchResult<'am, TMock> {
+    Ok(Rc<RefCell<FnConfig<'am, TMock>>>),
     Err(MatchingConfigSearchErr),
+}
+
+impl<'am, TMock> Debug for MatchingConfigSearchResult<'am, TMock> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            MatchingConfigSearchResult::Ok(_) => "Ok",
+            MatchingConfigSearchResult::Err(_) => "Err",
+        })
+    }
 }
 
 pub(crate) struct MatchingConfigSearchErr {
@@ -20,5 +30,26 @@ impl MatchingConfigSearchErr {
                 CallsCheckResult::empty(),
             needed_return_value: false,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(non_snake_case)]
+    use super::*;
+
+    #[test]
+    fn empty_Ok() {
+        // Act
+        let result = MatchingConfigSearchErr::empty();
+
+        // Assert
+        assert!(
+            result
+                .args_check_results_sorted_by_number_of_correctly_matched_args_descending
+                .calls_args_check_results
+                .is_empty()
+        );
+        assert!(!result.needed_return_value)
     }
 }

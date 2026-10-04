@@ -12,7 +12,7 @@ pub struct Calculator {
     pub value: i32,
 }
 
-#[mock(base)]
+#[mock]
 impl Calculator {
     pub fn new(value: i32) -> Self {
         Self { value }
@@ -56,6 +56,7 @@ mod tests {
     #[test]
     fn simple_struct_method() {
         // Arrange
+        Calculator::static_setup().new(Arg::Any).call_base();
         let mut mock = Calculator::new(1);
 
         mock.setup().add(10).returns(42);
@@ -72,6 +73,7 @@ mod tests {
     #[test]
     fn struct_through_consumer() {
         // Arrange
+        Calculator::static_setup().new(Arg::Any).call_base();
         let mut mock = Calculator::new(1);
 
         mock.setup().add(10).returns(42);

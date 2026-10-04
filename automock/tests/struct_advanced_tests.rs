@@ -8,7 +8,7 @@ struct Foo {
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     fn new() -> Self {
         Self
@@ -23,7 +23,7 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl From<i32> for Struct {
     fn from(_: i32) -> Self {
         Self::new()
@@ -39,7 +39,7 @@ impl From<f32> for Struct {
 #[mock]
 struct Selfish;
 
-#[mock(base)]
+#[mock]
 impl Selfish {
     #[allow(unused)]
     fn work(&self, _: &Self) {}

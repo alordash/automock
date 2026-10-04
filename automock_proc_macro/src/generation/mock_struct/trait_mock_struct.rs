@@ -1,4 +1,3 @@
-use crate::common::models::*;
 use crate::common::*;
 use crate::generation::base_fn;
 use crate::generation::common::*;
@@ -25,7 +24,6 @@ pub(crate) struct Params<'a> {
 }
 
 pub(crate) fn generate(
-    ctx: &Context,
     span: Span,
     Params {
         mock_struct_ident,
@@ -60,7 +58,6 @@ pub(crate) fn generate(
         &item_struct.fields,
     );
     let trait_impl = generate_trait_impl(
-        ctx,
         span,
         trait_info,
         generics_for_impl.clone(),
@@ -68,7 +65,6 @@ pub(crate) fn generate(
         mod_ident,
     );
     let inner_impl = generate_inner_impl(
-        ctx,
         span,
         trait_info,
         generics_for_impl,
@@ -90,7 +86,6 @@ pub(crate) fn generate(
 }
 
 fn generate_trait_impl(
-    ctx: &Context,
     span: Span,
     trait_info: &TraitInfo,
     generics_for_impl: Generics,
@@ -106,13 +101,13 @@ fn generate_trait_impl(
             trait_info
                 .associated_fns
                 .iter()
-                .map(|x| map_fn(ctx, mock_struct_path.clone(), x, mod_ident.clone(), false)),
+                .map(|x| map_fn(mock_struct_path.clone(), x, mod_ident.clone(), false)),
         )
         .chain(
             trait_info
                 .static_fns
                 .iter()
-                .map(|x| map_fn(ctx, mock_struct_path.clone(), x, mod_ident.clone(), true)),
+                .map(|x| map_fn(mock_struct_path.clone(), x, mod_ident.clone(), true)),
         )
         .collect();
     items_with_order.sort_by_key(|a| a.order_number);
@@ -182,7 +177,6 @@ fn map_assoc_type(ordered_assoc_type: &Ordered<TraitItemTypeSyntax>) -> Ordered<
 }
 
 fn map_fn(
-    ctx: &Context,
     mock_struct_path: Path,
     ordered_fn_info: &Ordered<FnInfo>,
     mod_ident: Ident,
@@ -197,7 +191,6 @@ fn map_fn(
             sig: *fn_info.signature.clone(),
             block: if is_static {
                 static_fn_block::generate(
-                    ctx,
                     span,
                     static_fn_block::Params {
                         mock_struct_path,
@@ -215,7 +208,6 @@ fn map_fn(
                 )
             } else {
                 associated_method_block::generate(
-                    ctx,
                     span,
                     associated_method_block::Params {
                         mock_struct_path,
@@ -237,7 +229,6 @@ fn map_fn(
 
 #[allow(clippy::too_many_arguments)]
 fn generate_inner_impl(
-    ctx: &Context,
     span: Span,
     trait_info: &TraitInfo,
     generics_for_impl: Generics,
@@ -246,6 +237,7 @@ fn generate_inner_impl(
     maybe_associated_controls: &Option<AssociatedControls>,
     maybe_static_controls: &Option<StaticControls>,
 ) -> ItemImpl {
+    let id_fn_impl = id_fn_impl::new(span, id_fn_impl::Params { public: true });
     let mock_struct_fn_new = mock_struct_fn_new::new(span);
     let associated_controls_creation_fns =
         maybe_associated_controls
@@ -284,21 +276,16 @@ fn generate_inner_impl(
             ),
         ]
     });
-    let base_fns = if ctx.support_base_calling {
-        Some(
-            trait_info
-                .associated_fns
-                .iter()
-                .chain(trait_info.static_fns.iter())
-                .filter_map(|fn_info| try_extract_base_fn(span, trait_info, fn_info, mod_ident)),
-        )
-    } else {
-        None
-    };
-    let items = core::iter::once(mock_struct_fn_new)
+    let base_fns = trait_info
+        .associated_fns
+        .iter()
+        .chain(trait_info.static_fns.iter())
+        .filter_map(|fn_info| try_extract_base_fn(span, trait_info, fn_info, mod_ident));
+    let items = [id_fn_impl, mock_struct_fn_new]
+        .into_iter()
         .chain(associated_controls_creation_fns.into_iter().flatten())
         .chain(static_controls_creation_fns.into_iter().flatten())
-        .chain(base_fns.into_iter().flatten())
+        .chain(base_fns)
         .map(ImplItem::Fn)
         .collect();
 

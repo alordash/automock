@@ -4,7 +4,7 @@ use proc_macro2::Span;
 use syn::*;
 
 pub(crate) fn new(span: Span) -> (ExprPath, PatType) {
-    let times_arg_path = expr::path::new(span, ["times"]);
+    let times_arg_path = expr::path::new(span, ["__ts"]);
     let times_arg = PatType {
         attrs: Vec::new(),
         pat: Box::new(Pat::Path(times_arg_path.clone())),

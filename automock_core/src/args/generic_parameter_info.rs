@@ -48,3 +48,47 @@ impl Display for GenericParameterInfo {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #![allow(non_snake_case)]
+    use super::*;
+
+    #[test]
+    fn generic_type_info_Ok() {
+        // Arrange
+        let name = "quo vadis";
+        let type_name = "veridis quo";
+
+        // Act
+        let result = generic_type_info(name, type_name);
+
+        // Assert
+        let generic_type_info = match result {
+            GenericParameterInfo::Type(x) => x,
+            y => panic!("Should be GenericParameterInfo::Type, is instead: '{y:?}'"),
+        };
+
+        assert_eq!(generic_type_info.name, name);
+        assert_eq!(generic_type_info.type_name, type_name);
+    }
+
+    #[test]
+    fn generic_const_info_Ok() {
+        // Arrange
+        let name = "quo vadis";
+        let value = "veridis quo".to_owned();
+
+        // Act
+        let result = generic_const_info(name, value.clone());
+
+        // Assert
+        let generic_const_info = match result {
+            GenericParameterInfo::Const(x) => x,
+            y => panic!("Should be GenericParameterInfo::Const, is instead: '{y:?}'"),
+        };
+
+        assert_eq!(generic_const_info.name, name);
+        assert_eq!(generic_const_info.debug_value_str, format!("{value:?}"))
+    }
+}

@@ -33,7 +33,7 @@ struct Struct<'s, TS> {
     phantom: PhantomData<&'s TS>,
 }
 
-#[mock(base)]
+#[mock]
 impl<'s, TS> Struct<'s, TS> {
     pub fn new() -> Self {
         Self {
@@ -44,15 +44,15 @@ impl<'s, TS> Struct<'s, TS> {
 
 #[mock]
 impl<'s, TS> Struct<'s, TS> {
-    fn accept_ref<'b>(&self, r: &'s &&'b i32) -> i32 {
+    fn accept_ref<'b>(&self, _r: &'s &&'b i32) -> i32 {
         unreachable!()
     }
 
-    fn accept_ref_ptr<'b>(&self, r: &'s &*const &&'b i32) -> i32 {
+    fn accept_ref_ptr<'b>(&self, _r: &'s &*const &&'b i32) -> i32 {
         unreachable!()
     }
 
-    fn generic<T1, T2>(&self, t1: T1) -> T2 {
+    fn generic<T1, T2>(&self, _t1: T1) -> T2 {
         unreachable!()
     }
 }
@@ -632,6 +632,7 @@ Received no non-matching calls"
         #[test]
         fn accept_ref_NoConfig_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mock = Struct::<T0>::new();
 
             let r = &&&5;
@@ -650,6 +651,7 @@ Received no non-matching calls"
         #[test]
         fn accept_ref_DidNotReceive_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
 
             let r = &&&5;
@@ -676,7 +678,7 @@ Received no non-matching calls"
 Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref(*{r}*)
-	1. r (&&&i32):
+	1. _r (&&&i32):
 		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r}
 		Actual   (ptr: {r_ptr:?}): {r}"
             );
@@ -686,6 +688,7 @@ accept_ref(*{r}*)
         #[test]
         fn accept_ref_UnexpectedCall_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
 
             let r = &&&5;
@@ -710,6 +713,7 @@ accept_ref(*{r}*)
         #[test]
         fn accept_ref_ptr_NoConfig_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mock = Struct::<T0>::new();
 
             let r = &&(&&&5 as *const &&i32);
@@ -728,6 +732,7 @@ accept_ref(*{r}*)
         #[test]
         fn accept_ref_ptr_DidNotReceive_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
 
             let r = &&(&&&5 as *const &&i32);
@@ -754,7 +759,7 @@ accept_ref(*{r}*)
 Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref_ptr(*{r:?}*)
-	1. r (&&*const &&i32):
+	1. _r (&&*const &&i32):
 		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
 		Actual   (ptr: {r_ptr:?}): {r:?}"
             );
@@ -764,6 +769,7 @@ accept_ref_ptr(*{r:?}*)
         #[test]
         fn accept_ref_ptr_UnexpectedCall_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
 
             let r = &&(&&&5 as *const &&i32);
@@ -788,6 +794,7 @@ accept_ref_ptr(*{r:?}*)
         #[test]
         fn generic_NoConfig_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
@@ -810,6 +817,7 @@ accept_ref_ptr(*{r:?}*)
         #[test]
         fn generic_DidNotReceiveSameGenerics_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
@@ -840,7 +848,7 @@ accept_ref_ptr(*{r:?}*)
 Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 generic(*{t1_debug_string}*)
-	1. t1 ({t1_name}):
+	1. _t1 ({t1_name}):
 		Expected: {unexpected_t1_debug_string}
 		Actual:   {t1_debug_string}"
             );
@@ -850,6 +858,7 @@ generic(*{t1_debug_string}*)
         #[test]
         fn generic_DidNotReceiveDifferentGenerics_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
@@ -886,6 +895,7 @@ Received no non-matching calls"
         #[test]
         fn generic_ref_UnexpectedCall_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
@@ -917,6 +927,7 @@ Received no non-matching calls"
         #[test]
         fn accept_ref_NoConfig_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mock = Struct::<T0>::new();
 
             let r = &&&5;
@@ -935,6 +946,7 @@ Received no non-matching calls"
         #[test]
         fn accept_ref_DidNotReceive_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
 
             let r = &&&5;
@@ -972,6 +984,7 @@ accept_ref(*{r}*)
         #[test]
         fn accept_ref_UnexpectedCall_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
 
             let r = &&&5;
@@ -996,6 +1009,7 @@ accept_ref(*{r}*)
         #[test]
         fn accept_ref_ptr_NoConfig_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mock = Struct::<T0>::new();
 
             let r = &&(&&&5 as *const &&i32);
@@ -1014,6 +1028,7 @@ accept_ref(*{r}*)
         #[test]
         fn accept_ref_ptr_DidNotReceive_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
 
             let r = &&(&&&5 as *const &&i32);
@@ -1054,6 +1069,7 @@ accept_ref_ptr(*{r:?}*)
         #[test]
         fn accept_ref_ptr_UnexpectedCall_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
 
             let r = &&(&&&5 as *const &&i32);
@@ -1081,6 +1097,7 @@ accept_ref_ptr(*{r:?}*)
         #[test]
         fn generic_NoConfig_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
@@ -1103,6 +1120,7 @@ accept_ref_ptr(*{r:?}*)
         #[test]
         fn generic_DidNotReceiveSameGenerics_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
@@ -1144,6 +1162,7 @@ generic(*{t1_debug_string}*)
         #[test]
         fn generic_DidNotReceiveDifferentGenerics_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
@@ -1181,6 +1200,7 @@ Received no non-matching calls"
         #[test]
         fn generic_ref_UnexpectedCall_Ok() {
             // Arrange
+            Struct::<T0>::static_setup().new().call_base();
             let mut mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;

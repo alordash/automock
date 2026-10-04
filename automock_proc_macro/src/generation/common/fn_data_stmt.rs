@@ -30,22 +30,11 @@ pub(crate) fn new_associated(
         pat: fn_data_pat(span, fn_data_var_path.clone(), generic_arguments),
         init: Some(LocalInit {
             eq_token: Token![=](span),
-            expr: Box::new(Expr::Call(expr::call::new(
+            expr: Box::new(Expr::MethodCall(expr::method_call::new(
                 span,
-                Expr::Path(expr::path::new_global(
-                    span,
-                    for_generated::new2("ISharedMockData", "get_shared_fn_data"),
-                )),
+                Expr::Field(expr::field::new_self(Ident::new("__mock_data", span))),
+                Ident::new("get_fn_data", span),
                 [
-                    Expr::Reference(ExprReference {
-                        attrs: Vec::new(),
-                        and_token: Token![&](span),
-                        mutability: None,
-                        expr: Box::new(Expr::Field(expr::field::new_self(Ident::new(
-                            "__rs_data",
-                            span,
-                        )))),
-                    }),
                     expr::lit::string(span, owner_name),
                     expr::lit::string(span, &fn_info.fn_data_name),
                     Expr::Call(expr::call::new(

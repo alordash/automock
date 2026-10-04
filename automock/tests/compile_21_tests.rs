@@ -4,7 +4,7 @@
 
 use automock::*;
 
-#[mock(base)]
+#[mock]
 trait Trait<T1: Clone> {
     fn ok(&self) -> i32;
     fn ok_static() -> i32;

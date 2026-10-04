@@ -1,9 +1,6 @@
-use crate::args::{GenericParameterInfo, GenericsHashKey};
+use crate::args::{GenericParameterInfo, GenericsHashKey, GenericsHasher};
 use std::any::TypeId;
-use std::hash::{DefaultHasher, Hash, Hasher};
-
-#[doc(hidden)]
-pub type GenericsHasher = DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 #[doc(hidden)]
 pub trait IGenericsInfoProvider {
@@ -16,7 +13,7 @@ pub trait IGenericsInfoProvider {
     fn hash_const_values(&self, #[allow(unused_variables)] hasher: &mut GenericsHasher) {}
 
     fn get_generics_hash_key(&self) -> GenericsHashKey {
-        let mut hasher = GenericsHasher::new();
+        let mut hasher = GenericsHasher::default();
         self.hash_generics_type_ids(&mut hasher);
         self.hash_const_values(&mut hasher);
         let generics_hash_key = GenericsHashKey(hasher.finish());
@@ -42,5 +39,142 @@ pub fn const_hash<T: Sized + 'static>(t: &T, hasher: &mut GenericsHasher) {
     unsafe {
         let t_slice = std::slice::from_raw_parts(t_ptr, t_size);
         t_slice.hash(hasher);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(non_snake_case)]
+
+    use super::*;
+    use crate::args::generics_hasher::tests::utilities::*;
+    use automock::Mockable;
+    use utilities::*;
+
+    #[test]
+    fn get_generic_parameter_infos_ReturnsEmptyVec() {
+        // Arrange
+        let generics_info_provider = DefaultGenericsInfoProvider::new();
+
+        // Act
+        let result = generics_info_provider.get_generic_parameter_infos();
+
+        // Assert
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn hash_generics_type_ids_DoesNothing() {
+        // Arrange
+        let generics_info_provider = DefaultGenericsInfoProvider::new();
+        let mut hasher = generics_hasher_mock();
+
+        // Act
+        generics_info_provider.hash_generics_type_ids(&mut hasher);
+
+        // Assert
+        hasher.received().no_other_calls();
+    }
+
+    #[test]
+    fn hash_const_values_ids_DoesNothing() {
+        // Arrange
+        let generics_info_provider = DefaultGenericsInfoProvider::new();
+        let mut hasher = generics_hasher_mock();
+
+        // Act
+        generics_info_provider.hash_const_values(&mut hasher);
+
+        // Assert
+        hasher.received().no_other_calls();
+    }
+
+    #[test]
+    fn get_generics_hash_key_Ok() {
+        // Arrange
+        let mut generics_info_provider = GenericsInfoProviderWithoutGetGenericsHashKey::new();
+        let generics_type_ids_bytes: &[u8] = &[1, 11u8];
+        let const_values_bytes: &[u8] = &[2, 22u8];
+        generics_info_provider
+            .setup()
+            .as_IGenericsInfoProvider()
+            .hash_generics_type_ids(automock::Arg::Any)
+            .does(|_, (hasher,)| hasher.write(generics_type_ids_bytes))
+            .hash_const_values(automock::Arg::Any)
+            .does(|_, (hasher,)| hasher.write(const_values_bytes));
+
+        let mut generics_hasher_mock = generics_hasher_mock();
+        GenericsHasher::static_setup()
+            .as_Default()
+            .default()
+            .returns(generics_hasher_mock.clone());
+        let hash = 5;
+        generics_hasher_mock
+            .setup()
+            .as_Hasher()
+            .finish()
+            .returns(hash);
+
+        // Act
+        let result = generics_info_provider.get_generics_hash_key();
+
+        // Assert
+        assert_eq!(result.0, hash);
+        generics_info_provider
+            .received()
+            .as_IGenericsInfoProvider()
+            .hash_generics_type_ids(automock::Arg::Any, automock::Times::Once)
+            .hash_const_values(automock::Arg::Any, automock::Times::Once)
+            .no_other_calls();
+
+        GenericsHasher::static_received()
+            .as_Default()
+            .default(automock::Times::Once)
+            .no_other_calls();
+
+        generics_hasher_mock
+            .received()
+            .as_Hasher()
+            .write(
+                automock::Arg::ref_eq(generics_type_ids_bytes),
+                automock::Times::Once,
+            )
+            .write(
+                automock::Arg::ref_eq(const_values_bytes),
+                automock::Times::Once,
+            )
+            .finish(automock::Times::Once)
+            .no_other_calls();
+    }
+
+    mod utilities {
+        use super::*;
+
+        #[automock::mock]
+        pub struct DefaultGenericsInfoProvider;
+        impl DefaultGenericsInfoProvider {
+            pub fn new() -> Self {
+                Self {
+                    __mock_data: Default::default(),
+                }
+            }
+        }
+        impl IGenericsInfoProvider for DefaultGenericsInfoProvider {}
+
+        #[automock::mock]
+        pub struct GenericsInfoProviderWithoutGetGenericsHashKey;
+        impl GenericsInfoProviderWithoutGetGenericsHashKey {
+            pub fn new() -> Self {
+                Self {
+                    __mock_data: Default::default(),
+                }
+            }
+        }
+        #[automock::mock]
+        impl IGenericsInfoProvider for GenericsInfoProviderWithoutGetGenericsHashKey {
+            fn hash_generics_type_ids(&self, hasher: &mut GenericsHasher) {}
+
+            fn hash_const_values(&self, hasher: &mut GenericsHasher) {}
+        }
     }
 }

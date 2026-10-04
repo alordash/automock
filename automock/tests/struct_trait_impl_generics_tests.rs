@@ -10,10 +10,10 @@ trait Trait<T> {
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {}
 
-#[mock(base)]
+#[mock]
 impl<T: Clone> Trait<T> for Struct {
     fn work(&self, t: T) -> T {
         t

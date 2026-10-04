@@ -1,8 +1,8 @@
 use automock::*;
 
 #[mock]
-trait Trait<'rs> {
-    fn work<'a: 'rs>(&self, v: &'a i32) -> &'a i32;
+trait Trait<'am> {
+    fn work<'a: 'am>(&self, v: &'a i32) -> &'a i32;
 }
 
 mod tests {

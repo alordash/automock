@@ -3,7 +3,7 @@ mod args_checker_impl;
 use crate::generation::fn_info::models::*;
 use crate::generation::fn_info::*;
 use crate::preparation::r#fn::models::*;
-use not_enough_syntax::{attributes, path};
+use not_enough_syntax::path;
 use quote::format_ident;
 use syn::*;
 
@@ -15,7 +15,7 @@ pub(crate) fn generate(
     let span = fn_syntax.spans.inputs;
     let fields_named = generate_fields(fn_syntax);
     let item_struct = ItemStruct {
-        attrs: vec![attributes::doc_hidden(span)],
+        attrs: Vec::new(),
         vis: Visibility::Inherited,
         struct_token: Token![struct](span),
         ident: format_ident!("{}_ArgsChecker", fn_syntax.fn_ident),

@@ -21,23 +21,23 @@ async fn input_output(_: i32) -> i32 {
 #[mock]
 async fn dependency() {}
 
-#[mock(base)]
+#[mock]
 async fn nothing_base() {
     dependency().await
 }
 
-#[mock(base)]
+#[mock]
 async fn input_base(_: i32) {
     dependency().await
 }
 
-#[mock(base)]
+#[mock]
 async fn output_base() -> i32 {
     dependency().await;
     DEFAULT_RESULT
 }
 
-#[mock(base)]
+#[mock]
 async fn input_output_base(_: i32) -> i32 {
     dependency().await;
     DEFAULT_RESULT
@@ -107,7 +107,7 @@ mod tests {
         nothing_base().await;
 
         // Assert
-        nothing_base::received(Times::Once).no_other_calls();
+        nothing_base::received_nothing();
         dependency::received(Times::Once).no_other_calls();
     }
 
@@ -121,7 +121,7 @@ mod tests {
         input_base(value).await;
 
         // Assert
-        input_base::received(value, Times::Once).no_other_calls();
+        input_base::received_nothing();
         dependency::received(Times::Once).no_other_calls();
     }
 
@@ -135,7 +135,7 @@ mod tests {
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        output_base::received(Times::Once).no_other_calls();
+        output_base::received_nothing();
         dependency::received(Times::Once).no_other_calls();
     }
 
@@ -150,7 +150,7 @@ mod tests {
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        input_output_base::received(value, Times::Once).no_other_calls();
+        input_output_base::received_nothing();
         dependency::received(Times::Once).no_other_calls();
     }
 }

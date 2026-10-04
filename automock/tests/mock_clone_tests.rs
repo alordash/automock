@@ -9,7 +9,7 @@ trait Trait {
 #[derive(Clone)]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     fn new() -> Self {
         Self
@@ -57,6 +57,7 @@ mod tests {
     #[test]
     fn StructMock_Clone_ContainsSameConfiguration() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         let return_value = 10;
         mock.setup().work().returns(return_value);
@@ -76,6 +77,7 @@ mod tests {
     #[test]
     fn StructMockAsTrait_Clone_ContainsSameConfiguration() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         let return_value = 10;
         mock.setup().as_Trait().work().returns(return_value);

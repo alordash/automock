@@ -7,7 +7,7 @@ unsafe trait UnsafeTrait {
     fn work();
 }
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 unsafe trait UnsafeTraitBase {
     fn work() {}
@@ -21,7 +21,7 @@ unsafe impl UnsafeTrait for Struct {
     fn work() {}
 }
 
-#[mock(base)]
+#[mock]
 unsafe impl UnsafeTraitBase for Struct {
     fn work() {}
 }

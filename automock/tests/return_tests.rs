@@ -1,6 +1,6 @@
 use automock::*;
 
-#[mock(base)]
+#[mock]
 fn work() -> i32 {
     1
 }

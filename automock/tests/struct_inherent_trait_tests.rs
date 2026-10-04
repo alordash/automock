@@ -11,7 +11,7 @@ pub trait B: A {
 #[mock]
 struct C;
 
-#[mock(base)]
+#[mock]
 impl C {
     fn new() -> Self {
         Self
@@ -19,7 +19,7 @@ impl C {
 }
 
 const A_DEFAULT: i32 = 11;
-#[mock(base)]
+#[mock]
 impl A for C {
     fn foo(&self) -> i32 {
         A_DEFAULT
@@ -27,7 +27,7 @@ impl A for C {
 }
 
 const B_DEFAULT: i32 = 11;
-#[mock(base)]
+#[mock]
 impl B for C {
     fn bar(&self) -> i32 {
         B_DEFAULT
@@ -41,6 +41,7 @@ mod tests {
     #[test]
     fn A_Mocked_Ok() {
         // Arrange
+        C::static_setup().new().call_base();
         let mut mock = C::new();
         mock.setup().as_A().foo().returns(42);
 
@@ -55,6 +56,7 @@ mod tests {
     #[test]
     fn A_Base_Ok() {
         // Arrange
+        C::static_setup().new().call_base();
         let mut mock = C::new();
         mock.setup().as_A().foo().call_base();
 
@@ -63,12 +65,13 @@ mod tests {
 
         // Assert
         assert_eq!(A_DEFAULT, result);
-        mock.received().as_A().foo(1.time());
+        mock.received().no_other_calls();
     }
 
     #[test]
     fn B_Mocked_Ok() {
         // Arrange
+        C::static_setup().new().call_base();
         let mut mock = C::new();
         mock.setup().as_B().bar().returns(42);
 
@@ -83,6 +86,7 @@ mod tests {
     #[test]
     fn B_Base_Ok() {
         // Arrange
+        C::static_setup().new().call_base();
         let mut mock = C::new();
         mock.setup().as_B().bar().call_base();
 
@@ -91,6 +95,6 @@ mod tests {
 
         // Assert
         assert_eq!(B_DEFAULT, result);
-        mock.received().as_B().bar(1.time());
+        mock.received().no_other_calls();
     }
 }

@@ -90,7 +90,7 @@ mod trait_tests {
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     #[allow(unused)]
     pub fn new() -> Self {
@@ -117,6 +117,7 @@ mod struct_tests {
         }
 
         let mocked_value = DEFAULT_VALUE + 1;
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         mock.setup().f().returns(mocked_value);
 

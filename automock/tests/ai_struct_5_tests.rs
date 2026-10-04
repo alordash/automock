@@ -44,7 +44,7 @@ fn monster_struct_function<T>(t: T) -> T {
     t
 }
 
-#[cfg_attr(test, mock(base))]
+#[cfg_attr(test, mock)]
 impl<'a, T, const N: usize> MonsterStruct<'a, T, N>
 where
     T: Clone,
@@ -85,6 +85,7 @@ pub struct Tiny;
 //
 
 #[cfg_attr(test, mock)]
+#[allow(unused_unsafe)]
 impl<'a, T, const N: usize> MonsterStruct<'a, T, N>
 where
     T: Clone,
@@ -298,7 +299,7 @@ where
             raw_const: std::ptr::null(),
             raw_mut: std::ptr::null_mut(),
             function: self.function,
-            boxed_function: Box::new(|x| x),
+            boxed_function: Box::leak(Box::new(Box::new(|x| x) as Box<dyn Fn(i32) -> i32>)),
             marker: std::marker::PhantomData,
         }
     }
@@ -373,6 +374,7 @@ where
 //
 
 #[mock]
+#[allow(unused_unsafe)]
 impl<'a, T, const N: usize> MonsterStruct<'a, T, N>
 where
     T: Clone,
@@ -405,6 +407,7 @@ where
 //
 
 #[mock]
+#[allow(unused_unsafe)]
 impl<'a, T, const N: usize> MonsterStruct<'a, T, N>
 where
     T: Clone + Send,
@@ -480,6 +483,9 @@ mod tests {
     }
 
     fn create_mock() -> MonsterStruct<'static, i32, 4> {
+        MonsterStruct::<'static, i32, 4>::static_setup()
+            .new()
+            .call_base();
         MonsterStruct::new()
     }
 

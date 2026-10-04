@@ -2,21 +2,33 @@ use crate::args::*;
 use crate::infrastructure::*;
 use indexmap::IndexMap;
 use std::fmt::Formatter;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, RwLock};
 
-// Two layer map: fn name + fn generics
-type Map = IndexMap<String, IndexMap<GenericsHashKey, *const ()>>;
+// fn name -> fn generics -> mock data
+type MockDataMap = IndexMap<String, IndexMap<GenericsHashKey, *const ()>>;
+
+static MOCK_ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 pub struct MockData {
-    map: Map,
+    id: usize,
+    map: RwLock<MockDataMap>,
 }
+
+pub type SharedMockData = Arc<MockData>;
 
 unsafe impl Send for MockData {}
 unsafe impl Sync for MockData {}
 
 impl core::fmt::Debug for MockData {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let length = self
+            .map
+            .read()
+            .expect(UNABLE_TO_LOCK_FOR_READING_ERROR)
+            .len();
         f.debug_struct("MockData")
-            .field("map.len", &self.map.len())
+            .field("map.len", &length)
             .finish()
     }
 }
@@ -25,45 +37,52 @@ impl core::fmt::Debug for MockData {
 impl Default for MockData {
     fn default() -> Self {
         Self {
+            id: MOCK_ID_COUNTER.fetch_add(1, Ordering::Relaxed),
             map: Default::default(),
         }
     }
 }
 
 impl MockData {
-    pub(crate) fn get_or_create_fn_data<
+    pub fn id(&self) -> usize {
+        self.id
+    }
+
+    pub fn get_fn_data<
         'a,
         TMock,
         const HAS_RETURN_VALUE: bool,
         const SUPPORTS_BASE_CALLING: bool,
         const PASSES_MOCK_TO_CALLBACK: bool,
     >(
-        &'_ mut self,
-        maybe_owner_name: Option<&'static str>,
-        unique_fn_ident: String, // for trait fns
+        &'_ self,
+        owner_name: &'static str,
         fn_ident: &'static str,
         generics_hash_key: GenericsHashKey,
-        for_struct: bool,
     ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
     {
-        let fn_data_ptr = self
-            .map
-            .entry(unique_fn_ident)
-            .or_default()
-            .entry(generics_hash_key)
-            .or_insert_with(|| {
-                Box::leak(Box::new(FnData::<
-                    '_,
-                    TMock,
-                    HAS_RETURN_VALUE,
-                    SUPPORTS_BASE_CALLING,
-                    PASSES_MOCK_TO_CALLBACK,
-                >::new(
-                    maybe_owner_name, fn_ident, for_struct
-                ))) as *const _ as *const ()
-            });
+        let unique_fn_ident = format!("{owner_name}_{fn_ident}");
+        let fn_data_ptr = {
+            let mut map_write = self.map.write().expect(UNABLE_TO_LOCK_FOR_WRITING_ERROR);
+            let fn_data_ptr_ref = map_write
+                .entry(unique_fn_ident)
+                .or_default()
+                .entry(generics_hash_key)
+                .or_insert_with(|| {
+                    Box::leak(Box::new(FnData::<
+                        '_,
+                        TMock,
+                        HAS_RETURN_VALUE,
+                        SUPPORTS_BASE_CALLING,
+                        PASSES_MOCK_TO_CALLBACK,
+                    >::new(
+                        Some(owner_name), fn_ident
+                    ))) as *const _ as *const ()
+                });
+            *fn_data_ptr_ref
+        };
 
-        let fn_data_ref = Self::cast_ptr_to_ref(*fn_data_ptr);
+        let fn_data_ref = Self::cast_ptr_to_ref(fn_data_ptr);
         return fn_data_ref;
     }
 
@@ -108,6 +127,8 @@ impl IMockData for MockData {
     fn get_received_nothing_else_error_msgs(&self) -> Vec<Vec<String>> {
         let result = self
             .map
+            .read()
+            .expect(UNABLE_TO_LOCK_FOR_READING_ERROR)
             .values()
             .flat_map(|y| y.values())
             .cloned()
@@ -126,9 +147,21 @@ impl IMockData for MockData {
     }
 }
 
+impl IMockData for SharedMockData {
+    fn get_received_nothing_else_error_msgs(&self) -> Vec<Vec<String>> {
+        <MockData as IMockData>::get_received_nothing_else_error_msgs(self)
+    }
+}
+
 impl Drop for MockData {
     fn drop(&mut self) {
-        for fn_data_ptr in self.map.values().flat_map(|x| x.values()) {
+        for fn_data_ptr in self
+            .map
+            .read()
+            .expect(UNABLE_TO_LOCK_FOR_READING_ERROR)
+            .values()
+            .flat_map(|x| x.values())
+        {
             let boxed_fn_data = unsafe {
                 Box::from_raw(
                     (*fn_data_ptr) as *const _
@@ -145,3 +178,6 @@ impl Drop for MockData {
         }
     }
 }
+
+const UNABLE_TO_LOCK_FOR_READING_ERROR: &str = "[ERROR] Unable to lock `MockData.map` for reading.";
+const UNABLE_TO_LOCK_FOR_WRITING_ERROR: &str = "[ERROR] Unable to lock `MockData.map` for writing.";

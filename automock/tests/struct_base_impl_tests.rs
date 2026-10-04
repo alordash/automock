@@ -15,14 +15,14 @@ pub const DEFAULT_SECOND_TRAIT_GET_VALUE: &str = "quo vadis";
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new() -> Self {
         Self
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn get(&self) -> i32 {
         DEFAULT_STRUCT_GET_VALUE
@@ -34,14 +34,14 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl FirstTrait for Struct {
     fn get(&self) -> i32 {
         DEFAULT_FIRST_TRAIT_GET_VALUE
     }
 }
 
-#[mock(base)]
+#[mock]
 impl SecondTrait for Struct {
     fn get(&self) -> &str {
         DEFAULT_SECOND_TRAIT_GET_VALUE
@@ -55,6 +55,7 @@ mod tests {
     #[test]
     fn get_plus_one_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
 
         let value = 302;
@@ -72,6 +73,7 @@ mod tests {
     #[test]
     fn get_plus_one_CallBase_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
 
         let struct_value = 302;
@@ -95,7 +97,6 @@ mod tests {
 
         mock.received()
             .get(Times::Once)
-            .get_plus_one(Times::Once)
             .as_FirstTrait()
             .get(Times::Once);
         mock.received().no_other_calls();
@@ -104,6 +105,7 @@ mod tests {
     #[test]
     fn get_plus_one_StructCallBase_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
 
         let trait_value = 33;
@@ -123,17 +125,14 @@ mod tests {
         let expected_value = DEFAULT_STRUCT_GET_VALUE + trait_value;
         assert_eq!(expected_value, actual_value);
 
-        mock.received()
-            .get(Times::Once)
-            .get_plus_one(Times::Once)
-            .as_FirstTrait()
-            .get(Times::Once);
+        mock.received().as_FirstTrait().get(Times::Once);
         mock.received().no_other_calls();
     }
 
     #[test]
     fn get_plus_one_StructAndTraitCallBase_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
 
         mock.setup()
@@ -152,17 +151,13 @@ mod tests {
         let expected_value = DEFAULT_STRUCT_GET_VALUE + DEFAULT_FIRST_TRAIT_GET_VALUE;
         assert_eq!(expected_value, actual_value);
 
-        mock.received()
-            .get(Times::Once)
-            .get_plus_one(Times::Once)
-            .as_FirstTrait()
-            .get(Times::Once);
         mock.received().no_other_calls();
     }
 
     #[test]
     fn get_SelfAndBothTraits_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
 
         let self_value = 5;

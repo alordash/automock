@@ -1,9 +1,7 @@
 //! Library for mocking static functions, traits and structures in Rust.
 //!
 //! # Usage
-//! Apply `#[mock]` attribute on your function, trait, structure or `impl` block. You can also
-//! use `#[mock(base)]` if you want the ability to use base implementation in your tests (refer to
-//! [`Base implementation`](#base-implementation) for more information).
+//! Apply `#[mock]` attribute on your function, trait, structure or `impl` block.
 //!
 //! ```
 //! use automock::*;
@@ -68,7 +66,7 @@
 //!
 //! ## Mocking traits
 //!
-//! To mock a trait, add `#[mock]` or `#[mock(base)]` attribute to it.
+//! To mock a trait, add `#[mock]` attribute to it.
 //! ```
 //! use automock::*;
 //!
@@ -119,27 +117,28 @@
 //!
 //! `automock` supports mocking structures, but it is primarily intended for structures that
 //! behave like "stateful" functions.  
-//! To mock a structure, add `#[mock]` attribute to structure definition and `#[mock]` or
-//! `#[mock(base)]` to its `impl` blocks whose functionality you want to mock.
+//! To mock a structure, add `#[mock]` attribute to structure definition and `#[mock]` to its
+//! `impl` blocks whose functionality you want to mock.
 //! ```
 //! use automock::*;
 //!
 //! #[mock]
-//! struct Structure { v: i32 }
+//! struct Struct { v: i32 }
 //!
-//! #[mock(base)]
-//! impl Structure {
+//! #[mock]
+//! impl Struct {
 //!     pub fn new(v: i32) -> Self { Self { v } }
 //! }
 //!
 //! #[mock]
-//! impl Structure {
+//! impl Struct {
 //!     pub fn get(&self) -> i32 { self.v }
 //! }
 //!
 //! # fn main() {
 //! // Arrange
-//! let mut mock = Structure::new(10);
+//! Struct::static_setup().new(Arg::Any).call_base();
+//! let mut mock = Struct::new(10);
 //! mock.setup().get().returns(20);
 //!
 //! // Act
@@ -151,15 +150,15 @@
 //! # }
 //! ```
 //!
-//! A common pattern when mocking structures is to add a public constructor such as `new` and
-//! mock its base implementation:
+//! A common pattern when mocking structures is to add a public constructor such as `new` and mock
+//! its base implementation:
 //!
 //! ```
 //! # use automock::*;
 //! #[mock]
 //! struct Struct;
 //!
-//! #[mock(base)]
+//! #[mock]
 //! impl Struct {
 //!     pub fn new() -> Self { Self }
 //! }
@@ -171,7 +170,7 @@
 //!
 //! There are a couple of limitations for structures mocking:
 //! 1. Mocked structure can not be constructed or deconstructed outside of associated functions that
-//!    were mocked. This is because `automock` adds special `__rs_data` field to generated
+//!    were mocked. This is because `automock` adds special `__mock_data` field to generated
 //!    structure that it automatically fills inside mocked `impl` block.
 //! 2. Structure must have either named fields or no fields at all. `struct Struct { v: i32 }` and
 //!    `struct Struct;` can be mocked, but `struct Struct(i32);` can not.
@@ -179,14 +178,14 @@
 //!    be mocked; `bar` will always use base implementation:
 //! ```
 //! # use automock::*;
-//! #[mock] struct Structure;
+//! #[mock] struct Struct;
 //!
 //! #[mock]
-//! impl Structure {
+//! impl Struct {
 //!     fn foo(&self) -> i32 { 1 } // mockable
 //! }
 //!
-//! impl Structure {
+//! impl Struct {
 //!     fn bar(&self) -> i32 { 2 } // unmockable - will always return 2
 //! }
 //!
@@ -197,7 +196,7 @@
 //! 5. Can not mock functions with `#[cfg]` attribute. This won't compile:
 //! ```compile_fail
 //! #[mock]
-//! impl Structure {
+//! impl Struct {
 //!     #[cfg(test)]      fn work(&self) {}
 //!     #[cfg(not(test))] fn work(&self) {}
 //! }
@@ -205,14 +204,14 @@
 //!
 //! ## Mocking trait implementations
 //! To mock implementations of traits on mockable structures (trait itself does not need to be
-//! mockable), add `#[mock]` or `#[mock(base)]` on `impl` block. Each mocked trait implementation
+//! mockable), add `#[mock]` on `impl` block. Each mocked trait implementation
 //! adds `as_TRAIT_NAME` method both to mock's `setup` and `received` functions:
 //! ```
 //! use automock::*;
 //!
-//! #[mock] struct Structure;
-//! #[mock(base)]
-//! impl Structure {
+//! #[mock] struct Struct;
+//! #[mock]
+//! impl Struct {
 //!     pub fn new() -> Self { Self }
 //! }
 //!
@@ -221,13 +220,14 @@
 //! }
 //!
 //! #[mock]
-//! impl Trait for Structure {
+//! impl Trait for Struct {
 //!     fn get(&self) -> i32 { 10 }
 //! }
 //!
 //! # fn main() {
 //! // Arrange
-//! let mut mock = Structure::new();
+//! Struct::static_setup().new().call_base();
+//! let mut mock = Struct::new();
 //! mock.setup().as_Trait().get().returns(20);
 //!
 //! // Act
@@ -265,7 +265,7 @@
 //!     //...
 //! }
 //! impl From<usize> for Struct {
-//! #    fn from(value: usize) -> Self { Self { __rs_data: Default::default() } }
+//! #    fn from(value: usize) -> Self { Self { __mock_data: Default::default() } }
 //!     //...
 //! }
 //!
@@ -294,9 +294,8 @@
 //!
 //! ## Mocking static functions
 //!
-//! To mock a static function, add `#[mock]` or `#[mock(base)]` attribute. This will generate module
-//! with the same name as mocked function, which exposes standalone `setup()` and `received()`
-//! functions:
+//! To mock a static function, add `#[mock]` attribute. This will generate module with the same name
+//! as mocked function, which exposes standalone `setup()` and `received()` functions:
 //!
 //! ```
 //! use automock::*;
@@ -331,22 +330,22 @@
 //!    configuration from one test leaking into next sequentially ran test. Standalone function
 //!    set-up must happen in **single module-level `setup()` call** in each unit-test.  
 //!    For example, this is a wrong way of configuring standalone function:
-//! ```no_run
-//! # use automock::*;
-//! #[mock] fn work(v: i32) -> i32 { v }
-//!
-//! work::setup(1).returns(10);
-//! work::setup(2).returns(20); // `work::setup(2)` will clear previous configuration
-//! ```
-//! The correct approach is to call `work::setup()` only once and then chain subsequent `.setup()`
-//! calls:
-//! ```no_run
-//! # use automock::*; #[mock] fn work(v: i32) -> i32 { v }
-//! # fn main() {
-//! work::setup(1).returns(10)
-//!      .setup(2).returns(20); // `.setup(2)` does not clear previous configuration
-//! }
-//! ```
+//!    ```no_run
+//!    # use automock::*;
+//!    #[mock] fn work(v: i32) -> i32 { v }
+//!   
+//!    work::setup(1).returns(10);
+//!    work::setup(2).returns(20); // `work::setup(2)` will clear previous configuration
+//!    ```
+//!    The correct approach is to call `work::setup()` only once and then chain subsequent `.setup()`
+//!    calls:
+//!    ```no_run
+//!    # use automock::*; #[mock] fn work(v: i32) -> i32 { v }
+//!    # fn main() {
+//!    work::setup(1).returns(10)
+//!         .setup(2).returns(20); // `.setup(2)` does not clear previous configuration
+//!    }
+//!    ```
 //!
 //! ## Mocking static associated functions
 //!
@@ -402,12 +401,7 @@
 //!
 //! ### Limitations
 //!
-//! There are a couple of limitations for static associated functions mocking:
-//! 1. Associated functions that use base implementation using `#[mock(base)]` use base
-//!    implementation by default, without any configuration. This is done to make creation of
-//!    structure mocks simpler by just calling `Struct::new()` without needing to first do
-//!    `Struct::static_setup().new(Arg::Any, ...).call_base()` in each test.
-//! 2. Limitations from [`Mocking static functions`](#mocking-static-functions)
+//! Same limitations from [`Mocking static functions`](#mocking-static-functions) apply here.
 //!
 //! ## Arguments matching
 //!
@@ -419,9 +413,11 @@
 //!    `mock.setup(10)`.
 //! 2. [`Arg::is`] - checks that argument passes provided predicate. Usage example:
 //!    `mock.setup(Arg::is(|v: &i32| *v == 10))`. Requires specifying closure's argument type.
-//! 3. [`Arg::not_eq`] - checks that argument is NOT equal to provided value. Uses [`PartialEq::eq`]
+//! 3. [`Arg::is_mut`] - same as `Arg::is`, but receives mutable reference to argument. Can be
+//!    useful for matching `FnMut` arguments.
+//! 4. [`Arg::not_eq`] - checks that argument is NOT equal to provided value. Uses [`PartialEq::eq`]
 //!    of `T`. Opposite of `Arg::eq`. Usage example: `mock.setup(Arg::not_eq(10))`.
-//! 4. [`Arg::ref_eq`] - checks that argument's reference points to the same location as provided
+//! 5. [`Arg::ref_eq`] - checks that argument's reference points to the same location as provided
 //!    reference. Compares references returned by [`std::ops::Deref::deref`] of `T`. Usage example:
 //! ```
 //! # use automock::*;
@@ -545,23 +541,14 @@
 //!
 //! ## Base implementation
 //!
-//! Mocked functions can use their base implementation in tests. To do so, apply `#[mock]` attribute
-//! with `base` argument: `#[mock(base)]`.
-//! ```
-//! # use automock::*; #[mock] struct Struct;
-//! #[mock(base)] trait Trait {}
-//! #[mock(base)] impl Struct {}
-//! #[mock(base)] fn function() {}
-//! # fn main() {}
-//! ```
-//!
-//! To tell mock object to use base implementation call `call_base()` on function setup:
+//! Mocked functions can use their base implementation in tests. To tell mock object to use base
+//! implementation call `call_base()` on function setup:
 //!
 //! ```
 //! use automock::*;
 //!
 //! #[mock] fn dependency() {}
-//! #[mock(base)]
+//! #[mock]
 //! fn work() {
 //!     dependency();   // will be called in test
 //! }
@@ -583,20 +570,17 @@
 //!
 //! ```compile_fail
 //! # use automock::*;
-//! # [mock(base)] fn work() -> i32 { 1 }
-//!
+//! # [mock] fn work() -> i32 { 1 }
 //! work::setup().call_base().returns(10);
 //!                        // ^^^^^^^ - error, return value is already
 //!                        //           provided by base implementation
 //! ```
 //!
-//! Base implementation usage is completely optional, you can mix mocked behavior with base calls.
-//!
-//! In traits, only functions with default implementation can use `call_base()`:
+//! In trait mocks, only functions with default implementation can use `call_base()`:
 //! ```
 //! use automock::*;
 //!
-//! #[mock(base)]
+//! #[mock]
 //! trait Trait {
 //!     fn dependency(&self);               // no default implementation - can not use `call_base()`
 //!     fn work(&self, v: i32) -> i32 {     // has default implementation - can use `call_base()`
@@ -620,7 +604,8 @@
 //! assert_eq!(first,  11);
 //! assert_eq!(second, 30);
 //! mock.received()
-//!     .work(10, 1.time())
+//!     .work(10, Times::Never) // a call that was handled by base implementation
+//!                             // can not be verified
 //!     .work(20, 1.time())
 //!     .dependency(1.time());
 //! # }
@@ -628,16 +613,24 @@
 //!
 //! ### Limitations
 //!
-//! There is one limitation: all arguments of function must implement [`Clone`] for its base
-//! implementation to be used in tests. If even single argument does not implement `Clone` you will
-//! get compilation error and will have to change your code or just use `#[mock]`:
-//! ```compile_fail
-//! # use automock::*;
-//! struct Unclonable;
-//! #[mock(base)]
-//! fn work(_: Unclonable) {}
+//! There is one limitation - calls that were configured to call base can not be verified later by
+//! `received`. For example, this will panic:
 //!
-//! # fn main() {}
+//! ```should_panic
+//! # use automock::*;
+//! #[mock]
+//! fn work() {}
+//!
+//! # fn main() {
+//! // Arrange
+//! work::setup().call_base();
+//!
+//! // Act
+//! work();
+//!
+//! // Assert
+//! work::received(1.time());   // panic - work did not receive any catchable calls
+//! # }
 //! ```
 //!
 //! ## Verifying calls
@@ -790,7 +783,7 @@
 //!     t2: &'a T2
 //! }
 //!
-//! #[mock(base)]
+//! #[mock]
 //! impl<'a, T1: Clone + ToString, T2> Struct<'a, T1, T2>
 //!     where T2: Debug
 //! {
@@ -807,6 +800,9 @@
 //!
 //! # fn main() {
 //! // Arrange
+//! Struct::static_setup()
+//!        .new(Arg::<i32>::Any, Arg::<&[i32; 3]>::Any, Arg::<&str>::Any)
+//!        .call_base();
 //! let mut mock = Struct::new::<str>(10i32, &[1, 2, 3], "quo vadis");
 //! mock.setup().get_t1().returns(20);
 //!
@@ -858,7 +854,7 @@
 //! # use std::fmt::Debug;
 //! use automock::*;
 //!
-//! #[mock(base)]
+//! #[mock]
 //! trait Trait {
 //!     type Item: Debug + Default;
 //!     const NUMBER: usize;
@@ -888,7 +884,7 @@
 //! assert_eq!(number, 20);
 //! mock.received()
 //!     .get_item(1.time())
-//!     .get_number(1.time());
+//!     .get_number(Times::Never);
 //! # }
 //! ```
 //!
@@ -1001,7 +997,7 @@
 //! #[mock] unsafe fn unsafe_dep() {}
 //! #[mock] extern "C" fn extern_dep() {}
 //!
-//! #[mock(base)]
+//! #[mock]
 //! # #[allow(improper_ctypes_definitions)]
 //! async unsafe extern "C" fn modifiers() {
 //!     async_dep().await;
@@ -1009,7 +1005,7 @@
 //!     extern_dep();
 //! }
 //!
-//! #[mock(base)]
+//! #[mock]
 //! trait Trait {
 //! # #[allow(improper_ctypes_definitions)]
 //!     async unsafe extern "C" fn modifiers(&self) {
@@ -1078,7 +1074,7 @@
 //! }
 //!
 //! #[mock] struct Struct;
-//! #[mock(base)]
+//! #[mock]
 //! impl Struct {
 //!     pub fn new() -> Self { Self }
 //!     pub fn third(&self) {}
@@ -1086,6 +1082,7 @@
 //!
 //! # fn main() {
 //! // Arrange
+//! Struct::static_setup().new().call_base();
 //! let mut trait_mock = TraitMock::new();
 //! let mut struct_mock = Struct::new();
 //!

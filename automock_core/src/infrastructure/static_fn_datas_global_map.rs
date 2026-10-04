@@ -3,17 +3,18 @@ use std::any::TypeId;
 use std::cell::UnsafeCell;
 use std::collections::HashMap;
 
-type Map = HashMap<TypeId, HashMap<String, *const ()>>;
+// mock type (contains generics info) -> fn name -> mock data
+type StaticFnDataMap = HashMap<TypeId, HashMap<String, *const ()>>;
 
 // Used for storing static functions' mock data.
 #[derive(Default)]
 struct StaticFnDatasGlobalMap {
-    pub map: UnsafeCell<Map>,
+    pub map: UnsafeCell<StaticFnDataMap>,
 }
 
 impl StaticFnDatasGlobalMap {
     #[allow(clippy::mut_from_ref)]
-    fn get_mut_map(&self) -> &mut Map {
+    fn get_mut_map(&self) -> &mut StaticFnDataMap {
         // SAFETY: static functions data is stored in global TLS, which guarantees that there can't
         // be more than one mutable reference to given static function data at the same time.
         // This is why `UnsafeCell` can be safely used here.
@@ -51,7 +52,6 @@ impl StaticFnDatasGlobalMap {
         &'_ self,
         maybe_owner_name: Option<&'static str>,
         fn_ident: &'static str,
-        for_struct: bool,
     ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, false> {
         let type_id = typeid::of::<TMock>();
         let map = self.get_mut_map();
@@ -69,9 +69,7 @@ impl StaticFnDatasGlobalMap {
                     HAS_RETURN_VALUE,
                     SUPPORTS_BASE_CALLING,
                     false,
-                >::new(
-                    maybe_owner_name, fn_ident, for_struct
-                ))) as *mut _ as *const _
+                >::new(maybe_owner_name, fn_ident))) as *mut _ as *const _
             });
 
         let fn_data_ref =
@@ -119,8 +117,7 @@ pub fn get_static_fn_data<
 >(
     fn_ident: &'static str,
 ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, false> {
-    let result =
-        STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.get_specific_fn_data(None, fn_ident, false));
+    let result = STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.get_specific_fn_data(None, fn_ident));
     return result;
 }
 
@@ -134,7 +131,7 @@ pub fn get_static_fn_data_for_struct<
     fn_ident: &'static str,
 ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, false> {
     let result = STATIC_FN_DATAS_GLOBAL_MAP
-        .with(|this| this.get_specific_fn_data(Some(owner_name), fn_ident, true));
+        .with(|this| this.get_specific_fn_data(Some(owner_name), fn_ident));
     return result;
 }
 

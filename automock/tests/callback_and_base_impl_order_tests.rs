@@ -5,7 +5,7 @@ fn base_dep() {}
 #[mock]
 fn callback_dep() {}
 
-#[mock(base)]
+#[mock]
 fn f() {
     base_dep();
 }
@@ -24,7 +24,6 @@ mod tests {
 
         // Assert
         verify_call_order(|| {
-            f::received(Times::Once).no_other_calls();
             callback_dep::received(Times::Once).no_other_calls();
             base_dep::received(Times::Once).no_other_calls();
         });

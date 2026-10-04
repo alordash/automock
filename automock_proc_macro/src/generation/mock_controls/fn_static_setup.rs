@@ -1,4 +1,3 @@
-use crate::common::models::*;
 use crate::common::*;
 use crate::generation::common::*;
 use crate::generation::fn_info::models::*;
@@ -8,14 +7,12 @@ use proc_macro2::Span;
 use syn::*;
 
 pub(crate) fn generate(
-    ctx: &Context,
     span: Span,
     mock_path: Path,
     static_setup_path: Path,
     fn_info: &FnInfo,
 ) -> ItemFn {
     let generic_arguments = generic_arguments::new(
-        ctx,
         span,
         generic_arguments::Params {
             mock_struct_path: mock_path.clone(),

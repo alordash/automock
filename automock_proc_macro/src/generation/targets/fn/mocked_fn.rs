@@ -1,4 +1,3 @@
-use crate::common::models::*;
 use crate::generation::fn_info::models::*;
 use crate::generation::mock_struct::models::*;
 use crate::generation::mock_struct::*;
@@ -7,7 +6,6 @@ use proc_macro2::Span;
 use syn::*;
 
 pub(crate) fn generate(
-    ctx: &Context,
     source_span: Span,
     fn_info: &FnInfo,
     mock_struct_path: Path,
@@ -15,7 +13,6 @@ pub(crate) fn generate(
     maybe_base_fn_ident: Option<Ident>,
 ) -> ItemFn {
     let block = static_fn_block::generate(
-        ctx,
         source_span,
         static_fn_block::Params {
             mock_struct_path,

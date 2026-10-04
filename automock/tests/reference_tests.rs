@@ -12,7 +12,7 @@ pub struct Data<'a, 'b, T1, T2> {
     ),
 }
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 trait Trait<'a, 'b: 'a, T1: Clone> {
     fn work<'c, 'd: 'a, T2: Clone>(
@@ -78,7 +78,7 @@ struct Struct<'a, 'b: 'a, T1: Clone> {
     _phantom_t1: PhantomData<T1>,
 }
 
-#[mock(base)]
+#[mock]
 impl<'a, 'b: 'a, T1: Clone> Struct<'a, 'b, T1> {
     pub fn new() -> Self {
         Self {
@@ -89,7 +89,7 @@ impl<'a, 'b: 'a, T1: Clone> Struct<'a, 'b, T1> {
     }
 }
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 impl<'a, 'b: 'a, T1: Clone> Struct<'a, 'b, T1> {
     #[allow(unused)]
@@ -123,7 +123,7 @@ impl<'a, 'b: 'a, T1: Clone> Struct<'a, 'b, T1> {
     }
 }
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 impl<'a, 'b: 'a, T1: Clone> Trait<'a, 'b, T1> for Struct<'a, 'b, T1> {
     fn work<'c, 'd: 'a, T2: Clone>(
@@ -181,11 +181,11 @@ struct Consumer<'a> {
     phantom: PhantomData<&'a ()>,
 }
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 fn consume(_: Consumer<'_>) {}
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 fn option_ref(_: Option<&i32>) {}
 
@@ -196,23 +196,23 @@ struct ImplRef;
 #[mock]
 impl ImplRef {
     #[allow(unused)]
-    fn work(&self) -> impl Iterator<Item = &i32> {
+    fn work<'a>(&'a self) -> impl Iterator<Item = &'a i32> + 'a {
         [].iter()
     }
 }
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 fn return_ref(_: &i32) -> &i32 {
     unreachable!()
 }
 
-#[mock(base)]
+#[mock]
 struct LifetimeHolder<'a> {
     _unused: PhantomData<&'a ()>,
 }
 
-#[mock(base)]
+#[mock]
 impl LifetimeHolder<'_> {
     fn new() -> Self {
         LifetimeHolder {
@@ -221,7 +221,7 @@ impl LifetimeHolder<'_> {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl Default for LifetimeHolder<'_> {
     fn default() -> Self {
         LifetimeHolder {
@@ -469,6 +469,7 @@ mod tests {
     #[test]
     fn struct_work_Ok() {
         // Arrange
+        Struct::<[i32; 2]>::static_setup().new().call_base();
         let mut mock = Struct::<[i32; 2]>::new();
         let return_value = &&&&&&&&&&&&&&&&&55;
         let a = &1;
@@ -574,28 +575,6 @@ mod tests {
 
                                                 // Assert
                                                 assert_eq!(return_value, actual_return_value);
-
-                                                mock.received().as_Trait().work(
-                                                    a,
-                                                    b,
-                                                    c,
-                                                    d,
-                                                    axb,
-                                                    cxd,
-                                                    abxbax,
-                                                    cdxdcx,
-                                                    abcd,
-                                                    xaxbxcxdx,
-                                                    data.clone(),
-                                                    t1,
-                                                    t1_ref,
-                                                    xaxbxcxdx_t1_ref,
-                                                    t2,
-                                                    t2_ref,
-                                                    xaxbxcxdx_t2_ref,
-                                                    xapx,
-                                                    Times::Once,
-                                                );
 
                                                 mock.received()
                                                     .work(

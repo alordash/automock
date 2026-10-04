@@ -1,13 +1,13 @@
 use automock::*;
 use std::fmt::Debug;
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
-trait Trait<'rs, T1> {
+trait Trait<'am, T1> {
     fn work<T2: Clone, T3: Default, const B: bool, const N: usize>(
         &self,
         t1: &T1,
-        t2: &'rs T2,
+        t2: &'am T2,
     ) -> T3
     where
         T1: Clone,
@@ -60,7 +60,6 @@ mod tests {
         assert_eq!(v5, av5);
 
         mock.received()
-            .work::<_, i32, true, 2>(&10, &"amogus", Times::Once)
             .work::<_, i32, true, 4>(&10, &"amogus", Times::Once)
             .work::<_, i32, false, 2>(&10, &"amogus", Times::Once)
             .work::<_, [i32; 5], false, 2>(&10, &"amogus", Times::Once)

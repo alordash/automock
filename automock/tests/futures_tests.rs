@@ -6,19 +6,19 @@ const MOCKED: i32 = 20;
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new() -> Self {
         Self
     }
 }
 
-#[mock(base)]
+#[mock]
 fn work_full() -> impl core::future::Future<Output = i32> {
     async move { DEFAULT }
 }
 
-#[mock(base)]
+#[mock]
 trait TraitFull {
     fn work_full(&self) -> impl core::future::Future<Output = i32> {
         async move { DEFAULT }
@@ -28,7 +28,7 @@ trait TraitFull {
         async move { DEFAULT }
     }
 }
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn work_full(&self) -> impl core::future::Future<Output = i32> {
         async move { DEFAULT }
@@ -39,7 +39,7 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 impl TraitFull for Struct {
     fn work_full(&self) -> impl core::future::Future<Output = i32> {
         async move { DEFAULT }
@@ -55,12 +55,12 @@ mod part {
     use super::*;
     use core::future;
 
-    #[mock(base)]
+    #[mock]
     pub fn work_part() -> impl future::Future<Output = i32> {
         async move { DEFAULT }
     }
 
-    #[mock(base)]
+    #[mock]
     pub trait TraitPart {
         fn work_part(&self) -> impl future::Future<Output = i32> {
             async move { DEFAULT }
@@ -71,7 +71,7 @@ mod part {
         }
     }
 
-    #[mock(base)]
+    #[mock]
     impl Struct {
         pub fn work_part(&self) -> impl future::Future<Output = i32> {
             async move { DEFAULT }
@@ -82,7 +82,7 @@ mod part {
         }
     }
 
-    #[mock(base)]
+    #[mock]
     impl TraitPart for Struct {
         fn work_part(&self) -> impl future::Future<Output = i32> {
             async move { DEFAULT }
@@ -100,12 +100,12 @@ mod name {
     use core::future::Future;
     use std::future;
 
-    #[mock(base)]
+    #[mock]
     pub fn work_name() -> impl Future<Output = i32> {
         async move { DEFAULT }
     }
 
-    #[mock(base)]
+    #[mock]
     pub trait TraitName {
         fn work_name(&self) -> impl future::Future<Output = i32> {
             async move { DEFAULT }
@@ -116,7 +116,7 @@ mod name {
         }
     }
 
-    #[mock(base)]
+    #[mock]
     impl Struct {
         pub fn work_name(&self) -> impl future::Future<Output = i32> {
             async move { DEFAULT }
@@ -127,7 +127,7 @@ mod name {
         }
     }
 
-    #[mock(base)]
+    #[mock]
     impl TraitName for Struct {
         fn work_name(&self) -> impl future::Future<Output = i32> {
             async move { DEFAULT }
@@ -169,7 +169,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            work_full::received(1.time()).no_other_calls();
+            work_full::received_nothing();
         }
 
         #[tokio::test]
@@ -195,7 +195,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            work_part::received(1.time()).no_other_calls();
+            work_part::received_nothing()
         }
 
         #[tokio::test]
@@ -221,7 +221,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            work_name::received(1.time()).no_other_calls();
+            work_name::received_nothing()
         }
     }
 
@@ -255,7 +255,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().work_full(1.time()).no_other_calls();
+            mock.received().no_other_calls();
         }
 
         #[tokio::test]
@@ -285,9 +285,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            TraitFullMock::static_received()
-                .static_work_full(1.time())
-                .no_other_calls();
+            TraitFullMock::static_received().no_other_calls();
         }
 
         #[tokio::test]
@@ -317,7 +315,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().work_part(1.time()).no_other_calls();
+            mock.received().no_other_calls();
         }
 
         #[tokio::test]
@@ -347,9 +345,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            TraitPartMock::static_received()
-                .static_work_part(1.time())
-                .no_other_calls();
+            TraitPartMock::static_received().no_other_calls();
         }
 
         #[tokio::test]
@@ -379,7 +375,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().work_name(1.time()).no_other_calls();
+            mock.received().no_other_calls();
         }
 
         #[tokio::test]
@@ -409,9 +405,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            TraitNameMock::static_received()
-                .static_work_name(1.time())
-                .no_other_calls();
+            TraitNameMock::static_received().no_other_calls();
         }
     }
 
@@ -421,6 +415,7 @@ mod tests {
         #[tokio::test]
         async fn work_full_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup()
                 .work_full()
@@ -437,6 +432,7 @@ mod tests {
         #[tokio::test]
         async fn work_full_CallBase_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup().work_full().call_base();
 
@@ -445,7 +441,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().work_full(1.time()).no_other_calls();
+            mock.received().no_other_calls();
         }
 
         #[tokio::test]
@@ -475,14 +471,13 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            Struct::static_received()
-                .static_work_full(1.time())
-                .no_other_calls();
+            Struct::static_received().no_other_calls();
         }
 
         #[tokio::test]
         async fn work_part_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup()
                 .work_part()
@@ -499,6 +494,7 @@ mod tests {
         #[tokio::test]
         async fn work_part_CallBase_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup().work_part().call_base();
 
@@ -507,7 +503,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().work_part(1.time()).no_other_calls();
+            mock.received().no_other_calls();
         }
 
         #[tokio::test]
@@ -537,14 +533,13 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            Struct::static_received()
-                .static_work_part(1.time())
-                .no_other_calls();
+            Struct::static_received().no_other_calls();
         }
 
         #[tokio::test]
         async fn work_name_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup()
                 .work_name()
@@ -561,6 +556,7 @@ mod tests {
         #[tokio::test]
         async fn work_name_CallBase_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup().work_name().call_base();
 
@@ -569,7 +565,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().work_name(1.time()).no_other_calls();
+            mock.received().no_other_calls();
         }
 
         #[tokio::test]
@@ -599,9 +595,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            Struct::static_received()
-                .static_work_name(1.time())
-                .no_other_calls();
+            Struct::static_received().no_other_calls();
         }
     }
 
@@ -611,6 +605,7 @@ mod tests {
         #[tokio::test]
         async fn work_full_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup()
                 .as_TraitFull()
@@ -631,6 +626,7 @@ mod tests {
         #[tokio::test]
         async fn work_full_CallBase_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup().as_TraitFull().work_full().call_base();
 
@@ -639,10 +635,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received()
-                .as_TraitFull()
-                .work_full(1.time())
-                .no_other_calls();
+            mock.received().as_TraitFull().no_other_calls();
         }
 
         #[tokio::test]
@@ -677,15 +670,13 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            Struct::static_received()
-                .as_TraitFull()
-                .static_work_full(1.time())
-                .no_other_calls();
+            Struct::static_received().as_TraitFull().no_other_calls();
         }
 
         #[tokio::test]
         async fn work_part_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup()
                 .as_TraitPart()
@@ -706,6 +697,7 @@ mod tests {
         #[tokio::test]
         async fn work_part_CallBase_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup().as_TraitPart().work_part().call_base();
 
@@ -714,10 +706,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received()
-                .as_TraitPart()
-                .work_part(1.time())
-                .no_other_calls();
+            mock.received().as_TraitPart().no_other_calls();
         }
 
         #[tokio::test]
@@ -752,15 +741,13 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            Struct::static_received()
-                .as_TraitPart()
-                .static_work_part(1.time())
-                .no_other_calls();
+            Struct::static_received().as_TraitPart().no_other_calls();
         }
 
         #[tokio::test]
         async fn work_name_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup()
                 .as_TraitName()
@@ -781,6 +768,7 @@ mod tests {
         #[tokio::test]
         async fn work_name_CallBase_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             mock.setup().as_TraitName().work_name().call_base();
 
@@ -789,10 +777,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received()
-                .as_TraitName()
-                .work_name(1.time())
-                .no_other_calls();
+            mock.received().as_TraitName().no_other_calls();
         }
 
         #[tokio::test]
@@ -827,10 +812,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            Struct::static_received()
-                .as_TraitName()
-                .static_work_name(1.time())
-                .no_other_calls();
+            Struct::static_received().as_TraitName().no_other_calls();
         }
     }
 }

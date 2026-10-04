@@ -1,11 +1,11 @@
 use crate::args::*;
 use crate::fn_parameters::DynCall;
 
-pub struct DynArgsChecker<'rs> {
-    inner: Box<dyn IArgsChecker + 'rs>,
+pub struct DynArgsChecker<'am> {
+    inner: Box<dyn IArgsChecker + 'am>,
 }
 
-impl<'rs> IGenericsInfoProvider for DynArgsChecker<'rs> {
+impl<'am> IGenericsInfoProvider for DynArgsChecker<'am> {
     fn get_generic_parameter_infos(&self) -> Vec<GenericParameterInfo> {
         self.inner.get_generic_parameter_infos()
     }
@@ -17,11 +17,15 @@ impl<'rs> IGenericsInfoProvider for DynArgsChecker<'rs> {
     fn hash_const_values(&self, hasher: &mut GenericsHasher) {
         self.inner.hash_const_values(hasher)
     }
+
+    fn get_generics_hash_key(&self) -> GenericsHashKey {
+        self.inner.get_generics_hash_key()
+    }
 }
 
-impl<'rs> IArgsChecker for DynArgsChecker<'rs> {
-    fn check(&self, dyn_call: &DynCall) -> Vec<ArgCheckResult> {
-        self.inner.check(dyn_call)
+impl<'am> IArgsChecker for DynArgsChecker<'am> {
+    fn check(&self, call_check: &DynCall) -> Vec<ArgCheckResult> {
+        self.inner.check(call_check)
     }
 
     fn fmt_args(&self) -> String {
@@ -29,8 +33,8 @@ impl<'rs> IArgsChecker for DynArgsChecker<'rs> {
     }
 }
 
-impl<'rs> DynArgsChecker<'rs> {
-    pub(crate) fn new<T: IArgsChecker + 'rs>(value: T) -> Self {
+impl<'am> DynArgsChecker<'am> {
+    pub(crate) fn new<T: IArgsChecker + 'am>(value: T) -> Self {
         Self {
             inner: Box::new(value),
         }
@@ -40,11 +44,10 @@ impl<'rs> DynArgsChecker<'rs> {
 #[cfg(test)]
 mod tests {
     #![allow(non_snake_case)]
-
     use super::*;
-    use crate::args::tests::*;
-    use crate::fn_parameters::tests::*;
-    use automock::{AsTimes, Mockable};
+    use crate::args::i_args_checker::tests::utilities::*;
+    use crate::fn_parameters::i_call::tests::utilities::*;
+    use automock::Mockable;
 
     #[test]
     fn IGenericsInfoProvider_get_generic_parameter_infos_ForwardsToInner() {
@@ -70,14 +73,18 @@ mod tests {
         args_checker_mock
             .received()
             .as_IGenericsInfoProvider()
-            .get_generic_parameter_infos(1.time())
+            .get_generic_parameter_infos(automock::Times::Once)
             .no_other_calls();
     }
 
     #[test]
     fn IGenericsInfoProvider_hash_generics_type_ids_ForwardsToInner() {
         // Arrange
-        let mut generics_hasher = GenericsHasher::new();
+        GenericsHasher::static_setup()
+            .as_Default()
+            .default()
+            .call_base();
+        let mut generics_hasher = GenericsHasher::default();
         let mut args_checker_mock = ArgsCheckerMock::new();
         let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
 
@@ -88,14 +95,21 @@ mod tests {
         args_checker_mock
             .received()
             .as_IGenericsInfoProvider()
-            .hash_generics_type_ids(automock::Arg::ref_eq(&mut generics_hasher), 1.time())
+            .hash_generics_type_ids(
+                automock::Arg::ref_eq(&mut generics_hasher),
+                automock::Times::Once,
+            )
             .no_other_calls();
     }
 
     #[test]
     fn IGenericsInfoProvider_hash_const_values_ids_ForwardsToInner() {
         // Arrange
-        let mut generics_hasher = GenericsHasher::new();
+        GenericsHasher::static_setup()
+            .as_Default()
+            .default()
+            .call_base();
+        let mut generics_hasher = GenericsHasher::default();
         let mut args_checker_mock = ArgsCheckerMock::new();
         let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
 
@@ -106,7 +120,35 @@ mod tests {
         args_checker_mock
             .received()
             .as_IGenericsInfoProvider()
-            .hash_const_values(automock::Arg::ref_eq(&mut generics_hasher), 1.time())
+            .hash_const_values(
+                automock::Arg::ref_eq(&mut generics_hasher),
+                automock::Times::Once,
+            )
+            .no_other_calls();
+    }
+
+    #[test]
+    fn IGenericsInfoProvider_get_generics_hash_key_ForwardsToInner() {
+        // Arrange
+        let mut args_checker_mock = ArgsCheckerMock::new();
+        let generics_hash_key = GenericsHashKey(5);
+        args_checker_mock
+            .setup()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key()
+            .returns(generics_hash_key);
+        let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
+
+        // Act
+        let result = dyn_args_checker.get_generics_hash_key();
+
+        // Assert
+        assert_eq!(result, generics_hash_key);
+
+        args_checker_mock
+            .received()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key(automock::Times::Once)
             .no_other_calls();
     }
 
@@ -140,7 +182,7 @@ mod tests {
         args_checker_mock
             .received()
             .as_IArgsChecker()
-            .check(automock::Arg::ref_eq(&dyn_call), 1.time())
+            .check(automock::Arg::ref_eq(&dyn_call), automock::Times::Once)
             .no_other_calls();
     }
 
@@ -165,7 +207,7 @@ mod tests {
         args_checker_mock
             .received()
             .as_IArgsChecker()
-            .fmt_args(1.time())
+            .fmt_args(automock::Times::Once)
             .no_other_calls();
     }
 }

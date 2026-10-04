@@ -7,7 +7,7 @@ struct Struct {
     pub number: i32,
 }
 
-#[mock(base)]
+#[mock]
 impl Struct {
     #[allow(unused)]
     pub fn new(number: i32) -> Self {
@@ -15,7 +15,7 @@ impl Struct {
     }
 }
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 impl Struct {
     pub(crate) fn accept_arc(&self, r: Arc<i32>) {}
@@ -46,6 +46,7 @@ mod tests {
         #[test]
         fn accept_arc_Ok() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(3);
             let r = Arc::new(1);
 
@@ -59,6 +60,7 @@ mod tests {
         #[test]
         fn accept_arc_Panics() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(3);
             let r = Arc::new(11);
             let r_ptr = Arc::as_ptr(&r);
@@ -67,11 +69,12 @@ mod tests {
             mock.accept_arc(r.clone());
 
             // Assert
+            let arc_type_name = std::any::type_name::<Arc<i32>>();
             assert_panics(
                 || mock.received().accept_arc(Arg::Any, Times::Never),
                 format!(
                     "Expected to never receive a call matching:
-	Struct::accept_arc((alloc::sync::Arc<i32>): any)
+	Struct::accept_arc(({arc_type_name}): any)
 Actually received 1 matching call:
 	accept_arc({r})
 Received no non-matching calls"
@@ -82,7 +85,7 @@ Received no non-matching calls"
                 || mock.received().accept_arc(Arg::Any, Times::Exactly(3)),
                 format!(
                     "Expected to receive a call 3 times matching:
-	Struct::accept_arc((alloc::sync::Arc<i32>): any)
+	Struct::accept_arc(({arc_type_name}): any)
 Actually received 1 matching call:
 	accept_arc({r})
 Received no non-matching calls"
@@ -98,11 +101,11 @@ Received no non-matching calls"
                 },
                 format!(
                     "Expected to receive a call exactly once matching:
-	Struct::accept_arc((alloc::sync::Arc<i32>): equal to {invalid_r})
+	Struct::accept_arc(({arc_type_name}): equal to {invalid_r})
 Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_arc(*{r}*)
-	1. r (alloc::sync::Arc<i32>):
+	1. r ({arc_type_name}):
 		Expected (ptr: {invalid_r_ptr:?}): {invalid_r}
 		Actual   (ptr: {r_ptr:?}): {r}"
                 ),
@@ -116,6 +119,7 @@ accept_arc(*{r}*)
         #[test]
         fn return_arc_Ok() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(3);
             let r = Arc::new(10);
             mock.setup().return_arc().returns(r.clone());
@@ -134,6 +138,7 @@ accept_arc(*{r}*)
         #[test]
         fn accept_arc_return_arc_Ok() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(3);
             let accepted_r = Arc::new(10);
             let returned_r = Arc::new(20);
@@ -160,6 +165,7 @@ accept_arc(*{r}*)
         #[test]
         fn accept_two_arcs_Ok() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(3);
             let r1 = Arc::new(10);
             let r2 = Arc::new(20.2);
@@ -181,6 +187,7 @@ accept_arc(*{r}*)
         #[test]
         fn accept_two_arcs_return_arc_Ok() {
             // Arrange
+            Struct::static_setup().new(Arg::Any).call_base();
             let mut mock = Struct::new(3);
             let r1 = Arc::new(10);
             let r2 = Arc::new(20.2);

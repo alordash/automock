@@ -1,14 +1,21 @@
 use crate::fn_parameters::IReturnValue;
 
-pub struct DynReturnValue<'rs> {
-    inner: Box<dyn IReturnValue<'rs> + 'rs>,
+pub struct DynReturnValue<'am> {
+    inner: Box<dyn IReturnValue<'am> + 'am>,
 }
 
-impl<'rs> DynReturnValue<'rs> {
-    pub(crate) fn new<T: IReturnValue<'rs> + 'rs>(value: T) -> Self {
+impl<'am> DynReturnValue<'am> {
+    pub(crate) fn new<T: IReturnValue<'am> + 'am>(value: T) -> Self {
         Self {
             inner: Box::new(value),
         }
+    }
+
+    pub fn downcast_to<T: 'am>(&self) -> &T {
+        let dyn_ref = self.inner.as_ref();
+        // SAFETY: for justification refer to module level documentation.
+        let t_ref = unsafe { &*(dyn_ref as *const _ as *const T) };
+        return t_ref;
     }
 
     pub fn downcast_into<'a, T: IReturnValue<'a>>(self) -> T {
@@ -36,7 +43,7 @@ mod tests {
         // Assert
         let inner_ptr = dyn_return_value.inner.as_ref() as *const _ as *const ReturnValue;
         // SAFETY: DynReturnValue is intended to work with type-erased values
-        let inner_ref = unsafe { inner_ptr.as_ref_unchecked() };
+        let inner_ref = unsafe { inner_ptr.as_ref().unwrap_unchecked() };
         assert_eq!(inner_ref, &return_value);
     }
 

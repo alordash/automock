@@ -4,7 +4,7 @@ use automock::*;
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     pub fn new() -> Self {
         Self
@@ -13,19 +13,19 @@ impl Struct {
 
 #[mock]
 impl Struct {
-    pub fn accept_value(&self, v: i32) {}
+    pub fn accept_value(&self, _v: i32) {}
 
     pub fn return_value(&self) -> i32 {
         unreachable!()
     }
 
-    pub fn accept_value_return_value(&self, v: i32) -> f32 {
+    pub fn accept_value_return_value(&self, _v: i32) -> f32 {
         unreachable!()
     }
 
-    pub fn accept_two_values(&self, v1: i32, v2: f32) {}
+    pub fn accept_two_values(&self, _v1: i32, _v2: f32) {}
 
-    pub fn accept_two_values_return_value(&self, v1: i32, v2: f32) -> String {
+    pub fn accept_two_values_return_value(&self, _v1: i32, _v2: f32) -> String {
         unreachable!()
     }
 }
@@ -43,6 +43,7 @@ mod tests {
         #[test]
         fn accept_value_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let first_value = 10;
             let second_value = 22;
@@ -71,6 +72,7 @@ mod tests {
         #[test]
         fn accept_value_Callback_ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let callback_flag = Arc::new(RefCell::new(false));
             let callback_flag_clone = callback_flag.clone();
@@ -88,6 +90,7 @@ mod tests {
         #[test]
         fn accept_value_ArgAny_Panics() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let first_value = 10;
             let second_value = 22;
@@ -135,6 +138,7 @@ Received no non-matching calls"#
         #[test]
         fn accept_value_ArgEq_Panics() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let first_value = 10;
             let second_value = 22;
@@ -156,7 +160,7 @@ Actually received 1 matching call:
 	accept_value({first_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{second_value}*)
-	1. v (i32):
+	1. _v (i32):
 		Expected: {first_value}
 		Actual:   {second_value}"#
                 ),
@@ -173,7 +177,7 @@ Actually received 1 matching call:
 	accept_value({first_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{second_value}*)
-	1. v (i32):
+	1. _v (i32):
 		Expected: {first_value}
 		Actual:   {second_value}"#
                 ),
@@ -190,7 +194,7 @@ Actually received 1 matching call:
 	accept_value({second_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{first_value}*)
-	1. v (i32):
+	1. _v (i32):
 		Expected: {second_value}
 		Actual:   {first_value}"#
                 ),
@@ -207,7 +211,7 @@ Actually received 1 matching call:
 	accept_value({second_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{first_value}*)
-	1. v (i32):
+	1. _v (i32):
 		Expected: {second_value}
 		Actual:   {first_value}"#
                 ),
@@ -217,6 +221,7 @@ accept_value(*{first_value}*)
         #[test]
         fn accept_value_ArgIs_Panics() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let first_value = 10;
             let second_value = 22;
@@ -240,8 +245,8 @@ Actually received 1 matching call:
 	accept_value({first_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{second_value}*)
-	1. v (i32):
-		Custom predicate didn't match passed value. Received value: {second_value}"#
+	1. _v (i32):
+		Custom predicate did not match passed value, received: {second_value}"#
                 ),
             );
             assert_panics(
@@ -258,8 +263,8 @@ Actually received 1 matching call:
 	accept_value({first_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{second_value}*)
-	1. v (i32):
-		Custom predicate didn't match passed value. Received value: {second_value}"#
+	1. _v (i32):
+		Custom predicate did not match passed value, received: {second_value}"#
                 ),
             );
             assert_panics(
@@ -276,8 +281,8 @@ Actually received 1 matching call:
 	accept_value({second_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{first_value}*)
-	1. v (i32):
-		Custom predicate didn't match passed value. Received value: {first_value}"#
+	1. _v (i32):
+		Custom predicate did not match passed value, received: {first_value}"#
                 ),
             );
             assert_panics(
@@ -294,8 +299,8 @@ Actually received 1 matching call:
 	accept_value({second_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{first_value}*)
-	1. v (i32):
-		Custom predicate didn't match passed value. Received value: {first_value}"#
+	1. _v (i32):
+		Custom predicate did not match passed value, received: {first_value}"#
                 ),
             );
         }
@@ -303,6 +308,7 @@ accept_value(*{first_value}*)
         #[test]
         fn accept_value_NoOtherCallsWithoutOtherCalls_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let value = 10;
 
@@ -318,6 +324,7 @@ accept_value(*{first_value}*)
         #[test]
         fn accept_value_NoOtherCallsWithOneOtherCall_Panics() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let first_value = 10;
             let second_value = 22;
@@ -343,6 +350,7 @@ accept_value(*{first_value}*)
         #[test]
         fn accept_value_NoOtherCallsWithManyOtherCalls_Panics() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let first_value = 10;
             let second_value = 22;
@@ -375,6 +383,7 @@ accept_value(*{first_value}*)
         #[test]
         fn return_value_Single_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let value = 10;
             mock.setup().return_value().returns(value);
@@ -396,6 +405,7 @@ accept_value(*{first_value}*)
                 ThirdConfigChanged,
             }
 
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let first_value = 10;
             let second_value = 22;
@@ -432,6 +442,7 @@ accept_value(*{first_value}*)
         #[test]
         fn return_value_Many_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let first_value = 10;
             let second_value = 22;
@@ -454,6 +465,7 @@ accept_value(*{first_value}*)
         #[test]
         fn return_value_ManyWithCallback_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let callback_counter = Arc::new(RefCell::new(0));
             let callback_counter_clone = callback_counter.clone();
@@ -478,6 +490,7 @@ accept_value(*{first_value}*)
         #[test]
         fn return_value_NoMatchingConfiguration_Panics() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mock = Struct::new();
 
             // Act
@@ -496,6 +509,7 @@ accept_value(*{first_value}*)
         #[test]
         fn accept_value_return_value_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let first_accepted_value = 10;
             let first_returned_value = 11.1;
@@ -532,6 +546,7 @@ accept_value(*{first_value}*)
         #[test]
         fn accept_value_return_value_Many1_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let single_accepted_value = 10;
             let double_accepted_value = 20;
@@ -567,6 +582,7 @@ accept_value(*{first_value}*)
         #[test]
         fn accept_value_return_value_Many2_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let first_accepted_value = 10;
             let first_first_returned_value = 11.1;
@@ -632,6 +648,7 @@ accept_value(*{first_value}*)
         #[test]
         fn accept_value_return_value_Callback_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let first_accepted_value = 10;
             let first_callback_number = Arc::new(RefCell::new(0));
@@ -678,6 +695,7 @@ accept_value(*{first_value}*)
         #[test]
         fn accept_two_values_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let v1 = 10;
             let v2 = 20.2;
@@ -698,6 +716,7 @@ accept_value(*{first_value}*)
         #[test]
         fn accept_two_values_return_value_Ok() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let v1 = 10;
             let v2 = 20.2;
@@ -720,6 +739,7 @@ accept_value(*{first_value}*)
         #[test]
         fn accept_two_values_return_value_Panics() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let v1 = 10;
             let v2 = 20.2;
@@ -778,10 +798,10 @@ Received no non-matching calls"#
 Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_two_values_return_value(*10*, *20.2*)
-	1. v1 (i32):
+	1. _v1 (i32):
 		Expected: 11
 		Actual:   10
-	2. v2 (f32):
+	2. _v2 (f32):
 		Expected: 21.2
 		Actual:   20.2"#
                 ),
@@ -791,6 +811,7 @@ accept_two_values_return_value(*10*, *20.2*)
         #[test]
         fn accept_two_values_return_value_NoReturnValue_Panics() {
             // Arrange
+            Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let unexpected_v1 = 10;
             let unexpected_v2 = 22.2;

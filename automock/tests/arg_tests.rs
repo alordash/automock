@@ -30,6 +30,28 @@ fn accept_ref(_: &i32) {}
 #[mock]
 fn accept_ptr(_: *const i32) {}
 
+trait IMutable {
+    fn mutate(&mut self);
+}
+#[mock]
+#[derive(Clone)]
+struct Mutable;
+#[mock]
+impl IMutable for Mutable {
+    fn mutate(&mut self) {}
+}
+#[mock]
+impl Mutable {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+#[mock]
+fn accept_mut_impl(mut mutable: impl IMutable) {
+    mutable.mutate()
+}
+
 mod tests {
     #![allow(non_snake_case)]
 
@@ -254,5 +276,38 @@ Received no non-matching calls",
         // Assert
         accept_ptr::received(Arg::eq(first_pointer), Times::Once).no_other_calls();
         accept_ptr::received(Arg::eq(second_pointer), Times::Never).no_other_calls();
+    }
+
+    #[test]
+    fn accept_mut_impl_NotBase_Ok() {
+        // Arrange
+        Mutable::static_setup().new().call_base();
+        let mut mutable = Mutable::new();
+
+        // Act
+        accept_mut_impl(mutable.clone());
+
+        // Assert
+        accept_mut_impl::received(Arg::Any, 1.time()).no_other_calls();
+
+        mutable.received().as_IMutable().mutate(Times::Never);
+        mutable.received().no_other_calls();
+    }
+
+    #[test]
+    fn accept_mut_impl_Base_Ok() {
+        // Arrange
+        Mutable::static_setup().new().call_base();
+        let mut mutable = Mutable::new();
+        accept_mut_impl::setup(Arg::Any).call_base();
+
+        // Act
+        accept_mut_impl(mutable.clone());
+
+        // Assert
+        accept_mut_impl::received(Arg::Any, Times::Never).no_other_calls();
+
+        mutable.received().as_IMutable().mutate(1.time());
+        mutable.received().no_other_calls();
     }
 }

@@ -4,12 +4,12 @@
 
 use automock::*;
 
-#[mock(base)]
+#[mock]
 fn f<'a, T: Clone>(v: &'a T) -> i32 {
     121
 }
 
-#[mock(base)]
+#[mock]
 fn flex<'a, 'b>(v: &'a &'b &()) {}
 
 struct Q;
@@ -22,8 +22,8 @@ impl Q {
 
 struct QMock;
 impl QMock {
-    fn __base_chevo(__rsa_self: &Q) {
-        __rsa_self.kavo()
+    fn __base_chevo(__ama_self: &Q) {
+        __ama_self.kavo()
     }
 }
 

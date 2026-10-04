@@ -226,7 +226,7 @@ Actually received 1 matching call:
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{second_value}*)
 	1. v (i32):
-		Custom predicate didn't match passed value. Received value: {second_value}"#
+		Custom predicate did not match passed value, received: {second_value}"#
                 ),
             );
             assert_panics(
@@ -244,7 +244,7 @@ Actually received 1 matching call:
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{second_value}*)
 	1. v (i32):
-		Custom predicate didn't match passed value. Received value: {second_value}"#
+		Custom predicate did not match passed value, received: {second_value}"#
                 ),
             );
             assert_panics(
@@ -262,7 +262,7 @@ Actually received 1 matching call:
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{first_value}*)
 	1. v (i32):
-		Custom predicate didn't match passed value. Received value: {first_value}"#
+		Custom predicate did not match passed value, received: {first_value}"#
                 ),
             );
             assert_panics(
@@ -280,7 +280,7 @@ Actually received 1 matching call:
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{first_value}*)
 	1. v (i32):
-		Custom predicate didn't match passed value. Received value: {first_value}"#
+		Custom predicate did not match passed value, received: {first_value}"#
                 ),
             );
         }

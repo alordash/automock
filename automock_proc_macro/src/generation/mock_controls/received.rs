@@ -1,4 +1,3 @@
-use crate::common::models::*;
 use crate::generation::common::*;
 use crate::generation::fn_info::models::*;
 use crate::generation::mock_controls::models::*;
@@ -17,7 +16,6 @@ pub(crate) struct Params<'a, T: Borrow<FnInfo>> {
     pub maybe_trait_ident: Option<Ident>,
 }
 pub(crate) fn generate<T: Borrow<FnInfo>>(
-    ctx: &Context,
     span: Span,
     Params {
         ident,
@@ -43,7 +41,6 @@ pub(crate) fn generate<T: Borrow<FnInfo>>(
         &item_struct.fields,
     );
     let item_impl = received_impl::generate(
-        ctx,
         span,
         received_impl::Params {
             received_struct_path: path.clone(),

@@ -9,7 +9,7 @@ use crate::preparation::r#trait::models::*;
 use not_enough_syntax::*;
 use syn::*;
 
-pub(crate) fn generate(ctx: &Context, trait_syntax: TraitSyntax) -> TraitInfo {
+pub(crate) fn generate(trait_syntax: TraitSyntax) -> TraitInfo {
     let span = trait_syntax.ident.span();
     let associated_items_info = AssociatedItemsInfo {
         trait_path_segment: PathSegment {
@@ -45,13 +45,11 @@ pub(crate) fn generate(ctx: &Context, trait_syntax: TraitSyntax) -> TraitInfo {
         assoc_types: trait_syntax.assoc_types,
         path: trait_syntax.path,
         static_fns: convert_fns(
-            ctx,
             &trait_syntax.ident,
             &associated_items_info,
             trait_syntax.static_fns,
         ),
         associated_fns: convert_fns(
-            ctx,
             &trait_syntax.ident,
             &associated_items_info,
             trait_syntax.associated_fns,
@@ -63,7 +61,6 @@ pub(crate) fn generate(ctx: &Context, trait_syntax: TraitSyntax) -> TraitInfo {
 }
 
 fn convert_fns(
-    ctx: &Context,
     trait_ident: &Ident,
     associated_items_info: &AssociatedItemsInfo,
     fn_syntaxes: Vec<Ordered<FnSyntax>>,
@@ -83,7 +80,6 @@ fn convert_fns(
                     fn_syntax,
                 );
                 return fn_info::generate_with_impl_generics(
-                    ctx,
                     normalized_fn_syntax,
                     generics_for_impl.clone(),
                 );

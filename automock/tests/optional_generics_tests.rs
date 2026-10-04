@@ -1,6 +1,6 @@
 use automock::*;
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 trait Trait<TA, const TB: usize, TC, const TD: usize = 3> {}
 
@@ -12,7 +12,7 @@ struct S<SA, const SB: usize, SC, const SD: usize = 2> {
     second: [SC; SD],
 }
 
-#[mock(base)]
+#[mock]
 impl<TA, const TB: usize, TC, SA, const SB: usize, SC> Trait<TA, TB, TC> for S<SA, SB, SC> {}
 
 mod tests {

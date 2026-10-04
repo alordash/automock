@@ -7,7 +7,7 @@ use automock::*;
 // ============================================================================
 //
 
-#[mock(base)]
+#[mock]
 trait GenericChain {
     fn transform<T>(&self, value: T) -> T
     where
@@ -45,9 +45,9 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received().calculate::<i32>(42, Times::Once);
-
-        mock.received().transform::<i32>(42, Times::Once);
+        mock.received()
+            .transform::<i32>(42, Times::Once)
+            .no_other_calls();
     }
 
     #[test]
@@ -65,8 +65,8 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received().calculate::<i32>(42, Times::Once);
-
-        mock.received().transform::<i32>(42, Times::Once);
+        mock.received()
+            .transform::<i32>(42, Times::Once)
+            .no_other_calls();
     }
 }

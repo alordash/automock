@@ -1,52 +1,52 @@
 use automock::*;
 
-#[mock(base)]
+#[mock]
 fn accept_ref(_: &i32) {}
 
 const BASE_RETURN_REF: &i32 = &1000;
-#[mock(base)]
+#[mock]
 fn return_ref() -> &'static i32 {
     BASE_RETURN_REF
 }
 
 const BASE_ACCEPT_REF_RETURN_REF: &i32 = &2000;
-#[mock(base)]
+#[mock]
 fn accept_ref_return_ref(_: &i32) -> &'static i32 {
     BASE_ACCEPT_REF_RETURN_REF
 }
 
-#[mock(base)]
+#[mock]
 fn accept_two_refs(_: &i32, _: &f32) {}
 
 const ACCEPT_TWO_REFS_RETURN_REF: &str = "quo vadis";
-#[mock(base)]
+#[mock]
 fn accept_two_refs_return_ref(_: &i32, _: &f32) -> &'static str {
     ACCEPT_TWO_REFS_RETURN_REF
 }
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 fn accept_mut_ref(r: &mut i32) {}
 
 static mut BASE_RETURN_MUT_REF: i32 = 12;
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 fn return_mut_ref() -> &'static mut i32 {
     unsafe { &mut *&raw mut BASE_RETURN_MUT_REF }
 }
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 fn accept_mut_ref_return_mut_ref(_: &mut i32) -> &'static i32 {
     BASE_ACCEPT_REF_RETURN_REF
 }
 
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 fn accept_two_mut_refs(_: &mut i32, _: &mut f32) {}
 
 static mut ACCEPT_TWO_REFS_RETURN_MUT_REF: i32 = 382;
-#[mock(base)]
+#[mock]
 #[allow(unused)]
 fn accept_two_mut_refs_return_mut_ref(_: &mut i32, _: &mut f32) -> &'static mut i32 {
     unsafe { &mut *&raw mut ACCEPT_TWO_REFS_RETURN_MUT_REF }
@@ -202,7 +202,7 @@ accept_ref(*{r}*)
 
             // Assert
             assert_eq!(BASE_ACCEPT_REF_RETURN_REF, actual_returned_r);
-            accept_ref_return_ref::received(accepted_r, Times::Once).no_other_calls();
+            accept_ref_return_ref::received_nothing();
         }
     }
 
@@ -258,7 +258,7 @@ accept_ref(*{r}*)
             // Assert
             assert_eq!(ACCEPT_TWO_REFS_RETURN_REF, actual_returned_r);
 
-            accept_two_refs_return_ref::received(r1, r2, Times::Once).no_other_calls();
+            accept_two_refs_return_ref::received_nothing();
         }
     }
 }

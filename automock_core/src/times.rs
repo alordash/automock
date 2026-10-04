@@ -1,5 +1,5 @@
 /// Defines number of times the function should have been called.
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Times {
     Never,
     Once,

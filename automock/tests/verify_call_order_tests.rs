@@ -16,7 +16,7 @@ trait Trait {
 #[mock]
 struct Struct;
 
-#[mock(base)]
+#[mock]
 impl Struct {
     fn new() -> Self {
         Self
@@ -25,7 +25,7 @@ impl Struct {
     fn structing(&self, _: i32) {}
 }
 
-#[mock(base)]
+#[mock]
 impl Trait for Struct {
     fn traiting(&self, _: i32) {}
 }
@@ -132,6 +132,7 @@ Actually received matching calls in this order:
     fn AllTogether_NoVerificationValidOrder_Ok() {
         // Arrange
         let mut trait_mock = TraitMock::new();
+        Struct::static_setup().new().call_base();
         let mut struct_mock = Struct::new();
 
         // Act
@@ -159,6 +160,7 @@ Actually received matching calls in this order:
     fn AllTogether_NoVerificationInvalidOrder_Ok() {
         // Arrange
         let mut trait_mock = TraitMock::new();
+        Struct::static_setup().new().call_base();
         let mut struct_mock = Struct::new();
 
         // Act
@@ -187,6 +189,7 @@ Actually received matching calls in this order:
     fn AllTogether_WithVerificationValidOrder_Ok() {
         // Arrange
         let mut trait_mock = TraitMock::new();
+        Struct::static_setup().new().call_base();
         let mut struct_mock = Struct::new();
 
         // Act
@@ -216,6 +219,7 @@ Actually received matching calls in this order:
     fn AllTogether_WithVerificationInvalidOrder_Panics() {
         // Arrange
         let mut trait_mock = TraitMock::new();
+        Struct::static_setup().new().call_base();
         let mut struct_mock = Struct::new();
 
         // Act

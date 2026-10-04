@@ -8,32 +8,32 @@ thread_local! {
     pub static BASE_CALLED_FLAG: Cell<bool> = const {Cell::new(false)};
 }
 
-#[mock(base)]
+#[mock]
 fn accept_value(v: i32) {
     BASE_CALLED_FLAG.set(true);
 }
 
 const BASE_RETURN_VALUE: i32 = 12321;
-#[mock(base)]
+#[mock]
 fn return_value() -> i32 {
     BASE_CALLED_FLAG.set(true);
     return BASE_RETURN_VALUE;
 }
 
 const BASE_ACCEPT_VALUE_RETURN_VALUE: f32 = 44.2;
-#[mock(base)]
+#[mock]
 fn accept_value_return_value(v: i32) -> f32 {
     BASE_CALLED_FLAG.set(true);
     return BASE_ACCEPT_VALUE_RETURN_VALUE;
 }
 
-#[mock(base)]
+#[mock]
 fn accept_two_values(v1: i32, v2: f32) {
     BASE_CALLED_FLAG.set(true);
 }
 
 const BASE_ACCEPT_TWO_VALUES_RETURN_VALUE: &str = "quo vadis";
-#[mock(base)]
+#[mock]
 fn accept_two_values_return_value(v1: i32, v2: f32) -> &'static str {
     BASE_CALLED_FLAG.set(true);
     return BASE_ACCEPT_TWO_VALUES_RETURN_VALUE;
@@ -85,7 +85,7 @@ mod tests {
 
             // Assert
             assert!(BASE_CALLED_FLAG.get());
-            accept_value::received(v, Times::Once).no_other_calls();
+            accept_value::received_nothing();
         }
 
         #[test]
@@ -243,7 +243,7 @@ Actually received 1 matching call:
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{second_value}*)
 	1. v (i32):
-		Custom predicate didn't match passed value. Received value: {second_value}"
+		Custom predicate did not match passed value, received: {second_value}"
                 ),
             );
             assert_panics(
@@ -261,7 +261,7 @@ Actually received 1 matching call:
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{second_value}*)
 	1. v (i32):
-		Custom predicate didn't match passed value. Received value: {second_value}"
+		Custom predicate did not match passed value, received: {second_value}"
                 ),
             );
             assert_panics(
@@ -279,7 +279,7 @@ Actually received 1 matching call:
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{first_value}*)
 	1. v (i32):
-		Custom predicate didn't match passed value. Received value: {first_value}"
+		Custom predicate did not match passed value, received: {first_value}"
                 ),
             );
             assert_panics(
@@ -297,7 +297,7 @@ Actually received 1 matching call:
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{first_value}*)
 	1. v (i32):
-		Custom predicate didn't match passed value. Received value: {first_value}"
+		Custom predicate did not match passed value, received: {first_value}"
                 ),
             );
         }
@@ -412,7 +412,7 @@ accept_value(*{first_value}*)
             // Assert
             assert_eq!(BASE_RETURN_VALUE, actual_value);
             assert!(BASE_CALLED_FLAG.get());
-            return_value::received(Times::Once).no_other_calls();
+            return_value::received_nothing();
         }
 
         #[test]
@@ -547,7 +547,7 @@ accept_value(*{first_value}*)
             assert_eq!(BASE_ACCEPT_VALUE_RETURN_VALUE, actual_value);
             assert!(BASE_CALLED_FLAG.get());
 
-            accept_value_return_value::received(v, Times::Once).no_other_calls();
+            accept_value_return_value::received_nothing();
         }
 
         #[test]
@@ -709,7 +709,7 @@ accept_value(*{first_value}*)
 
             // Assert
             assert!(BASE_CALLED_FLAG.get());
-            accept_two_values::received(v1, v2, Times::Once).no_other_calls();
+            accept_two_values::received_nothing();
         }
     }
 
@@ -810,7 +810,7 @@ accept_two_values_return_value(*10*, *20.2*)
             assert_eq!(BASE_ACCEPT_TWO_VALUES_RETURN_VALUE, actual_returned_value);
             assert!(BASE_CALLED_FLAG.get());
 
-            accept_two_values_return_value::received(v1, v2, Times::Once).no_other_calls();
+            accept_two_values_return_value::received_nothing();
         }
     }
 }

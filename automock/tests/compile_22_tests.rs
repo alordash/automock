@@ -7,7 +7,7 @@
 use automock::*;
 use std::fmt::Debug;
 
-#[mock(base)]
+#[mock]
 trait Trait {
     const CONST: usize = 43;
 

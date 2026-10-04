@@ -22,7 +22,7 @@ impl Generator for GeneratedValue {
 #[mock]
 pub struct Factory;
 
-#[mock(base)]
+#[mock]
 impl Factory {
     pub fn new() -> Self {
         Self
@@ -95,6 +95,7 @@ impl Factory {
     // impl Iterator whose concrete type is deliberately complicated
     // ------------------------------------------------------------------------
 
+    #[allow(clippy::manual_repeat_n)]
     pub fn complicated_iterator(&self, value: i32) -> impl Iterator<Item = i32> {
         std::iter::repeat(value)
             .take(3)
@@ -164,6 +165,7 @@ mod tests {
     #[test]
     fn impl_trait_return() {
         // Arrange
+        Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
         mock.setup()
@@ -182,6 +184,7 @@ mod tests {
     #[test]
     fn impl_trait_return_through_consumer() {
         // Arrange
+        Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
         mock.setup()
@@ -200,6 +203,7 @@ mod tests {
     #[test]
     fn impl_iterator_return() {
         // Arrange
+        Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
         mock.setup()
@@ -218,6 +222,7 @@ mod tests {
     #[test]
     fn impl_iterator_through_consumer() {
         // Arrange
+        Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
         mock.setup()
@@ -236,6 +241,7 @@ mod tests {
     #[test]
     fn impl_iterator_with_bounds() {
         // Arrange
+        Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
         mock.setup()
@@ -254,6 +260,7 @@ mod tests {
     #[tokio::test]
     async fn impl_future_return() {
         // Arrange
+        Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
         mock.setup().future(42).returns(Box::pin(async { 123 }));
@@ -270,6 +277,7 @@ mod tests {
     #[tokio::test]
     async fn impl_future_send_return() {
         // Arrange
+        Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
         mock.setup()
@@ -288,6 +296,7 @@ mod tests {
     #[test]
     fn impl_fn_return() {
         // Arrange
+        Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
         mock.setup().function(42).returns(Box::new(|x| x + 100));
@@ -306,6 +315,7 @@ mod tests {
     #[test]
     fn impl_fn_send_sync_return() {
         // Arrange
+        Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
         mock.setup()
@@ -326,6 +336,7 @@ mod tests {
     #[test]
     fn complicated_impl_iterator() {
         // Arrange
+        Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
         mock.setup()
@@ -344,6 +355,7 @@ mod tests {
     #[test]
     fn impl_trait_cross_module() {
         // Arrange
+        Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
         mock.setup()
@@ -362,6 +374,7 @@ mod tests {
     #[tokio::test]
     async fn impl_future_cross_module() {
         // Arrange
+        Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
         mock.setup().future(42).returns(Box::pin(async { 123 }));

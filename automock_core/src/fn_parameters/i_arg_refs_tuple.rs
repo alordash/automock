@@ -1,3 +1,4 @@
-pub(crate) trait IArgRefsTuple<'rs> {}
+#[doc(hidden)]
+pub trait IArgRefsTuple<'am> {}
 
-impl<'rs, T: 'rs> IArgRefsTuple<'rs> for T {}
+impl<'am, T: 'am> IArgRefsTuple<'am> for T {}

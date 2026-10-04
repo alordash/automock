@@ -1,5 +1,8 @@
+// TODO - think this should not be hidden in doc
 #[doc(hidden)]
-pub trait Mockable<'__rsa> {
+pub trait Mockable<'__ama> {
+    fn id(&self) -> usize;
+
     type Setup;
     fn setup(&mut self) -> Self::Setup;
 

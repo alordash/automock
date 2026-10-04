@@ -4,7 +4,7 @@ use automock::*;
 
 use std::fmt::Display;
 
-#[mock(base)]
+#[mock]
 trait Repository {
     type Item: Clone + Display;
     type Error: Display;
@@ -198,7 +198,7 @@ where
 //
 // So expose only the object-safe subset through another trait.
 // ============================================================
-#[mock(base)]
+#[mock]
 trait DynRepository {
     type Item: Clone + Display;
     type Error: Display;

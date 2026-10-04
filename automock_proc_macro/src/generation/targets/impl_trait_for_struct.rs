@@ -1,6 +1,5 @@
 mod as_trait_control_impl;
 
-use crate::common::models::*;
 use crate::common::*;
 use crate::generation::mock_controls::models::*;
 use crate::generation::mock_controls::*;
@@ -15,7 +14,7 @@ use quote::format_ident;
 use syn::spanned::Spanned;
 use syn::*;
 
-pub(crate) fn generate_module(ctx: &Context, mut item_impl: ItemImpl) -> MockMod {
+pub(crate) fn generate_module(mut item_impl: ItemImpl) -> MockMod {
     let source_span = item_impl.span();
     let Some((trait_path, _)) = &item_impl.trait_ else {
         panic!("When mocking trait implementation `item_impl` must have trait field.")
@@ -29,7 +28,7 @@ pub(crate) fn generate_module(ctx: &Context, mut item_impl: ItemImpl) -> MockMod
             impl_items: item_impl.items.clone(),
         });
     let impl_trait_for_struct_info =
-        impl_trait_for_struct_info::generate(ctx, impl_trait_for_struct_syntax);
+        impl_trait_for_struct_info::generate(impl_trait_for_struct_syntax);
     let control_struct_path =
         patch_lifetime::prepend_to_path(impl_trait_for_struct_info.target_path.clone());
     let control_struct_generics =
@@ -41,7 +40,6 @@ pub(crate) fn generate_module(ctx: &Context, mut item_impl: ItemImpl) -> MockMod
     let maybe_associated_controls =
         (!impl_trait_for_struct_info.associated_fns.is_empty()).then(|| {
             let trait_setup_struct = setup::generate(
-                ctx,
                 source_span,
                 setup::Params {
                     ident: path::last_ident(&impl_trait_for_struct_info.target_path).clone(),
@@ -53,7 +51,6 @@ pub(crate) fn generate_module(ctx: &Context, mut item_impl: ItemImpl) -> MockMod
                 },
             );
             let trait_received_struct = received::generate(
-                ctx,
                 source_span,
                 received::Params {
                     ident: path::last_ident(&impl_trait_for_struct_info.target_path).clone(),
@@ -112,7 +109,6 @@ pub(crate) fn generate_module(ctx: &Context, mut item_impl: ItemImpl) -> MockMod
         });
     let maybe_static_controls = (!impl_trait_for_struct_info.static_fns.is_empty()).then(|| {
         let trait_static_setup_struct = static_setup::generate(
-            ctx,
             source_span,
             static_setup::Params {
                 ident: path::last_ident(&impl_trait_for_struct_info.target_path).clone(),
@@ -126,7 +122,6 @@ pub(crate) fn generate_module(ctx: &Context, mut item_impl: ItemImpl) -> MockMod
             },
         );
         let trait_static_received_struct = static_received::generate(
-            ctx,
             source_span,
             static_received::Params {
                 ident: path::last_ident(&impl_trait_for_struct_info.target_path).clone(),
@@ -201,7 +196,6 @@ pub(crate) fn generate_module(ctx: &Context, mut item_impl: ItemImpl) -> MockMod
         column
     );
     let mock_struct_impls = mock_struct_impl::generate_for_trait(
-        ctx,
         source_span,
         mock_struct_impl::ParamsForTrait {
             attributes: impl_trait_for_struct_info.attributes,
@@ -238,7 +232,6 @@ pub(crate) fn generate_module(ctx: &Context, mut item_impl: ItemImpl) -> MockMod
                     Item::Impl(call_struct.call_impl),
                 ]
                 .into_iter()
-                .chain(call_struct.maybe_clone_impl.map(Item::Impl))
                 .chain([
                     Item::Struct(args_checker.item_struct),
                     Item::Impl(args_checker.generics_info_provider_impl),
@@ -259,7 +252,6 @@ pub(crate) fn generate_module(ctx: &Context, mut item_impl: ItemImpl) -> MockMod
                     Item::Impl(call_struct.call_impl),
                 ]
                 .into_iter()
-                .chain(call_struct.maybe_clone_impl.map(Item::Impl))
                 .chain([
                     Item::Struct(args_checker.item_struct),
                     Item::Impl(args_checker.generics_info_provider_impl),

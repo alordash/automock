@@ -4,17 +4,17 @@ use std::fmt::{Debug, Display};
 
 mod common;
 
-#[mock(base)]
+#[mock]
 fn get_return<T: Clone>(value: T) -> T {
     return value;
 }
 
-#[mock(base)]
+#[mock]
 fn return_constraint<T: Default>() -> T {
     return T::default();
 }
 
-#[mock(base)]
+#[mock]
 fn return_where_constraint<T: Default>() -> T
 where
     T: Debug,
@@ -22,7 +22,7 @@ where
     return T::default();
 }
 
-#[mock(base)]
+#[mock]
 fn get_return_different<T1: Debug, T2>(_value: T1) -> T2
 where
     T1: Clone + Display,
@@ -111,7 +111,7 @@ mod tests {
 
             // Assert
             assert_eq!(accepted_number, returned_number);
-            get_return::received(accepted_number, Times::Once).no_other_calls();
+            get_return::received_nothing::<i32>();
         }
     }
 
@@ -150,7 +150,7 @@ mod tests {
 
             // Assert
             assert_eq!(i32::default(), actual_number_value);
-            return_constraint::received::<i32>(Times::Once).no_other_calls();
+            return_constraint::received_nothing::<i32>();
         }
     }
 
@@ -189,7 +189,7 @@ mod tests {
 
             // Assert
             assert_eq!(i32::default(), actual_number_value);
-            return_where_constraint::received::<i32>(Times::Once).no_other_calls();
+            return_where_constraint::received_nothing::<i32>();
         }
     }
 
@@ -238,10 +238,8 @@ mod tests {
             // Assert
             assert_eq!(String::default(), actual_returned_string);
             assert_eq!(Vec::<i32>::default(), actual_returned_vec);
-            get_return_different::received::<_, String>(first_accepted_number, Times::Once)
-                .no_other_calls();
-            get_return_different::received::<_, Vec<i32>>(second_accepted_number, Times::Once)
-                .no_other_calls();
+            get_return_different::received_nothing::<i32, String>();
+            get_return_different::received_nothing::<i32, Vec<i32>>();
         }
     }
 }

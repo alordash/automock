@@ -96,6 +96,10 @@ mod target_module {
         async_helper(value).await + 100
     }
 
+    async fn async_helper(value: i32) -> i32 {
+        value
+    }
+
     // --------------------------------------------------------
     // Recursive static function
     // --------------------------------------------------------

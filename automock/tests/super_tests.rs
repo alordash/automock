@@ -4,7 +4,7 @@ struct Dependency;
 mod inner {
     use automock::*;
 
-    #[mock(base)]
+    #[mock]
     #[allow(unused)]
     fn work(_: super::Dependency) -> super::Dependency {
         use super::Dependency;

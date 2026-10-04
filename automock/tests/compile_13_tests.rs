@@ -23,7 +23,7 @@ impl IFoo for Foo {
 }
 
 const DEFAULT_MY_TRAIT_GET: i32 = 10;
-#[mock(base)]
+#[mock]
 trait MyTrait {
     fn work(&self, value: i32);
 
@@ -72,7 +72,6 @@ fn get_CallBase_Ok() {
     // Assert
     assert_eq!(DEFAULT_MY_TRAIT_GET, actual_value);
     mock.received()
-        .get(Times::Once)
         .work(actual_value, Times::Once)
         .no_other_calls();
 }

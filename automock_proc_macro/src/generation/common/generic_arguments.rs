@@ -1,4 +1,3 @@
-use crate::common::models::*;
 use crate::generation::fn_info::models::*;
 use not_enough_syntax::*;
 use proc_macro2::Span;
@@ -16,7 +15,6 @@ pub(crate) struct Result {
     pub passes_mock_to_callback_argument: GenericArgument,
 }
 pub(crate) fn new(
-    ctx: &Context,
     span: Span,
     Params {
         mut mock_struct_path,
@@ -42,7 +40,7 @@ pub(crate) fn new(
         ),
         supports_base_calling_argument: generic_argument::bool(
             span,
-            ctx.support_base_calling && fn_info.maybe_base_impl.is_some(),
+            fn_info.maybe_base_impl.is_some(),
         ),
         passes_mock_to_callback_argument: generic_argument::bool(
             span,

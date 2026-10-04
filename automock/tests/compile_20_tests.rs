@@ -11,7 +11,7 @@ struct Struct<'a, T1: Clone> {
     pub phantom_data: PhantomData<(&'a (), T1)>,
 }
 
-#[mock(base)]
+#[mock]
 impl<'a, T1: Clone> Struct<'a, T1> {
     pub fn f<'r>(&'r self, a: &i32, t1: T1) {
         unreachable!()
@@ -22,12 +22,12 @@ impl<'a, T1: Clone> Struct<'a, T1> {
     }
 }
 
-#[mock(base)]
+#[mock]
 trait Trait {
     fn f(v: i32) -> i32;
 }
 
-#[mock(base)]
+#[mock]
 fn f(v: i32) -> i32 {
     v + 10
 }
