@@ -64,11 +64,12 @@ mod tests {
             mock.accept_rc(r.clone());
 
             // Assert
+            let rc_type_name = std::any::type_name::<Rc<i32>>();
             assert_panics(
                 || mock.received().accept_rc(Arg::Any, Times::Never),
                 format!(
                     "Expected to never receive a call matching:
-	Struct::accept_rc((alloc::rc::Rc<i32>): any)
+	Struct::accept_rc(({rc_type_name}): any)
 Actually received 1 matching call:
 	accept_rc({r})
 Received no non-matching calls"
@@ -79,7 +80,7 @@ Received no non-matching calls"
                 || mock.received().accept_rc(Arg::Any, Times::Exactly(3)),
                 format!(
                     "Expected to receive a call 3 times matching:
-	Struct::accept_rc((alloc::rc::Rc<i32>): any)
+	Struct::accept_rc(({rc_type_name}): any)
 Actually received 1 matching call:
 	accept_rc({r})
 Received no non-matching calls"
@@ -95,11 +96,11 @@ Received no non-matching calls"
                 },
                 format!(
                     "Expected to receive a call exactly once matching:
-	Struct::accept_rc((alloc::rc::Rc<i32>): equal to {invalid_r})
+	Struct::accept_rc(({rc_type_name}): equal to {invalid_r})
 Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_rc(*{r}*)
-	1. __arg0 (alloc::rc::Rc<i32>):
+	1. __arg0 ({rc_type_name}):
 		Expected (ptr: {invalid_r_ptr:?}): {invalid_r}
 		Actual   (ptr: {r_ptr:?}): {r}"
                 ),
