@@ -24,8 +24,8 @@ impl<'am> IGenericsInfoProvider for DynArgsChecker<'am> {
 }
 
 impl<'am> IArgsChecker for DynArgsChecker<'am> {
-    fn check(&self, dyn_call: &DynCall) -> Vec<ArgCheckResult> {
-        self.inner.check(dyn_call)
+    fn check(&self, call_check: &DynCall) -> Vec<ArgCheckResult> {
+        self.inner.check(call_check)
     }
 
     fn fmt_args(&self) -> String {

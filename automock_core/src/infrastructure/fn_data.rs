@@ -116,7 +116,7 @@ impl<
         let mut unexpected_call_infos: Vec<_> = all_call_infos
             .values()
             .flatten()
-            .filter(|x| x.is_not_verified())
+            .filter(|x| !x.is_verified())
             .collect();
         unexpected_call_infos.sort_by_key(|a| a.number);
         let unexpected_call_arg_infos = unexpected_call_infos
@@ -190,7 +190,7 @@ mod internal {
                 .push(CallCheck::new(dyn_call));
         }
 
-// TODO - test things below
+        // TODO - test things below
         pub(crate) fn get_matching_and_non_matching_calls<'a>(
             &self,
             dyn_args_checker: &DynArgsChecker<'a>,
@@ -198,17 +198,17 @@ mod internal {
             let mut matching_calls_args_check_results = Vec::new();
             let mut non_matching_calls_args_check_results = Vec::new();
             let generics_hash_key = dyn_args_checker.get_generics_hash_key();
-            let mut all_call_infos = self.call_checks.borrow_mut();
-            let specific_call_infos = all_call_infos.entry(generics_hash_key).or_default();
-            for call_info in specific_call_infos.iter_mut() {
-                let call_args_check_results = dyn_args_checker.check(call_info.get_dyn_call());
+            let mut all_call_checks = self.call_checks.borrow_mut();
+            let specific_call_checks = all_call_checks.entry(generics_hash_key).or_default();
+            for call_check in specific_call_checks.iter_mut() {
+                let call_args_check_results = dyn_args_checker.check(call_check.get_dyn_call());
                 let is_matching = call_args_check_results.iter().all(ArgCheckResult::is_ok);
                 let ordered_call_check_result = OrderedCallCheckResult {
-                    call_order_number: call_info.number,
+                    call_order_number: call_check.number,
                     args_check_results: call_args_check_results,
                 };
                 if is_matching {
-                    call_info.mark_as_verified();
+                    call_check.mark_as_verified();
                     matching_calls_args_check_results.push(ordered_call_check_result);
                 } else {
                     non_matching_calls_args_check_results.push(ordered_call_check_result);
@@ -871,6 +871,126 @@ mod tests {
 
         assert_eq!(call_check.number, call_check_number);
         get_next_call_order_number::received(automock::Times::Exactly(2)).no_other_calls();
+    }
+
+    #[test]
+    fn get_matching_and_non_matching_calls_Ok() {
+        // Arrange
+        let mut args_checker_mock = ArgsCheckerMock::new();
+        let generic_hash_key = GenericsHashKey(5);
+        let irrelevant_generic_hash_key = GenericsHashKey(generic_hash_key.0 + 10);
+        args_checker_mock
+            .setup()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key()
+            .returns(generic_hash_key);
+
+        let mut fn_data_mock = fn_data_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        let irrelevant_dyn_call = Rc::new(DynCall::new(CallMock::new()));
+        let matching_dyn_call = Rc::new(DynCall::new(CallMock::new()));
+        let non_matching_dyn_call = Rc::new(DynCall::new(CallMock::new()));
+        let irrelevant_call_check_number = 11;
+        let matching_call_check_number = 55;
+        let non_matching_call_check_number = 111;
+        get_next_call_order_number::setup().returns_many([
+            irrelevant_call_check_number,
+            matching_call_check_number,
+            non_matching_call_check_number,
+        ]);
+        let matching_call_arg_check_results = vec![
+            ArgCheckResult::Ok(ArgCheckResultOk {
+                arg_info: ArgInfo::new("1", "1v", "1dbs".to_owned()),
+            }),
+            ArgCheckResult::Ok(ArgCheckResultOk {
+                arg_info: ArgInfo::new("2", "2v", "2dbs".to_owned()),
+            }),
+        ];
+        let non_matching_call_arg_check_results = vec![
+            ArgCheckResult::Ok(ArgCheckResultOk {
+                arg_info: ArgInfo::new("3", "3v", "3dbs".to_owned()),
+            }),
+            ArgCheckResult::Err(ArgCheckResultErr {
+                arg_info: ArgInfo::new("4", "4v", "4dbs".to_owned()),
+                error_msg: "not matching call mock".to_owned(),
+            }),
+        ];
+        args_checker_mock
+            .setup()
+            .as_IArgsChecker()
+            .check(automock::Arg::ref_eq(matching_dyn_call.as_ref()))
+            .returns(matching_call_arg_check_results.clone())
+            .check(automock::Arg::ref_eq(non_matching_dyn_call.as_ref()))
+            .returns(non_matching_call_arg_check_results.clone());
+        {
+            let irrelevant_call_check = CallCheck::new(irrelevant_dyn_call);
+            let matching_call_check = CallCheck::new(matching_dyn_call.clone());
+            let non_matching_call_check = CallCheck::new(non_matching_dyn_call.clone());
+            let mut mut_call_checks = fn_data_mock.call_checks.borrow_mut();
+            mut_call_checks.insert(irrelevant_generic_hash_key, vec![irrelevant_call_check]);
+            mut_call_checks.insert(
+                generic_hash_key,
+                vec![matching_call_check, non_matching_call_check],
+            );
+        }
+        let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
+        fn_data_mock
+            .setup()
+            .get_matching_and_non_matching_calls(automock::Arg::Any)
+            .call_base();
+
+        // Act
+        let (matching_calls, non_matching_calls) =
+            fn_data_mock.get_matching_and_non_matching_calls(&dyn_args_checker);
+
+        // Act
+        assert_eq!(matching_calls.calls_args_check_results.len(), 1);
+        let actual_matching_call_check_result = &matching_calls.calls_args_check_results[0];
+        assert_eq!(
+            actual_matching_call_check_result.call_order_number,
+            matching_call_check_number
+        );
+        assert_eq!(
+            actual_matching_call_check_result.args_check_results,
+            matching_call_arg_check_results
+        );
+
+        assert_eq!(non_matching_calls.calls_args_check_results.len(), 1);
+        let actual_non_matching_call_check_result = &non_matching_calls.calls_args_check_results[0];
+        assert_eq!(
+            actual_non_matching_call_check_result.call_order_number,
+            non_matching_call_check_number
+        );
+        assert_eq!(
+            actual_non_matching_call_check_result.args_check_results,
+            non_matching_call_arg_check_results
+        );
+
+        get_next_call_order_number::received(automock::Times::Exactly(3)).no_other_calls();
+
+        args_checker_mock
+            .received()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key(automock::Times::Once);
+        args_checker_mock
+            .received()
+            .as_IArgsChecker()
+            .check(
+                automock::Arg::ref_eq(matching_dyn_call.as_ref()),
+                automock::Times::Once,
+            )
+            .check(
+                automock::Arg::ref_eq(non_matching_dyn_call.as_ref()),
+                automock::Times::Once,
+            )
+            .no_other_calls();
+
+        let call_checks = fn_data_mock.call_checks.borrow();
+        let actual_irrelevant_call_check = &call_checks[&irrelevant_generic_hash_key][0];
+        let actual_matching_call_check = &call_checks[&generic_hash_key][0];
+        let actual_non_matching_call_check = &call_checks[&generic_hash_key][1];
+        assert!(!actual_irrelevant_call_check.is_verified());
+        assert!(actual_matching_call_check.is_verified());
+        assert!(!actual_non_matching_call_check.is_verified());
     }
 
     mod utilities {

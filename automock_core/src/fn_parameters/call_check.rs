@@ -34,8 +34,8 @@ impl<'am> CallCheck<'am> {
         self.verified.set(true);
     }
 
-    pub fn is_not_verified(&self) -> bool {
-        !self.verified.get()
+    pub fn is_verified(&self) -> bool {
+        self.verified.get()
     }
 
     pub fn get_dyn_call(&self) -> &Rc<DynCall<'am>> {
@@ -93,7 +93,7 @@ mod tests {
         };
 
         // Act
-        let result = call_check.is_not_verified();
+        let result = call_check.is_verified();
 
         // Assert
         assert!(result);
@@ -109,7 +109,7 @@ mod tests {
         };
 
         // Act
-        let result = call_check.is_not_verified();
+        let result = call_check.is_verified();
 
         // Assert
         assert!(!result);
