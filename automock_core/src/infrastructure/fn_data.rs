@@ -190,7 +190,6 @@ mod internal {
                 .push(CallCheck::new(dyn_call));
         }
 
-        // TODO - test things below
         pub(crate) fn get_matching_and_non_matching_calls<'a>(
             &self,
             dyn_args_checker: &DynArgsChecker<'a>,
@@ -222,35 +221,6 @@ mod internal {
             };
             return (matching_calls_check_result, non_matching_calls_check_result);
         }
-
-        // todo - remove?
-        // pub(crate) fn get_optional_matching_config(
-        //     &self,
-        //     dyn_call: &DynCall<'am>,
-        // ) -> MatchingConfigSearchResult<'am, TMock> {
-        //     let with_return_value = false;
-        //     return self.try_get_matching_config(dyn_call, with_return_value);
-        // }
-        //
-        // pub(crate) fn get_required_matching_config(
-        //     &self,
-        //     dyn_call: &DynCall<'am>,
-        // ) -> Rc<RefCell<FnConfig<'am, TMock>>> {
-        //     let with_return_value = true;
-        //     let fn_config = match self.try_get_matching_config(dyn_call, with_return_value) {
-        //         MatchingConfigSearchResult::Ok(matching_config) => matching_config,
-        //         MatchingConfigSearchResult::Err(matching_config_search_err) => {
-        //             error_printing::panic_no_suitable_fn_configuration_found(
-        //                 self.fn_name,
-        //                 &self.formatted_fn_name,
-        //                 dyn_call.get_arg_infos(),
-        //                 dyn_call.get_generic_parameter_infos(),
-        //                 matching_config_search_err,
-        //             )
-        //         }
-        //     };
-        //     return fn_config;
-        // }
 
         pub(super) fn try_get_matching_config<TReturnValue>(
             &self,
@@ -993,8 +963,60 @@ mod tests {
         assert!(!actual_non_matching_call_check.is_verified());
     }
 
+    #[test]
+    fn try_get_matching_config_NoConfigs_ReturnsError() {
+        // Arrange
+        let mut call_mock = CallMock::new();
+        let generic_hash_key = GenericsHashKey(5);
+        call_mock
+            .setup()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key()
+            .returns(generic_hash_key);
+        let dyn_call = DynCall::new(call_mock.clone());
+        let irrelevant_with_return_value = false;
+
+        let mut fn_data_mock = fn_data_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
+        fn_data_mock
+            .setup()
+            .try_get_matching_config::<IrrelevantReturnValue>(
+                automock::Arg::Any,
+                automock::Arg::Any,
+            )
+            .call_base();
+
+        // Act
+        let result = fn_data_mock.try_get_matching_config::<IrrelevantReturnValue>(
+            &dyn_call,
+            irrelevant_with_return_value,
+        );
+
+        // Assert
+        let error = match result {
+            MatchingConfigSearchResult::Err(x) => x,
+            _ => panic!(
+                "Expected result to be `MatchingConfigSearchResult::Err`, actually: {result:?}"
+            ),
+        };
+        assert!(
+            error
+                .args_check_results_sorted_by_number_of_correctly_matched_args_descending
+                .calls_args_check_results
+                .is_empty()
+        );
+        assert!(!error.needed_return_value);
+
+        call_mock
+            .received()
+            .as_IGenericsInfoProvider()
+            .get_generics_hash_key(automock::Times::Once)
+            .no_other_calls();
+    }
+
     mod utilities {
         use super::*;
+
+        pub type IrrelevantReturnValue = i32;
 
         pub fn fn_data_mock<
             const HAS_RETURN_VALUE: bool,

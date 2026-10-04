@@ -1,11 +1,21 @@
 use crate::args::CallsCheckResult;
 use crate::infrastructure::FnConfig;
 use std::cell::RefCell;
+use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 
 pub(crate) enum MatchingConfigSearchResult<'am, TMock> {
     Ok(Rc<RefCell<FnConfig<'am, TMock>>>),
     Err(MatchingConfigSearchErr),
+}
+
+impl<'am, TMock> Debug for MatchingConfigSearchResult<'am, TMock> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            MatchingConfigSearchResult::Ok(_) => "Ok",
+            MatchingConfigSearchResult::Err(_) => "Err",
+        })
+    }
 }
 
 pub(crate) struct MatchingConfigSearchErr {
