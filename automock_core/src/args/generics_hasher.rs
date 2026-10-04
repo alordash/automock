@@ -9,8 +9,8 @@ pub struct GenericsHasher {
 }
 
 #[cfg_attr(test, automock::mock)]
-impl GenericsHasher {
-    pub fn new() -> Self {
+impl Default for GenericsHasher {
+    fn default() -> Self {
         Self {
             inner: DefaultHasher::new(),
         }
@@ -39,8 +39,11 @@ pub(crate) mod tests {
     #[test]
     fn finish_Ok() {
         // Arrange
-        GenericsHasher::static_setup().new().call_base();
-        let mut generics_hasher = GenericsHasher::new();
+        GenericsHasher::static_setup()
+            .as_Default()
+            .default()
+            .call_base();
+        let mut generics_hasher = GenericsHasher::default();
         generics_hasher.setup().as_Hasher().finish().call_base();
 
         // Act
@@ -54,8 +57,11 @@ pub(crate) mod tests {
     #[test]
     fn write_Ok() {
         // Arrange
-        GenericsHasher::static_setup().new().call_base();
-        let mut generics_hasher = GenericsHasher::new();
+        GenericsHasher::static_setup()
+            .as_Default()
+            .default()
+            .call_base();
+        let mut generics_hasher = GenericsHasher::default();
         generics_hasher
             .setup()
             .as_Hasher()

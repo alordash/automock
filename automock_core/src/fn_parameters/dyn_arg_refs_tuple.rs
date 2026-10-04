@@ -86,6 +86,7 @@ pub(crate) mod tests {
             .call_base();
 
         // Act
+        #[allow(clippy::let_unit_value)]
         let result: ArgRefsTupleType = dyn_arg_refs_tuple.downcast_into();
 
         // Assert

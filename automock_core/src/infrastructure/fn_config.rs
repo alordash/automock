@@ -40,6 +40,7 @@ impl<'am, TMock> FnConfig<'am, TMock> {
         self.return_value_sources.extend(return_values);
     }
 
+    #[allow(clippy::type_complexity)]
     pub(crate) fn set_callback<TArgRefsTuple: 'am, TMockArg: 'am>(
         &mut self,
         mut callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'am,
@@ -567,6 +568,7 @@ pub(crate) mod tests {
     }
 
     #[test]
+    #[allow(clippy::extra_unused_lifetimes)]
     fn get_callback_WithCallback_ReturnsSome<'am>() {
         // Arrange
         let maybe_callback = Some(Rc::new(RefCell::new(inner_callback))

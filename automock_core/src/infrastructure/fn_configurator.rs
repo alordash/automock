@@ -373,7 +373,7 @@ pub(crate) mod tests {
 
                 let mut dyn_arg_refs_tuple_mock = dyn_arg_refs_tuple_mock();
                 let arg_refs_tuple = ArgRefsTuple(10);
-                dyn_arg_refs_tuple_mock.setup().downcast_into::<ArgRefsTuple>().returns(arg_refs_tuple.clone());
+                dyn_arg_refs_tuple_mock.setup().downcast_into::<ArgRefsTuple>().returns(arg_refs_tuple);
 
                 let actual_return_value: ReturnValue = factory(dyn_arg_refs_tuple_mock).downcast_into();
                 assert_eq!(actual_return_value, return_value);
@@ -386,6 +386,7 @@ pub(crate) mod tests {
     }
 
     #[test]
+    #[allow(clippy::extra_unused_lifetimes)]
     fn does_WithoutMockObject_Ok<'am>() {
         // Arrange
         let owner = Owner;
@@ -413,6 +414,7 @@ pub(crate) mod tests {
     }
 
     #[test]
+    #[allow(clippy::extra_unused_lifetimes)]
     fn does_WithMockObject_Ok<'am>() {
         // Arrange
         let owner = Owner;
@@ -447,6 +449,7 @@ pub(crate) mod tests {
     }
 
     #[test]
+    #[allow(clippy::extra_unused_lifetimes)]
     fn call_base_Ok<'am>() {
         // Arrange
         let owner = Owner;

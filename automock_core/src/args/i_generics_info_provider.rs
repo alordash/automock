@@ -13,7 +13,7 @@ pub trait IGenericsInfoProvider {
     fn hash_const_values(&self, #[allow(unused_variables)] hasher: &mut GenericsHasher) {}
 
     fn get_generics_hash_key(&self) -> GenericsHashKey {
-        let mut hasher = GenericsHasher::new();
+        let mut hasher = GenericsHasher::default();
         self.hash_generics_type_ids(&mut hasher);
         self.hash_const_values(&mut hasher);
         let generics_hash_key = GenericsHashKey(hasher.finish());
@@ -105,7 +105,8 @@ mod tests {
 
         let mut generics_hasher_mock = generics_hasher_mock();
         GenericsHasher::static_setup()
-            .new()
+            .as_Default()
+            .default()
             .returns(generics_hasher_mock.clone());
         let hash = 5;
         generics_hasher_mock
@@ -127,7 +128,8 @@ mod tests {
             .no_other_calls();
 
         GenericsHasher::static_received()
-            .new(automock::Times::Once)
+            .as_Default()
+            .default(automock::Times::Once)
             .no_other_calls();
 
         generics_hasher_mock

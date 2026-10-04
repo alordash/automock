@@ -88,6 +88,7 @@ where
         self.value = value;
     }
 
+    #[allow(clippy::boxed_local)]
     pub fn boxed(self: Box<Self>) -> T {
         self.value
     }

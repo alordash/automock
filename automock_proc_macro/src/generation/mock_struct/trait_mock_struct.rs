@@ -285,7 +285,7 @@ fn generate_inner_impl(
         .into_iter()
         .chain(associated_controls_creation_fns.into_iter().flatten())
         .chain(static_controls_creation_fns.into_iter().flatten())
-        .chain(base_fns.into_iter())
+        .chain(base_fns)
         .map(ImplItem::Fn)
         .collect();
 

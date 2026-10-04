@@ -95,6 +95,7 @@ impl Factory {
     // impl Iterator whose concrete type is deliberately complicated
     // ------------------------------------------------------------------------
 
+    #[allow(clippy::manual_repeat_n)]
     pub fn complicated_iterator(&self, value: i32) -> impl Iterator<Item = i32> {
         std::iter::repeat(value)
             .take(3)

@@ -612,22 +612,22 @@
 //! ```
 //!
 //! ### Limitations
-//! 
+//!
 //! There is one limitation - calls that were configured to call base can not be verified later by
 //! `received`. For example, this will panic:
-//! 
+//!
 //! ```should_panic
 //! # use automock::*;
 //! #[mock]
 //! fn work() {}
-//! 
+//!
 //! # fn main() {
 //! // Arrange
 //! work::setup().call_base();
-//! 
+//!
 //! // Act
 //! work();
-//! 
+//!
 //! // Assert
 //! work::received(1.time());   // panic - work did not receive any catchable calls
 //! # }
