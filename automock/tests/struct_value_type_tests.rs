@@ -160,7 +160,7 @@ Actually received 1 matching call:
 	accept_value({first_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{second_value}*)
-	1. v (i32):
+	1. _v (i32):
 		Expected: {first_value}
 		Actual:   {second_value}"#
                 ),
@@ -177,7 +177,7 @@ Actually received 1 matching call:
 	accept_value({first_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{second_value}*)
-	1. v (i32):
+	1. _v (i32):
 		Expected: {first_value}
 		Actual:   {second_value}"#
                 ),
@@ -194,7 +194,7 @@ Actually received 1 matching call:
 	accept_value({second_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{first_value}*)
-	1. v (i32):
+	1. _v (i32):
 		Expected: {second_value}
 		Actual:   {first_value}"#
                 ),
@@ -211,7 +211,7 @@ Actually received 1 matching call:
 	accept_value({second_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{first_value}*)
-	1. v (i32):
+	1. _v (i32):
 		Expected: {second_value}
 		Actual:   {first_value}"#
                 ),
@@ -245,7 +245,7 @@ Actually received 1 matching call:
 	accept_value({first_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{second_value}*)
-	1. v (i32):
+	1. _v (i32):
 		Custom predicate did not match passed value, received: {second_value}"#
                 ),
             );
@@ -263,7 +263,7 @@ Actually received 1 matching call:
 	accept_value({first_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{second_value}*)
-	1. v (i32):
+	1. _v (i32):
 		Custom predicate did not match passed value, received: {second_value}"#
                 ),
             );
@@ -281,7 +281,7 @@ Actually received 1 matching call:
 	accept_value({second_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{first_value}*)
-	1. v (i32):
+	1. _v (i32):
 		Custom predicate did not match passed value, received: {first_value}"#
                 ),
             );
@@ -299,7 +299,7 @@ Actually received 1 matching call:
 	accept_value({second_value})
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_value(*{first_value}*)
-	1. v (i32):
+	1. _v (i32):
 		Custom predicate did not match passed value, received: {first_value}"#
                 ),
             );
@@ -798,10 +798,10 @@ Received no non-matching calls"#
 Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_two_values_return_value(*10*, *20.2*)
-	1. v1 (i32):
+	1. _v1 (i32):
 		Expected: 11
 		Actual:   10
-	2. v2 (f32):
+	2. _v2 (f32):
 		Expected: 21.2
 		Actual:   20.2"#
                 ),

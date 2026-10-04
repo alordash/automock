@@ -3,7 +3,7 @@ use crate::fn_parameters::*;
 
 pub trait ICall: IGenericsInfoProvider {
     fn is_zst(&self) -> bool {
-        true
+        size_of_val(self) == 0
     }
 
     fn get_arg_infos(&self) -> Vec<ArgInfo> {

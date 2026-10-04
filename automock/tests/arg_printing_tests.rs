@@ -678,7 +678,7 @@ Received no non-matching calls"
 Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref(*{r}*)
-	1. r (&&&i32):
+	1. _r (&&&i32):
 		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r}
 		Actual   (ptr: {r_ptr:?}): {r}"
             );
@@ -759,7 +759,7 @@ accept_ref(*{r}*)
 Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 accept_ref_ptr(*{r:?}*)
-	1. r (&&*const &&i32):
+	1. _r (&&*const &&i32):
 		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
 		Actual   (ptr: {r_ptr:?}): {r:?}"
             );
@@ -848,7 +848,7 @@ accept_ref_ptr(*{r:?}*)
 Actually received no matching calls
 Received 1 non-matching call (non-matching arguments indicated with '*' characters):
 generic(*{t1_debug_string}*)
-	1. t1 ({t1_name}):
+	1. _t1 ({t1_name}):
 		Expected: {unexpected_t1_debug_string}
 		Actual:   {t1_debug_string}"
             );

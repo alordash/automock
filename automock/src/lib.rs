@@ -123,21 +123,22 @@
 //! use automock::*;
 //!
 //! #[mock]
-//! struct Structure { v: i32 }
+//! struct Struct { v: i32 }
 //!
 //! #[mock]
-//! impl Structure {
+//! impl Struct {
 //!     pub fn new(v: i32) -> Self { Self { v } }
 //! }
 //!
 //! #[mock]
-//! impl Structure {
+//! impl Struct {
 //!     pub fn get(&self) -> i32 { self.v }
 //! }
 //!
 //! # fn main() {
 //! // Arrange
-//! let mut mock = Structure::new(10);
+//! Struct::static_setup().new(Arg::Any).call_base();
+//! let mut mock = Struct::new(10);
 //! mock.setup().get().returns(20);
 //!
 //! // Act
@@ -177,14 +178,14 @@
 //!    be mocked; `bar` will always use base implementation:
 //! ```
 //! # use automock::*;
-//! #[mock] struct Structure;
+//! #[mock] struct Struct;
 //!
 //! #[mock]
-//! impl Structure {
+//! impl Struct {
 //!     fn foo(&self) -> i32 { 1 } // mockable
 //! }
 //!
-//! impl Structure {
+//! impl Struct {
 //!     fn bar(&self) -> i32 { 2 } // unmockable - will always return 2
 //! }
 //!
@@ -195,7 +196,7 @@
 //! 5. Can not mock functions with `#[cfg]` attribute. This won't compile:
 //! ```compile_fail
 //! #[mock]
-//! impl Structure {
+//! impl Struct {
 //!     #[cfg(test)]      fn work(&self) {}
 //!     #[cfg(not(test))] fn work(&self) {}
 //! }
@@ -208,9 +209,9 @@
 //! ```
 //! use automock::*;
 //!
-//! #[mock] struct Structure;
+//! #[mock] struct Struct;
 //! #[mock]
-//! impl Structure {
+//! impl Struct {
 //!     pub fn new() -> Self { Self }
 //! }
 //!
@@ -219,13 +220,14 @@
 //! }
 //!
 //! #[mock]
-//! impl Trait for Structure {
+//! impl Trait for Struct {
 //!     fn get(&self) -> i32 { 10 }
 //! }
 //!
 //! # fn main() {
 //! // Arrange
-//! let mut mock = Structure::new();
+//! Struct::static_setup().new().call_base();
+//! let mut mock = Struct::new();
 //! mock.setup().as_Trait().get().returns(20);
 //!
 //! // Act
@@ -569,7 +571,6 @@
 //! ```compile_fail
 //! # use automock::*;
 //! # [mock] fn work() -> i32 { 1 }
-//!
 //! work::setup().call_base().returns(10);
 //!                        // ^^^^^^^ - error, return value is already
 //!                        //           provided by base implementation
@@ -603,7 +604,8 @@
 //! assert_eq!(first,  11);
 //! assert_eq!(second, 30);
 //! mock.received()
-//!     .work(10, 1.time())
+//!     .work(10, Times::Never) // a call that was handled by base implementation
+//!                             // can not be verified
 //!     .work(20, 1.time())
 //!     .dependency(1.time());
 //! # }
@@ -798,6 +800,9 @@
 //!
 //! # fn main() {
 //! // Arrange
+//! Struct::static_setup()
+//!        .new(Arg::<i32>::Any, Arg::<&[i32; 3]>::Any, Arg::<&str>::Any)
+//!        .call_base();
 //! let mut mock = Struct::new::<str>(10i32, &[1, 2, 3], "quo vadis");
 //! mock.setup().get_t1().returns(20);
 //!
@@ -879,7 +884,7 @@
 //! assert_eq!(number, 20);
 //! mock.received()
 //!     .get_item(1.time())
-//!     .get_number(1.time());
+//!     .get_number(Times::Never);
 //! # }
 //! ```
 //!
@@ -1077,6 +1082,7 @@
 //!
 //! # fn main() {
 //! // Arrange
+//! Struct::static_setup().new().call_base();
 //! let mut trait_mock = TraitMock::new();
 //! let mut struct_mock = Struct::new();
 //!

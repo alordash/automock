@@ -84,7 +84,7 @@ mod tests {
     }
 
     #[test]
-    fn is_not_verified_WhenNotVerified_ReturnsTrue() {
+    fn is_verified_WhenNotVerified_ReturnsFalse() {
         // Arrange
         let call_check = CallCheck {
             number: 1,
@@ -96,11 +96,11 @@ mod tests {
         let result = call_check.is_verified();
 
         // Assert
-        assert!(result);
+        assert!(!result);
     }
 
     #[test]
-    fn is_not_verified_WhenVerified_ReturnsFalse() {
+    fn is_verified_WhenVerified_ReturnsTrue() {
         // Arrange
         let call_check = CallCheck {
             number: 1,
@@ -112,7 +112,7 @@ mod tests {
         let result = call_check.is_verified();
 
         // Assert
-        assert!(!result);
+        assert!(result);
     }
 
     #[test]
