@@ -2,7 +2,7 @@
 #[doc(hidden)]
 pub trait Mockable<'__ama> {
     fn id(&self) -> usize;
-    
+
     type Setup;
     fn setup(&mut self) -> Self::Setup;
 

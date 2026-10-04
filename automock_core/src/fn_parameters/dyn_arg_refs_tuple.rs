@@ -134,14 +134,14 @@ pub(crate) mod tests {
         let expected_result = "[ERROR] Tuple of function arguments is null!";
         assert_eq!(result, Some(expected_result.to_owned()));
     }
-    
+
     pub mod utilities {
         use super::*;
-        
+
         pub fn dyn_arg_refs_tuple_mock<'am>() -> DynArgRefsTuple<'am> {
             DynArgRefsTuple {
                 inner: None,
-                __mock_data: Default::default()
+                __mock_data: Default::default(),
             }
         }
     }

@@ -92,7 +92,7 @@ pub(crate) mod tests {
 
         // Assert
         assert_eq!(result.id(), deref_info_mock_id);
-        
+
         let expected_expected_value_deref_ptr = value.deref() as *const _ as *const ();
         DerefInfo::static_received()
             .new(

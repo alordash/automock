@@ -20,9 +20,7 @@ pub(crate) fn generate_static_fn(
 ) -> ItemFn {
     let (sig, block) = generate_core(span, fn_info, *base_impl, None);
     let result = ItemFn {
-        attrs: fn_info
-            .attributes
-            .clone(),
+        attrs: fn_info.attributes.clone(),
         vis: Visibility::Public(Token![pub](span)),
         modifiers: FnModifiers::default(),
         sig,
@@ -51,9 +49,7 @@ pub(crate) fn generate_associated(
         (sig, block) = normalization::normalize_associated_items(associated_items_info, sig, block);
     }
     let result = ImplItemFn {
-        attrs: fn_info
-            .attributes
-            .clone(),
+        attrs: fn_info.attributes.clone(),
         vis: Visibility::Inherited,
         modifiers: FnModifiers::default(),
         sig,

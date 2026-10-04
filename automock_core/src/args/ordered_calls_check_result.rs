@@ -10,4 +10,3 @@ pub(crate) struct OrderedCallCheckResult {
     pub call_order_number: usize,
     pub args_check_results: Vec<ArgCheckResult>,
 }
-

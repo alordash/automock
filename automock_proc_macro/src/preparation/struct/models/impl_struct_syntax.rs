@@ -1,5 +1,5 @@
-use crate::preparation::models::*;
 use crate::preparation::r#fn::models::*;
+use crate::preparation::models::*;
 use syn::*;
 
 pub(crate) struct ImplStructSyntax {

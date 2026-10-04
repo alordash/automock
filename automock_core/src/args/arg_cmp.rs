@@ -182,7 +182,7 @@ pub(crate) mod tests {
 
         // Assert
         assert_eq!(result.id(), arg_cmp_mock_id);
-        
+
         ArgCmp::<T>::static_received()
             .new(
                 print_arg,
@@ -229,7 +229,7 @@ pub(crate) mod tests {
 
         // Assert
         assert_eq!(result.id(), arg_cmp_mock_id);
-        
+
         ArgCmp::<T>::static_received()
             .new(
                 print_arg,
