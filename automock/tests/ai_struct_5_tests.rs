@@ -85,6 +85,7 @@ pub struct Tiny;
 //
 
 #[cfg_attr(test, mock)]
+#[allow(unused_unsafe)]
 impl<'a, T, const N: usize> MonsterStruct<'a, T, N>
 where
     T: Clone,
@@ -373,6 +374,7 @@ where
 //
 
 #[mock]
+#[allow(unused_unsafe)]
 impl<'a, T, const N: usize> MonsterStruct<'a, T, N>
 where
     T: Clone,
@@ -405,6 +407,7 @@ where
 //
 
 #[mock]
+#[allow(unused_unsafe)]
 impl<'a, T, const N: usize> MonsterStruct<'a, T, N>
 where
     T: Clone + Send,

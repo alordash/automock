@@ -196,7 +196,7 @@ struct ImplRef;
 #[mock]
 impl ImplRef {
     #[allow(unused)]
-    fn work<'a>(&'a self) -> impl Iterator<Item = &i32> + 'a {
+    fn work<'a>(&'a self) -> impl Iterator<Item = &'a i32> + 'a {
         [].iter()
     }
 }

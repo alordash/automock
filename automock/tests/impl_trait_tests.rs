@@ -61,11 +61,11 @@ impl Struct {
 
 #[mock]
 impl Struct {
-    pub fn input_self(&self, dummy: impl Dummy) -> i32 {
+    pub fn input_self(&self, _dummy: impl Dummy) -> i32 {
         unreachable!()
     }
 
-    pub fn static_input_self(dummy: impl Dummy) -> i32 {
+    pub fn static_input_self(_dummy: impl Dummy) -> i32 {
         unreachable!()
     }
 }

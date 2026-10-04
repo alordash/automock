@@ -40,6 +40,7 @@ where
 }
 
 #[mock]
+#[allow(unused_unsafe)]
 impl<'a, T, const N: usize> Monster<'a, T, N>
 where
     T: Clone + Send + Sync + 'a,

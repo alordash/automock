@@ -44,15 +44,15 @@ impl<'s, TS> Struct<'s, TS> {
 
 #[mock]
 impl<'s, TS> Struct<'s, TS> {
-    fn accept_ref<'b>(&self, r: &'s &&'b i32) -> i32 {
+    fn accept_ref<'b>(&self, _r: &'s &&'b i32) -> i32 {
         unreachable!()
     }
 
-    fn accept_ref_ptr<'b>(&self, r: &'s &*const &&'b i32) -> i32 {
+    fn accept_ref_ptr<'b>(&self, _r: &'s &*const &&'b i32) -> i32 {
         unreachable!()
     }
 
-    fn generic<T1, T2>(&self, t1: T1) -> T2 {
+    fn generic<T1, T2>(&self, _t1: T1) -> T2 {
         unreachable!()
     }
 }
