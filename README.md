@@ -17,7 +17,7 @@ Add `automock` to your `dev-dependencies`:
 
 ```toml
 [dev-dependencies]
-automock = "0.1.6"
+automock = "0.2.1"
 ```
 
 Import `automock::*` and apply `mock` attribute on your function, trait, structure, or `impl` block.  
