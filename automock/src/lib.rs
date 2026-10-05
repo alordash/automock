@@ -449,7 +449,7 @@
 //!    Opposite of `Arg::ref_eq`.
 //!
 //! ## Comparing mocks
-//! 
+//!
 //! All mock objects implement [`Mockable`]. This interface provides [`Mockable::id`] method that
 //! returns mock object's id - unique number that represents concrete mock object. This number is
 //! unique regardless of mock object type - it can not be repeated across mocks of different types.
@@ -459,17 +459,17 @@
 //! #[mock] trait Trait {}
 //! #[mock] struct Struct;
 //! #[mock] impl Struct { pub fn new() -> Self { Self } }
-//! 
+//!
 //! # fn main() {
 //! // Arrange
 //! let trait_mock = TraitMock::new();
 //! Struct::static_setup().new().call_base();
 //! let struct_mock = Struct::new();
-//! 
+//!
 //! // Act
 //! let trait_mock_id = trait_mock.id();
 //! let struct_mock_id = struct_mock.id();
-//! 
+//!
 //! // Assert
 //! assert_ne!(trait_mock_id, struct_mock_id)
 //! # }
@@ -477,22 +477,22 @@
 //!
 //! You can use it to compare mock objects if they don't implement `PartialEq` or do not have other
 //! meaningful ways to distinguish them:
-//! 
+//!
 //! ```
 //! # use automock::*;
 //! #[mock] struct Struct;
 //! #[mock] impl Struct { pub fn new() -> Self { Self } }
 //! #[mock] fn work(_: Struct) {}
-//! 
+//!
 //! # fn main() {
 //! // Arrange
 //! Struct::static_setup().new().call_base();
 //! let struct_mock = Struct::new();
 //! let struct_mock_id = struct_mock.id();
-//! 
+//!
 //! // Act
 //! work(struct_mock);
-//! 
+//!
 //! // Assert
 //! work::received(Arg::is(|struct_mock: &Struct| struct_mock.id() == struct_mock_id), 1.time());
 //! # }
