@@ -49,6 +49,7 @@
 //! * [Mocking static functions](#mocking-static-functions)
 //! * [Mocking static associated functions](#mocking-static-associated-functions)
 //! * [Arguments matching](#arguments-matching)
+//! * [Comparing mocks](#comparing-mocks)
 //! * [Controlling function behavior](#controlling-function-behavior)
 //! * [Base implementation](#base-implementation)
 //! * [Verifying calls](#verifying-calls)
@@ -176,31 +177,31 @@
 //!    `struct Struct;` can be mocked, but `struct Struct(i32);` can not.
 //! 3. Only functions inside mocked `impl` blocks can be mocked. In the example below only `foo` can
 //!    be mocked; `bar` will always use base implementation:
-//! ```
-//! # use automock::*;
-//! #[mock] struct Struct;
+//!    ```
+//!    # use automock::*;
+//!    #[mock] struct Struct;
 //!
-//! #[mock]
-//! impl Struct {
-//!     fn foo(&self) -> i32 { 1 } // mockable
-//! }
+//!    #[mock]
+//!    impl Struct {
+//!        fn foo(&self) -> i32 { 1 } // mockable
+//!    }
 //!
-//! impl Struct {
-//!     fn bar(&self) -> i32 { 2 } // unmockable - will always return 2
-//! }
+//!    impl Struct {
+//!        fn bar(&self) -> i32 { 2 } // unmockable - will always return 2
+//!    }
 //!
-//! # fn main() {}
-//! ```
+//!    # fn main() {}
+//!    ```
 //! 4. A structure's `impl` block can be mocked only if the structure itself is mocked (i.e. it has
 //!    `#[mock]`attribute).
 //! 5. Can not mock functions with `#[cfg]` attribute. This won't compile:
-//! ```compile_fail
-//! #[mock]
-//! impl Struct {
-//!     #[cfg(test)]      fn work(&self) {}
-//!     #[cfg(not(test))] fn work(&self) {}
-//! }
-//! ```
+//!    ```compile_fail
+//!    #[mock]
+//!    impl Struct {
+//!        #[cfg(test)]      fn work(&self) {}
+//!        #[cfg(not(test))] fn work(&self) {}
+//!    }
+//!    ```
 //!
 //! ## Mocking trait implementations
 //! To mock implementations of traits on mockable structures (trait itself does not need to be
@@ -244,52 +245,51 @@
 //! There are a couple of limitations for trait implementations mocking:
 //! 1. Can not mock more than one implementation of same trait on a struct differing only in trait's
 //!    generics. For example, this won't compile:
-//! ```compile_fail
-//! # use automock::*;
-//! #[mock]
-//! impl From<i32> for Struct {
-//!     //...
-//! }
-//! #[mock]
-//! impl From<usize> for Struct {
-//!     //...
-//! }
-//! ```
-//! Can mock only one of them:
-//! ```
-//! # use automock::*;
-//! # #[mock] struct Struct;
-//! #[mock]
-//! impl From<i32> for Struct {
-//! #    fn from(value: i32) -> Self { Self }
-//!     //...
-//! }
-//! impl From<usize> for Struct {
-//! #    fn from(value: usize) -> Self { Self { __mock_data: Default::default() } }
-//!     //...
-//! }
-//!
-//! # fn main() {}
-//! ```
+//!    ```compile_fail
+//!    # use automock::*;
+//!    #[mock]
+//!    impl From<i32> for Struct {
+//!        //...
+//!    }
+//!    #[mock]
+//!    impl From<usize> for Struct {
+//!        //...
+//!    }
+//!    ```
+//!    Can mock only one of them:
+//!    ```
+//!    # use automock::*;
+//!    # #[mock] struct Struct;
+//!    #[mock]
+//!    impl From<i32> for Struct {
+//!    #    fn from(value: i32) -> Self { Self }
+//!        //...
+//!    }
+//!    impl From<usize> for Struct {
+//!    #    fn from(value: usize) -> Self { Self { __mock_data: Default::default() } }
+//!        //...
+//!    }
+//!    # fn main() {}
+//!    ```
 //! 2. If trait has default implementations for some methods, these methods can be mocked only if
 //!    they are defined inside structure's `impl` block. For example:
-//! ```
-//! # use automock::*; #[mock] struct Foo; #[mock] struct Bar;
-//! trait Trait {
-//!     fn get(&self) -> i32 { 10 }
-//! }
+//!    ```
+//!    # use automock::*; #[mock] struct Foo; #[mock] struct Bar;
+//!    trait Trait {
+//!        fn get(&self) -> i32 { 10 }
+//!    }
 //!
-//! // Cannot mock `Trait::get()`
-//! #[mock]
-//! impl Trait for Foo {}
+//!    // Cannot mock `Trait::get()`
+//!    #[mock]
+//!    impl Trait for Foo {}
 //!
-//! // Can mock `Trait::get()`
-//! #[mock]
-//! impl Trait for Bar {
-//!     fn get(&self) -> i32 { 10 }
-//! }
-//! # fn main() {}
-//! ```
+//!    // Can mock `Trait::get()`
+//!    #[mock]
+//!    impl Trait for Bar {
+//!        fn get(&self) -> i32 { 10 }
+//!    }
+//!    # fn main() {}
+//!    ```
 //! 3. Limitations from [`Mocking structures`](#mocking-structures).
 //!
 //! ## Mocking static functions
@@ -419,34 +419,84 @@
 //!    of `T`. Opposite of `Arg::eq`. Usage example: `mock.setup(Arg::not_eq(10))`.
 //! 5. [`Arg::ref_eq`] - checks that argument's reference points to the same location as provided
 //!    reference. Compares references returned by [`std::ops::Deref::deref`] of `T`. Usage example:
-//! ```
-//! # use automock::*;
-//! # use std::rc::Rc;
-//! #[mock]
-//! trait Trait {
-//!     fn work(&self, r: Rc<i32>) -> i32;
-//! }
+//!    ```
+//!    # use automock::*;
+//!    # use std::rc::Rc;
+//!    #[mock]
+//!    trait Trait {
+//!        fn work(&self, r: Rc<i32>) -> i32;
+//!    }
 //!
-//! # fn main() {
-//! // Arrange
-//! let mut mock = TraitMock::new();
-//! let r1 = Rc::new(1);
-//! let r2 = r1.clone();
-//! mock.setup().work(Arg::ref_eq(r1.clone())).always_returns(10);
+//!    # fn main() {
+//!    // Arrange
+//!    let mut mock = TraitMock::new();
+//!    let r1 = Rc::new(1);
+//!    let r2 = r1.clone();
+//!    mock.setup().work(Arg::ref_eq(r1.clone())).always_returns(10);
 //!
-//! // Act
-//! let first  = mock.work(r1.clone());
-//! let second = mock.work(r2);
+//!    // Act
+//!    let first  = mock.work(r1.clone());
+//!    let second = mock.work(r2);
 //!
-//! // Assert
-//! assert_eq!(first,  10);
-//! assert_eq!(second, 10);
-//! mock.received().work(Arg::ref_eq(r1), 2.times());
-//! # }
-//! ```
-//! 5. [`Arg::ref_not_eq`] - checks that argument's reference DOES NOT point to the same place as
+//!    // Assert
+//!    assert_eq!(first,  10);
+//!    assert_eq!(second, 10);
+//!    mock.received().work(Arg::ref_eq(r1), 2.times());
+//!    # }
+//!    ```
+//! 6. [`Arg::ref_not_eq`] - checks that argument's reference DOES NOT point to the same place as
 //!    provided reference. Compares references returned by [`std::ops::Deref::deref`] of `T`.
 //!    Opposite of `Arg::ref_eq`.
+//!
+//! ## Comparing mocks
+//! 
+//! All mock objects implement [`Mockable`]. This interface provides [`Mockable::id`] method that
+//! returns mock object's id - unique number that represents concrete mock object. This number is
+//! unique regardless of mock object type - it can not be repeated across mocks of different types.
+//!
+//! ```
+//! # use automock::*;
+//! #[mock] trait Trait {}
+//! #[mock] struct Struct;
+//! #[mock] impl Struct { pub fn new() -> Self { Self } }
+//! 
+//! # fn main() {
+//! // Arrange
+//! let trait_mock = TraitMock::new();
+//! Struct::static_setup().new().call_base();
+//! let struct_mock = Struct::new();
+//! 
+//! // Act
+//! let trait_mock_id = trait_mock.id();
+//! let struct_mock_id = struct_mock.id();
+//! 
+//! // Assert
+//! assert_ne!(trait_mock_id, struct_mock_id)
+//! # }
+//! ```
+//!
+//! You can use it to compare mock objects if they don't implement `PartialEq` or do not have other
+//! meaningful ways to distinguish them:
+//! 
+//! ```
+//! # use automock::*;
+//! #[mock] struct Struct;
+//! #[mock] impl Struct { pub fn new() -> Self { Self } }
+//! #[mock] fn work(_: Struct) {}
+//! 
+//! # fn main() {
+//! // Arrange
+//! Struct::static_setup().new().call_base();
+//! let struct_mock = Struct::new();
+//! let struct_mock_id = struct_mock.id();
+//! 
+//! // Act
+//! work(struct_mock);
+//! 
+//! // Assert
+//! work::received(Arg::is(|struct_mock: &Struct| struct_mock.id() == struct_mock_id), 1.time());
+//! # }
+//! ```
 //!
 //! ## Controlling function behavior
 //!
@@ -1150,7 +1200,7 @@
 //! Mock can be cloned either if:
 //! 1. it is mock of a trait,
 //! 2. it is mock of a struct that has `#[derive(Clone)]` attribute (manually implementing [`Clone`]
-//!    won't work).
+//!    would not work).
 //!
 //! Cloned mocks share the same configuration (it is stored behind reference-counted pointer
 //! internally). This lets you share mocks between parts of your code. This can be useful, for
@@ -1223,7 +1273,7 @@
 //! # How it works
 //!
 //! Easiest way to mock some function is to create two separate versions of it - one for `release`
-//! build and one for `test` that tracks calls:
+//! build and one for `dev`/`debug_assertions` build that tracks calls:
 //! ```no_run
 //! #[cfg(not(test))] fn f() {}
 //!
@@ -1245,8 +1295,8 @@
 //!     }
 //! }
 //! ```
-//! This is basically what `automock` does - it automatically creates infrastructure for mocking,
-//! except that it generates a more complex code for flexible configuration.
+//! This is basically what `automock` does - it automatically creates infrastructure for mocking
+//! that provides ways to check `F_CALLS_COUNT` and other function parameters.
 //!
 //! # Undefined behavior
 //!

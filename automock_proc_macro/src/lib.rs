@@ -8,6 +8,7 @@ mod constants;
 mod generation;
 mod preparation;
 
+/// The whole point. Apply it to function/trait/struct/`impl` block to turn it into mockable object.
 #[proc_macro_attribute]
 pub fn mock(
     _: proc_macro::TokenStream,

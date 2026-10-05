@@ -4,7 +4,7 @@ pub enum Times {
     Never,
     Once,
     Exactly(usize),
-    #[deprecated = "Expecting varying number of calls is not recommended, as it may lead to inconsistent test run results. Determine concrete number of expected calls."]
+    #[deprecated = "Expecting varying number of calls is not recommended, as it may lead to inconsistent test run results. Determine concrete number of expected calls and use either `Once`, `Exactly(N)` or `Never`."]
     Any,
 }
 
