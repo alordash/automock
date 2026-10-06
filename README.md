@@ -55,8 +55,7 @@ mod tests {
 }
 ```
 
-For more information about features and caveats of `automock` refer to
-[crate documentation](https://docs.rs/automock).
+For more information refer to [crate documentation](https://docs.rs/automock).
 
 # Minimum Supported Rust Version (MSRV)
 
