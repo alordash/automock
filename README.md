@@ -1,6 +1,6 @@
 # automock
 
-Library for mocking static functions, traits and structures in Rust.
+Library for mocking functions, traits and structures in Rust.
 
 [![Build Status](https://github.com/alordash/automock/actions/workflows/ci.yml/badge.svg)](https://github.com/alordash/automock/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/automock.svg)](https://crates.io/crates/automock)
