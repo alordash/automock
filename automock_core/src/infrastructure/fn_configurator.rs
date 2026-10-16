@@ -123,24 +123,6 @@ impl<
         return &self.fn_callback_configurator;
     }
 
-    /// Sets return value of this function. Clones of this value will be returned indefinitely. The
-    /// provided values itself will never be returned.
-    pub fn always_returns<'a>(
-        &self,
-        return_value: TReturnValue,
-    ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
-    where
-        TReturnValue: 'am + 'a + IReturnValue<'a> + Clone,
-    {
-        let return_value_source = ReturnValueSource::Perpetual(Box::new(move || {
-            transmute_lifetime!(DynReturnValue::new(return_value.clone()))
-        }));
-        self.fn_config
-            .borrow_mut()
-            .add_return_value_source(return_value_source);
-        return &self.fn_callback_configurator;
-    }
-
     /// Sets return value of this function using factory. Factory constructs new return value using
     /// references to source function argument values. Never ends.
     pub fn returns_with<'a>(
@@ -324,31 +306,32 @@ pub(crate) mod tests {
             .no_other_calls();
     }
 
-    #[test]
-    fn always_returns_Ok() {
-        // Arrange
-        let owner = Owner;
-        let fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
-        let return_value = ReturnValue(5);
-
-        // Act
-        fn_configurator_mock.always_returns(return_value);
-
-        // Assert
-        fn_configurator_mock.fn_config
-            .borrow_mut()
-            .received()
-            .add_return_value_source(automock::Arg::is(|return_value_source| {
-                let perpetual_factory = match return_value_source {
-                    ReturnValueSource::Perpetual(x) => x,
-                    _ => panic!("Return value source must be `Perpetual`, was instead: {return_value_source:?}")
-                };
-                let actual_return_value: ReturnValue = perpetual_factory().downcast_into();
-                assert_eq!(actual_return_value, return_value);
-                return true;
-            }), automock::Times::Once)
-            .no_other_calls();
-    }
+    // TODO - remove
+    // #[test]
+    // fn always_returns_Ok() {
+    //     // Arrange
+    //     let owner = Owner;
+    //     let fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
+    //     let return_value = ReturnValue(5);
+    // 
+    //     // Act
+    //     fn_configurator_mock.always_returns(return_value);
+    // 
+    //     // Assert
+    //     fn_configurator_mock.fn_config
+    //         .borrow_mut()
+    //         .received()
+    //         .add_return_value_source(automock::Arg::is(|return_value_source| {
+    //             let perpetual_factory = match return_value_source {
+    //                 ReturnValueSource::Perpetual(x) => x,
+    //                 _ => panic!("Return value source must be `Perpetual`, was instead: {return_value_source:?}")
+    //             };
+    //             let actual_return_value: ReturnValue = perpetual_factory().downcast_into();
+    //             assert_eq!(actual_return_value, return_value);
+    //             return true;
+    //         }), automock::Times::Once)
+    //         .no_other_calls();
+    // }
 
     #[test]
     fn returns_with_Ok() {

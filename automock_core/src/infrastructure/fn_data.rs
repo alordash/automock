@@ -1,5 +1,6 @@
 use crate::args::*;
 use crate::fn_parameters::*;
+use crate::infrastructure::error_printing::panic_unused_configs_error;
 use crate::infrastructure::*;
 use crate::times::*;
 use crate::*;
@@ -87,6 +88,20 @@ impl<
         return fn_configurator;
     }
 
+    pub fn verify_calls(&self) {
+        let all_configs = self.configs.borrow();
+        let unused_configs: Vec<_> = all_configs
+            .values()
+            .flatten()
+            .filter(|x| x.borrow().return_value_sources.len() > 0)
+            .cloned()
+            .collect();
+        if unused_configs.is_empty() {
+            return;
+        }
+        panic_unused_configs_error(&self.formatted_fn_name, unused_configs);
+    }
+
     pub fn verify_received<'a, TArgsChecker: IArgsChecker + 'a>(
         &self,
         args_checker: TArgsChecker,
@@ -112,14 +127,14 @@ impl<
     }
 
     pub fn get_unexpected_calls_error_msgs(&self) -> Vec<String> {
-        let all_call_infos = self.call_checks.borrow();
-        let mut unexpected_call_infos: Vec<_> = all_call_infos
+        let all_call_checks = self.call_checks.borrow();
+        let mut unexpected_call_checks: Vec<_> = all_call_checks
             .values()
             .flatten()
             .filter(|x| !x.is_verified())
             .collect();
-        unexpected_call_infos.sort_by_key(|a| a.number);
-        let unexpected_call_arg_infos = unexpected_call_infos
+        unexpected_call_checks.sort_by_key(|a| a.number);
+        let unexpected_call_arg_infos = unexpected_call_checks
             .into_iter()
             .map(|x| {
                 let call = x.get_dyn_call();

@@ -1,9 +1,29 @@
+use std::cell::RefCell;
+use std::rc::Rc;
 use crate::args::*;
 use crate::fn_parameters::*;
-use crate::infrastructure::MatchingConfigSearchErr;
 use crate::infrastructure::call_order_verification::CallOrderEntry;
+use crate::infrastructure::{FnConfig, MatchingConfigSearchErr};
 use crate::settings::*;
 use crate::times::*;
+
+pub(crate) fn panic_unused_configs_error<TMock>(
+    formatted_fn_name: &str,
+    unused_configs: Vec<Rc<RefCell<FnConfig<TMock>>>>
+) {
+    let fmts: Vec<_> = unused_configs
+        .into_iter()
+        .map(|rc_config| {
+        let config = rc_config.borrow();
+            let args_checker_fmt = config.args_checker.fmt_args();
+            let times_format = format_times(config.return_value_sources.len().times());
+            format!("{args_checker_fmt} {times_format}")
+        })
+        .collect();
+    let fmts_msg = fmts.join("\n\t");
+    let result = format!("Unverified calls for `{formatted_fn_name}`:\n\t{fmts_msg}");
+    panic!("{result}")
+}
 
 pub(crate) fn panic_received_verification_error(
     fn_name: &str,

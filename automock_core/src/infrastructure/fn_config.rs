@@ -88,29 +88,16 @@ impl<'am, TMock> FnConfig<'am, TMock> {
         &mut self,
         call: &DynCall<'am>,
     ) -> Option<DynReturnValue<'am>> {
-        let return_value_source = self.return_value_sources.front()?;
-
-        return match return_value_source {
-            ReturnValueSource::SingleTime(_) => {
-                let Some(ReturnValueSource::SingleTime(return_value)) =
-                    self.return_value_sources.pop_front()
-                else {
-                    panic!(
-                        "Front return value source must be not empty and single time because it was just checked."
-                    )
-                };
-                Some(return_value)
-            }
-            ReturnValueSource::Perpetual(perpetual_factory) => {
-                let return_value = perpetual_factory();
-                Some(return_value)
-            }
+        let result = self.return_value_sources.pop_front().map(|x| match x {
+            ReturnValueSource::SingleTime(return_value) => return_value,
             ReturnValueSource::Factory(factory) => {
                 let dyn_arg_refs_tuple = call.get_dyn_tuple_of_refs();
                 let return_value = factory(dyn_arg_refs_tuple);
-                return Some(return_value);
+                return_value
             }
-        };
+        });
+
+        return result;
     }
 
     #[allow(clippy::type_complexity)]
@@ -467,37 +454,38 @@ pub(crate) mod tests {
         assert_eq!(actual_existed_return_value, existed_return_value);
     }
 
-    #[test]
-    fn select_next_return_value_FrontPerpetual_ReturnsSomeButDoesNotPopFront() {
-        // Arrange
-        let mut fn_config = fn_config_mock();
-        type TReturnValue = i32;
-        let return_value: TReturnValue = 5;
-        let return_value_source =
-            ReturnValueSource::Perpetual(Box::new(move || DynReturnValue::new(return_value)));
-        fn_config
-            .return_value_sources
-            .push_front(return_value_source);
-        let initial_return_value_sources_length = fn_config.return_value_sources.len();
-        fn_config
-            .setup()
-            .select_next_return_value(automock::Arg::Any)
-            .call_base();
-        let dyn_call = DynCall::new(CallMock::new());
-
-        // Act
-        let result = fn_config.select_next_return_value(&dyn_call);
-
-        // Assert
-        let dyn_return_value = result.expect("Result must contain return value.");
-        let actual_return_value: TReturnValue = dyn_return_value.downcast_into();
-        assert_eq!(actual_return_value, return_value);
-
-        assert_eq!(
-            fn_config.return_value_sources.len(),
-            initial_return_value_sources_length
-        );
-    }
+    // TODO - remove
+    // #[test]
+    // fn select_next_return_value_FrontPerpetual_ReturnsSomeButDoesNotPopFront() {
+    //     // Arrange
+    //     let mut fn_config = fn_config_mock();
+    //     type TReturnValue = i32;
+    //     let return_value: TReturnValue = 5;
+    //     let return_value_source =
+    //         ReturnValueSource::Perpetual(Box::new(move || DynReturnValue::new(return_value)));
+    //     fn_config
+    //         .return_value_sources
+    //         .push_front(return_value_source);
+    //     let initial_return_value_sources_length = fn_config.return_value_sources.len();
+    //     fn_config
+    //         .setup()
+    //         .select_next_return_value(automock::Arg::Any)
+    //         .call_base();
+    //     let dyn_call = DynCall::new(CallMock::new());
+    // 
+    //     // Act
+    //     let result = fn_config.select_next_return_value(&dyn_call);
+    // 
+    //     // Assert
+    //     let dyn_return_value = result.expect("Result must contain return value.");
+    //     let actual_return_value: TReturnValue = dyn_return_value.downcast_into();
+    //     assert_eq!(actual_return_value, return_value);
+    // 
+    //     assert_eq!(
+    //         fn_config.return_value_sources.len(),
+    //         initial_return_value_sources_length
+    //     );
+    // }
 
     #[test]
     fn select_next_return_value_FrontFactory_ReturnsSomeButDoesNotPopFront() {
