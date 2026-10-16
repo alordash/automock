@@ -1,12 +1,12 @@
 use crate::args::*;
 use crate::fn_parameters::*;
-use crate::infrastructure::error_printing::panic_unused_configs_error;
 use crate::infrastructure::*;
 use crate::times::*;
 use crate::*;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use crate::infrastructure::error_printing::panic_unused_configs_error;
 
 mod handling;
 
@@ -23,6 +23,12 @@ pub struct FnData<
     pub call_checks: RefCell<HashMap<GenericsHashKey, Vec<CallCheck<'am>>>>,
     #[allow(clippy::type_complexity)]
     pub configs: RefCell<HashMap<GenericsHashKey, Vec<Rc<RefCell<FnConfig<'am, TMock>>>>>>,
+}
+
+// TODO - move to separate file
+pub struct VerifyCallsResult<'am, TMock> {
+    pub formatted_fn_name: String,
+    pub unused_configs: Vec<Rc<RefCell<FnConfig<'am, TMock>>>>,
 }
 
 #[cfg_attr(test, automock::mock)]
@@ -88,7 +94,7 @@ impl<
         return fn_configurator;
     }
 
-    pub fn verify_calls(&self) {
+    pub fn verify_calls(&self) -> VerifyCallsResult<'am, TMock> {
         let all_configs = self.configs.borrow();
         let unused_configs: Vec<_> = all_configs
             .values()
@@ -96,10 +102,10 @@ impl<
             .filter(|x| x.borrow().return_value_sources.len() > 0)
             .cloned()
             .collect();
-        if unused_configs.is_empty() {
-            return;
-        }
-        panic_unused_configs_error(&self.formatted_fn_name, unused_configs);
+        return VerifyCallsResult {
+            formatted_fn_name: self.formatted_fn_name.clone(),
+            unused_configs,
+        };
     }
 
     pub fn verify_received<'a, TArgsChecker: IArgsChecker + 'a>(
@@ -1049,4 +1055,16 @@ mod tests {
             }
         }
     }
+}
+
+
+pub fn paaanic<'a, TMock>(
+    verify_calls_results: Vec<VerifyCallsResult<'a, TMock>>,) {
+    if verify_calls_results
+        .iter()
+        .all(|x| x.unused_configs.is_empty())
+    {
+        return;
+    }
+    panic_unused_configs_error(verify_calls_results);
 }

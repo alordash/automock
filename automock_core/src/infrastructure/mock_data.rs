@@ -1,5 +1,6 @@
 use crate::args::*;
 use crate::infrastructure::*;
+use error_printing::panic_unused_configs_error;
 use indexmap::IndexMap;
 use std::fmt::Formatter;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -46,6 +47,34 @@ impl Default for MockData {
 impl MockData {
     pub fn id(&self) -> usize {
         self.id
+    }
+
+    pub fn verify_calls(&self) {
+        let verify_calls_results: Vec<_> = self
+            .map
+            .read()
+            .expect(UNABLE_TO_LOCK_FOR_READING_ERROR)
+            .values()
+            .flat_map(|y| y.values())
+            .cloned()
+            .map(
+                Self::cast_ptr_to_ref::<
+                    'static,
+                    (),
+                    IRRELEVANT_HAS_RETURN_VALUE,
+                    IRRELEVANT_SUPPORTS_BASE_CALLING,
+                    IRRELEVANT_PASSES_MOCK_TO_CALLBACK,
+                >,
+            )
+            .map(|x| x.verify_calls())
+            .collect();
+        if verify_calls_results
+            .iter()
+            .all(|x| x.unused_configs.is_empty())
+        {
+            return;
+        }
+        panic_unused_configs_error(verify_calls_results);
     }
 
     pub fn get_fn_data<
