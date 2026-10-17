@@ -1,12 +1,12 @@
 use crate::args::*;
 use crate::fn_parameters::*;
+use crate::infrastructure::error_printing::panic_unused_configs_error;
 use crate::infrastructure::*;
 use crate::times::*;
 use crate::*;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use crate::infrastructure::error_printing::panic_unused_configs_error;
 
 mod handling;
 
@@ -106,6 +106,15 @@ impl<
             formatted_fn_name: self.formatted_fn_name.clone(),
             unused_configs,
         };
+    }
+
+    // For static fns
+    pub fn validate_calls(&self) {
+        let verify_calls_result = self.verify_calls();
+        if verify_calls_result.unused_configs.is_empty() {
+            return;
+        }
+        panic_unused_configs_error(vec![verify_calls_result]);
     }
 
     pub fn verify_received<'a, TArgsChecker: IArgsChecker + 'a>(
@@ -1057,9 +1066,7 @@ mod tests {
     }
 }
 
-
-pub fn paaanic<'a, TMock>(
-    verify_calls_results: Vec<VerifyCallsResult<'a, TMock>>,) {
+pub fn paaanic<'a, TMock>(verify_calls_results: Vec<VerifyCallsResult<'a, TMock>>) {
     if verify_calls_results
         .iter()
         .all(|x| x.unused_configs.is_empty())

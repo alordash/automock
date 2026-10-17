@@ -30,13 +30,15 @@ impl<T: Debug> Debug for Arg<T> {
         let arg_type_name = std::any::type_name::<T>();
         match self {
             Arg::Any => write!(f, "({arg_type_name}): any"),
-            Arg::Eq(arg_cmp, _) => {
-                write!(f, "({}): equal to {:?}", arg_type_name, arg_cmp.value())
+            Arg::Eq(arg_cmp, _) => if is_primitive_type::<T>() {
+                write!(f, "{:?}", arg_cmp.value())
+            } else {
+                write!(f, "{} == {:?}", arg_type_name, arg_cmp.value())
             }
             Arg::NotEq(arg_cmp, _) => {
-                write!(f, "({}): NOT equal to {:?}", arg_type_name, arg_cmp.value())
+                write!(f, "{} != {:?}", arg_type_name, arg_cmp.value())
             }
-            Arg::Is(_, _) => write!(f, "({arg_type_name}): custom predicate"),
+            Arg::Is(_, _) => write!(f, "fn({arg_type_name})"),
         }
     }
 }
