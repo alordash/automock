@@ -35,7 +35,9 @@ impl<T: Debug> Debug for Arg<T> {
             } else {
                 write!(f, "{} == {:?}", arg_type_name, arg_cmp.value())
             }
-            Arg::NotEq(arg_cmp, _) => {
+            Arg::NotEq(arg_cmp, _) => if is_primitive_type::<T>() {
+                write!(f, "!{:?}", arg_cmp.value())
+            } else {
                 write!(f, "{} != {:?}", arg_type_name, arg_cmp.value())
             }
             Arg::Is(_, _) => write!(f, "fn({arg_type_name})"),

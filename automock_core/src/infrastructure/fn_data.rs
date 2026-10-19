@@ -575,7 +575,7 @@ mod tests {
         let matching_calls_check_result = OrderedCallsCheckResult {
             calls_args_check_results: matching_calls_args_check_results.clone(),
         };
-        let times = Times::Exactly(matching_calls_check_result.calls_args_check_results.len());
+        let times = Times(matching_calls_check_result.calls_args_check_results.len());
         let non_matching_calls_check_result = OrderedCallsCheckResult {
             calls_args_check_results: Vec::new(),
         };
@@ -614,7 +614,7 @@ mod tests {
                 args_check_results: Vec::new(),
             }],
         };
-        let times = Times::Exactly(matching_calls_check_result.calls_args_check_results.len() + 10);
+        let times = Times(matching_calls_check_result.calls_args_check_results.len() + 10);
         let non_matching_calls_check_result = OrderedCallsCheckResult {
             calls_args_check_results: vec![OrderedCallCheckResult {
                 call_order_number: 15,

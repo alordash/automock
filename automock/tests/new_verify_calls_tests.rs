@@ -354,7 +354,7 @@ mod tests {
             .foo(102)
             .returns(202)
             .bar(b)
-            .returns(bar_result)
+            .returns_many([true, false, true, false])
             .bar(b)
             .returns(bar_result);
 

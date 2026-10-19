@@ -8,29 +8,40 @@ use crate::times::*;
 pub(crate) fn panic_unused_configs_error<TMock>(
     verify_calls_results: Vec<VerifyCallsResult<TMock>>,
 ) {
-    let fmts: Vec<_> = verify_calls_results
+    let configs_fmts: Vec<_> = verify_calls_results
         .into_iter()
-        .map(|x| {
+        .flat_map(|x| {
             let config_fmts: Vec<_> = x
                 .unused_configs
                 .into_iter()
                 .map(|rc_config| {
                     let config = rc_config.borrow();
                     let args_checker_fmt = config.args_checker.fmt_args();
-                    let times_format = format_times(config.return_value_sources.len().times());
-                    format!("{args_checker_fmt} {times_format}")
+                    let times_fmt = format_times(config.return_value_sources.len().times());
+                    let fn_fmt = format!("{}({})", x.formatted_fn_name, args_checker_fmt);
+                    return (fn_fmt, times_fmt);
                 })
                 .collect();
-            let config_fmts_msg = config_fmts.join("\n\t");
-            let fmt = format!(
-                "Unverified calls for `{}`:\n\t{}",
-                x.formatted_fn_name, config_fmts_msg
-            );
-            return fmt;
+            return config_fmts;
         })
         .collect();
-    let result = fmts.join("\n");
-    panic!("{result}");
+    let Some(longest_line_length) = configs_fmts.iter().map(|x| x.0.len()).max() else {
+        panic!(
+            "[ERROR] `panic_unused_configs_error` must receive non empty `VerifyCallsResult` vector, but received vector was empty."
+        )
+    };
+    let fmts_with_time: Vec<_> = configs_fmts
+        .into_iter()
+        .map(|(fn_fmt, times_fmt)| {
+            format!(
+                "{fn_fmt}{} {}",
+                " ".repeat(longest_line_length - fn_fmt.len()),
+                times_fmt
+            )
+        })
+        .collect();
+    let result = fmts_with_time.join("\n\t");
+    panic!("Expected following calls:\n\t{result}");
 }
 
 pub(crate) fn panic_received_verification_error(
@@ -264,14 +275,9 @@ fn fmt_call_order_entries(call_order_entries: &[CallOrderEntry]) -> String {
 }
 
 fn format_times(times: Times) -> String {
-    let result = match times {
-        Times::Never | Times::Exactly(0) => "Expected to never receive a call".to_owned(),
-        Times::Once | Times::Exactly(1) => "Expected to receive a call exactly once".to_owned(),
-        Times::Exactly(exact_count) => {
-            format!("Expected to receive a call {exact_count} times")
-        }
-        #[allow(deprecated)]
-        Times::Any => "Expected to receive a call any number of times.".to_owned(),
+    let result = match times.0 {
+        1 => "1 time".to_owned(),
+        x => format!("{x} times"),
     };
     return result;
 }
