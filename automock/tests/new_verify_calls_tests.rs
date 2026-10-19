@@ -348,15 +348,17 @@ mod tests {
         let b = false;
         let foo_result = 20;
         let bar_result = true;
-        mock.setup()
-            .foo(v)
-            .returns(foo_result)
-            .foo(102)
-            .returns(202)
-            .bar(b)
-            .returns_many([true, false, true, false])
-            .bar(b)
-            .returns(bar_result);
+        let sequence = in_sequence(|| {
+            mock.setup()
+                .foo(v)
+                .returns(foo_result)
+                .foo(102)
+                .returns(202)
+                .bar(b)
+                .returns_many([true, false, true, false])
+                .bar(b)
+                .returns(bar_result);
+        });
 
         // TODO - target API?
         // mock.setup()
@@ -372,6 +374,8 @@ mod tests {
         assert_eq!(actual_bar_result, bar_result);
 
         mock.verify_calls();
+        
+        sequence.verify();
     }
 }
 

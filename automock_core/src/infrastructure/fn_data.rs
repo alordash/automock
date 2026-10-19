@@ -1065,13 +1065,3 @@ mod tests {
         }
     }
 }
-
-pub fn paaanic<'a, TMock>(verify_calls_results: Vec<VerifyCallsResult<'a, TMock>>) {
-    if verify_calls_results
-        .iter()
-        .all(|x| x.unused_configs.is_empty())
-    {
-        return;
-    }
-    panic_unused_configs_error(verify_calls_results);
-}
