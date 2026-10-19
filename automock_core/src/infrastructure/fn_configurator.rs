@@ -180,7 +180,6 @@ impl<
     TArgRefsTuple,
     TReturnValue,
     TMockArg,
-    const HAS_RETURN_VALUE: bool,
     const SUPPORTS_BASE_CALLING: bool,
 >
     FnConfigurator<
@@ -190,7 +189,7 @@ impl<
         TArgRefsTuple,
         TReturnValue,
         TMockArg,
-        HAS_RETURN_VALUE,
+        false,
         SUPPORTS_BASE_CALLING,
         true,
     >
