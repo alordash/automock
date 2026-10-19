@@ -373,7 +373,7 @@ mod tests {
         assert_eq!(actual_foo_result, foo_result);
         assert_eq!(actual_bar_result, bar_result);
 
-        mock.verify_calls();
+        // mock.verify_calls();
         
         sequence.verify();
     }

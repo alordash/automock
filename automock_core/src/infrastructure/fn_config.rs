@@ -1,19 +1,33 @@
 use crate::args::*;
 use crate::fn_parameters::*;
+use crate::sequence;
+use crate::sequence::Sequence;
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::marker::PhantomData;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+#[cfg_attr(test, allow(unused))]
+static FN_CONFIG_ORDER_NUMBER: AtomicUsize = AtomicUsize::new(0);
+
+#[cfg_attr(test, automock::mock)]
+#[inline(always)]
+pub(crate) fn get_next_fn_config_order_number() -> usize {
+    FN_CONFIG_ORDER_NUMBER.fetch_add(1, Ordering::Relaxed)
+}
 
 #[cfg_attr(test, automock::mock)]
 pub struct FnConfig<'am, TMock> {
     _phantom_mock: PhantomData<TMock>,
+    pub number: usize,
     pub args_checker: DynArgsChecker<'am>,
     pub return_value_sources: VecDeque<ReturnValueSource<'am>>,
     pub calls: Vec<Rc<DynCall<'am>>>,
     #[allow(clippy::type_complexity)]
     pub maybe_callback: Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>) + 'am>>>,
     pub call_base: bool,
+    pub maybe_sequence: Option<Rc<Sequence>>,
 }
 
 #[cfg_attr(test, automock::mock)]
@@ -21,11 +35,13 @@ impl<'am, TMock> FnConfig<'am, TMock> {
     pub(crate) fn new(args_checker: DynArgsChecker<'am>) -> Self {
         FnConfig {
             _phantom_mock: PhantomData,
+            number: get_next_fn_config_order_number(),
             args_checker,
             return_value_sources: VecDeque::new(),
             calls: Vec::new(),
             maybe_callback: None,
             call_base: false,
+            maybe_sequence: sequence::try_get_current_sequence(),
         }
     }
 
@@ -472,15 +488,15 @@ pub(crate) mod tests {
     //         .select_next_return_value(automock::Arg::Any)
     //         .call_base();
     //     let dyn_call = DynCall::new(CallMock::new());
-    // 
+    //
     //     // Act
     //     let result = fn_config.select_next_return_value(&dyn_call);
-    // 
+    //
     //     // Assert
     //     let dyn_return_value = result.expect("Result must contain return value.");
     //     let actual_return_value: TReturnValue = dyn_return_value.downcast_into();
     //     assert_eq!(actual_return_value, return_value);
-    // 
+    //
     //     assert_eq!(
     //         fn_config.return_value_sources.len(),
     //         initial_return_value_sources_length
@@ -614,12 +630,14 @@ pub(crate) mod tests {
         pub fn fn_config_mock<'am>() -> FnConfig<'am, Mock> {
             FnConfig {
                 _phantom_mock: PhantomData,
+                number: 0,
                 args_checker: DynArgsChecker::new(ArgsCheckerMock::new()),
                 return_value_sources: VecDeque::new(),
                 calls: Vec::new(),
                 maybe_callback: None,
                 call_base: false,
                 __mock_data: Default::default(),
+                maybe_sequence: None
             }
         }
 
