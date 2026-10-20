@@ -1,7 +1,7 @@
 use crate::args::*;
 use crate::fn_parameters::*;
 use crate::infrastructure::*;
-use crate::sequence;
+use crate::infrastructure::sequence::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -42,10 +42,6 @@ impl<
         };
         let should_call_base = {
             let fn_config_ref = fn_config.borrow();
-
-            if let Some(sequence) = &fn_config_ref.maybe_sequence {
-                sequence.add_call_number(fn_config_ref.number);
-            }
 
             if let Some(callback) = fn_config_ref.get_callback() {
                 callback.borrow_mut()(&mock_arg as *const TMockArg as *const (), &call);

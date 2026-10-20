@@ -1,7 +1,7 @@
 use crate::args::*;
 use crate::fn_parameters::*;
-use crate::sequence;
-use crate::sequence::Sequence;
+use super::sequence;
+use super::sequence::Sequence;
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::marker::PhantomData;

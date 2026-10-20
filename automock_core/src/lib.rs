@@ -10,8 +10,7 @@ mod fat_pointer;
 mod lifetimes_transmutation;
 pub mod settings;
 pub mod times;
-pub mod sequence;
 
-pub use infrastructure::verify_call_order;
+pub use infrastructure::{verify_call_order, in_sequence, Sequence};
 
 use fat_pointer::*;

@@ -272,8 +272,15 @@ mod internal {
                     continue;
                 }
                 let args_check_result = config_ref.check_call(dyn_call);
-                drop(config_ref);
                 if args_check_result.iter().all(|x| x.is_ok()) {
+                    if let Some(sequence) = &config_ref.maybe_sequence {
+                        let formatted_string = fmt_call(
+                            &self.formatted_fn_name,
+                            args_check_result,
+                            GenericParameterInfosFormattingPolicy::Skip,
+                        );
+                        sequence.add_call_number(config_ref.number, formatted_string);
+                    }
                     return MatchingConfigSearchResult::Ok(config.clone());
                 }
                 calls_args_check_results.push(args_check_result);

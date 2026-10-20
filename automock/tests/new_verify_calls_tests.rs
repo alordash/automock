@@ -366,8 +366,8 @@ mod tests {
         //     .work(3).returns(4, 5.times());
 
         // Act
-        let actual_foo_result = mock.foo(v);
         let actual_bar_result = mock.bar(b);
+        let actual_foo_result = mock.foo(v);
 
         // Assert
         assert_eq!(actual_foo_result, foo_result);
