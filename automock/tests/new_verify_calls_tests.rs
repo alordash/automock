@@ -4,6 +4,7 @@ use automock::*;
 fn work(a: i32, b: i32) -> i32 {
     a + b + 1
 }
+// TODO - need to generate this
 pub fn work_verify_calls<'__aml>() {
     let fn_data: &::automock::for_generated::FnData<'_, work::workMock<'__aml>, true, true, false> =
         ::automock::for_generated::get_static_fn_data("work");
@@ -201,6 +202,7 @@ mod __automock_generated_TraitMock {
                 __mock_data: self.__mock_data.clone(),
             }
         }
+        // TODO - and this
         pub fn verify_calls(&mut self) {
             self.__mock_data.verify_calls();
         }

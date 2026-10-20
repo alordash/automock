@@ -1,6 +1,6 @@
 mod mocked_fn;
 
-use crate::generation::mock_controls::*;
+use crate::generation::mock_setup::*;
 use crate::generation::mock_struct::*;
 use crate::generation::targets::models::*;
 use crate::generation::targets::*;
@@ -55,31 +55,11 @@ pub(crate) fn generate_module(item_fn: ItemFn) -> MockMod {
             maybe_trait_ident: None,
         },
     );
-    let static_received_struct = static_received::generate(
-        source_span,
-        static_received::Params {
-            ident: target_ident,
-            generics: target_generics.clone(),
-            generics_for_impl: target_generics,
-            maybe_argument_types: Some(target_argument_types),
-            mock_struct_path: &static_fn_mock_struct.path,
-            fn_infos: &fn_infos,
-            for_static_fn: true,
-            maybe_trait_ident: None,
-        },
-    );
     let [fn_info] = fn_infos;
     let fn_static_setup = fn_static_setup::generate(
         source_span,
         static_fn_mock_struct.path.clone(),
         static_setup_struct.path.clone(),
-        &fn_info,
-    );
-    let fn_static_received =
-        fn_static_received::generate(source_span, static_received_struct.path.clone(), &fn_info);
-    let fn_static_received_nothing = fn_static_received_nothing::generate(
-        source_span,
-        static_fn_mock_struct.path.clone(),
         &fn_info,
     );
 
@@ -97,8 +77,6 @@ pub(crate) fn generate_module(item_fn: ItemFn) -> MockMod {
         .into_iter()
         .chain([
             Item::Fn(fn_static_setup),
-            Item::Fn(fn_static_received),
-            Item::Fn(fn_static_received_nothing),
             Item::Struct(fn_info.call_struct.item_struct),
             Item::Impl(fn_info.call_struct.generics_info_provider_impl),
             Item::Impl(fn_info.call_struct.call_impl),
@@ -110,9 +88,6 @@ pub(crate) fn generate_module(item_fn: ItemFn) -> MockMod {
             Item::Struct(static_fn_mock_struct.item_struct),
             Item::Struct(static_setup_struct.item_struct),
             Item::Impl(static_setup_struct.item_impl),
-            Item::Struct(static_received_struct.item_struct),
-            Item::Impl(static_received_struct.clone_impl),
-            Item::Impl(static_received_struct.item_impl),
         ])
         .collect();
 

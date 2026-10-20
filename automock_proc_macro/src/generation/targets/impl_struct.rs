@@ -1,5 +1,5 @@
 use crate::common::*;
-use crate::generation::mock_controls::*;
+use crate::generation::mock_setup::*;
 use crate::generation::targets::common::*;
 use crate::generation::targets::models::*;
 use crate::generation::targets::*;
@@ -44,40 +44,24 @@ pub(crate) fn generate_module(mut item_impl: ItemImpl) -> MockMod {
     );
     let control_struct_path_base =
         patch_lifetime::prepend_to_path(impl_struct_info.target_path.clone());
-    let maybe_associated_controls_impls =
-        (!impl_struct_info.associated_fns.is_empty()).then(|| {
-            let setup_impl = setup_impl::generate(
-                source_span,
-                setup_impl::Params {
-                    setup_struct_path: path::from_base_path_with_ident(
-                        &control_struct_path_base,
-                        format_ident!("{}Setup", path::last_ident(&control_struct_path_base)),
-                    ),
-                    generics: generics_for_impl.clone(),
-                    mock_struct_path: &impl_struct_info.target_path,
-                    fn_infos: &impl_struct_info.associated_fns,
-                    for_static_fn: false,
-                    is_static: false,
-                },
-            );
-            let received_impl = received_impl::generate(
-                source_span,
-                received_impl::Params {
-                    received_struct_path: path::from_base_path_with_ident(
-                        &control_struct_path_base,
-                        format_ident!("{}Received", path::last_ident(&control_struct_path_base)),
-                    ),
-                    generics: generics_for_impl.clone(),
-                    mock_struct_path: &impl_struct_info.target_path,
-                    fn_infos: &impl_struct_info.associated_fns,
-                    for_static_fn: false,
-                    is_static: false,
-                    generate_fn_no_other_calls: false,
-                },
-            );
-            (setup_impl, received_impl)
-        });
-    let maybe_static_controls_impls = (!impl_struct_info.static_fns.is_empty()).then(|| {
+    let maybe_associated_setup_impls = (!impl_struct_info.associated_fns.is_empty()).then(|| {
+        let setup_impl = setup_impl::generate(
+            source_span,
+            setup_impl::Params {
+                setup_struct_path: path::from_base_path_with_ident(
+                    &control_struct_path_base,
+                    format_ident!("{}Setup", path::last_ident(&control_struct_path_base)),
+                ),
+                generics: generics_for_impl.clone(),
+                mock_struct_path: &impl_struct_info.target_path,
+                fn_infos: &impl_struct_info.associated_fns,
+                for_static_fn: false,
+                is_static: false,
+            },
+        );
+        setup_impl
+    });
+    let maybe_static_setup_impl = (!impl_struct_info.static_fns.is_empty()).then(|| {
         let static_setup_impl = setup_impl::generate(
             source_span,
             setup_impl::Params {
@@ -92,25 +76,7 @@ pub(crate) fn generate_module(mut item_impl: ItemImpl) -> MockMod {
                 is_static: true,
             },
         );
-        let static_received_impl = received_impl::generate(
-            source_span,
-            received_impl::Params {
-                received_struct_path: path::from_base_path_with_ident(
-                    &control_struct_path_base,
-                    format_ident!(
-                        "{}StaticReceived",
-                        path::last_ident(&control_struct_path_base)
-                    ),
-                ),
-                generics: generics_for_impl,
-                mock_struct_path: &impl_struct_info.target_path,
-                fn_infos: &impl_struct_info.static_fns,
-                for_static_fn: false,
-                is_static: true,
-                generate_fn_no_other_calls: false,
-            },
-        );
-        (static_setup_impl, static_received_impl)
+        static_setup_impl
     });
     source_static_fn_block::replace(
         source_span,
@@ -157,15 +123,11 @@ pub(crate) fn generate_module(mut item_impl: ItemImpl) -> MockMod {
         ])
     }))
     .chain(
-        maybe_associated_controls_impls
+        maybe_associated_setup_impls
             .into_iter()
-            .flat_map(|x| [Item::Impl(x.0), Item::Impl(x.1)]),
+            .map(|x| Item::Impl(x)),
     )
-    .chain(
-        maybe_static_controls_impls
-            .into_iter()
-            .flat_map(|x| [Item::Impl(x.0), Item::Impl(x.1)]),
-    )
+    .chain(maybe_static_setup_impl.into_iter().map(|x| Item::Impl(x)))
     .collect();
     let item_mod = ItemMod {
         attrs: vec![
