@@ -1,74 +1,47 @@
-use crate::infrastructure::error_printing;
-use std::cell::{Cell, RefCell};
+use std::rc::Rc;
+use std::sync::{LazyLock, RwLock};
 
-/// Checks that `received()` assertions inside `verifications` are performed sequentially relative
-/// to each other.
-pub fn verify_call_order(mut verifications: impl FnMut()) {
-    enable();
-    verifications();
-    disable();
-    validate_actual_calls_order();
-}
+mod sequence;
+mod call_oder_entry;
 
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) struct CallOrderEntry {
-    pub call_order_number: usize,
-    pub formatted_string: String,
-}
+pub(crate) use sequence::Sequence;
+pub(crate) use call_oder_entry::CallOrderEntry;
 
-struct CallOrderState {
-    pub perform_call_order_verification: Cell<bool>,
-    pub expected_calls_order: RefCell<Vec<CallOrderEntry>>,
+pub fn in_sequence(mut setups: impl FnMut()) -> Rc<Sequence> {
+    let sequence = Sequence {
+        expected_calls_order: Default::default(),
+    };
+    set_current_sequence(sequence);
+    setups();
+    extract_current_sequence()
 }
 
 thread_local! {
-    static CALL_ORDER_STATE: CallOrderState = const {
-        CallOrderState {
-            perform_call_order_verification: Cell::new(false),
-            expected_calls_order: RefCell::new(Vec::new()),
-        }
-    };
+    static CURRENT_SEQUENCE: LazyLock<RwLock<Option<Rc<Sequence>>>> = LazyLock::new(Default::default);
 }
 
-pub(crate) fn should_perform() -> bool {
-    CALL_ORDER_STATE.with(|x| x.perform_call_order_verification.get())
-}
-
-pub(crate) fn add_call(new_call_order_number: usize, call_formatted_string: String) {
-    CALL_ORDER_STATE.with(|x| {
-        x.expected_calls_order.borrow_mut().push(CallOrderEntry {
-            call_order_number: new_call_order_number,
-            formatted_string: call_formatted_string,
-        });
+pub fn try_get_current_sequence() -> Option<Rc<Sequence>> {
+    CURRENT_SEQUENCE.with(|x| {
+        x.read()
+         .expect("TODO generic message bla-bla can not read")
+         .clone()
     })
 }
 
-fn enable() {
-    CALL_ORDER_STATE.with(|x| {
-        x.expected_calls_order.borrow_mut().clear();
-        x.perform_call_order_verification.set(true)
-    })
-}
-
-fn disable() {
-    CALL_ORDER_STATE.with(|x| x.perform_call_order_verification.set(false))
-}
-
-fn validate_actual_calls_order() {
-    CALL_ORDER_STATE.with(|x| {
-        let is_order_correct = x
-            .expected_calls_order
-            .borrow()
-            .is_sorted_by(|a, b| a.call_order_number < b.call_order_number);
-        if !is_order_correct {
-            panic_invalid_calls_order(x.expected_calls_order.borrow_mut().as_mut_slice());
-        }
+fn set_current_sequence(sequence: Sequence) {
+    CURRENT_SEQUENCE.with(|x| {
+        *x.write()
+          .expect("TODO generic message bla-bla can not write") = Some(Rc::new(sequence));
     });
 }
 
-#[cfg_attr(test, automock::mock)]
-fn panic_invalid_calls_order(expected_calls_order: &mut [CallOrderEntry]) {
-    error_printing::panic_invalid_calls_order(expected_calls_order);
+fn extract_current_sequence() -> Rc<Sequence> {
+    CURRENT_SEQUENCE.with(|x| {
+        x.write()
+         .expect("TODO generic message bla-bla can not write")
+         .take()
+         .expect("TODO error - sequence should be present")
+    })
 }
 
 #[cfg(test)]

@@ -138,7 +138,6 @@ impl<
             );
             return;
         }
-        self.handle_call_order_verification(matching_calls_check_result.calls_args_check_results);
     }
 
     pub fn get_unexpected_calls_error_msgs(&self) -> Vec<String> {
@@ -296,27 +295,6 @@ mod internal {
                     calls_check_result,
                 needed_return_value: with_return_value,
             });
-        }
-
-        pub(super) fn handle_call_order_verification(
-            &self,
-            ordered_call_check_results: Vec<OrderedCallCheckResult>,
-        ) {
-            if !call_order_verification::should_perform() {
-                return;
-            }
-
-            for matching_call in ordered_call_check_results {
-                let formatted_string = fmt_call(
-                    &self.formatted_fn_name,
-                    matching_call.args_check_results,
-                    GenericParameterInfosFormattingPolicy::Skip,
-                );
-                call_order_verification::add_call(
-                    matching_call.call_order_number,
-                    formatted_string,
-                );
-            }
         }
     }
 }

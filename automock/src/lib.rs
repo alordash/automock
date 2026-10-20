@@ -1353,11 +1353,11 @@ pub use automock_proc_macro::mock;
 
 #[doc(hidden)]
 pub use automock_core::args::*;
+pub use automock_core::in_sequence;
 pub use automock_core::infrastructure::{FnCallbackConfigurator, FnConfigurator, Mockable};
 pub use automock_core::settings::*;
 pub use automock_core::times::*;
 pub use automock_core::transmute_lifetime;
-pub use automock_core::{verify_call_order, in_sequence, Sequence};
 
 #[doc(hidden)]
 pub mod for_generated {

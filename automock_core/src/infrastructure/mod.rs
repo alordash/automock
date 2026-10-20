@@ -10,11 +10,9 @@ mod matching_config_search_result;
 mod mock_data;
 mod mockable;
 mod static_fn_datas_global_map;
-mod sequence;
 
 pub use arg_refs_binder::*;
-pub use call_order_verification::verify_call_order;
-pub use sequence::*;
+pub use call_order_verification::in_sequence;
 pub use fn_callback_configurator::*;
 pub(crate) use fn_config::*;
 pub use fn_configurator::*;

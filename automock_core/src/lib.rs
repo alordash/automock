@@ -11,6 +11,6 @@ mod lifetimes_transmutation;
 pub mod settings;
 pub mod times;
 
-pub use infrastructure::{verify_call_order, in_sequence, Sequence};
+pub use infrastructure::in_sequence;
 
 use fat_pointer::*;

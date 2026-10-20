@@ -1,7 +1,6 @@
+use super::call_order_verification::*;
 use crate::args::*;
 use crate::fn_parameters::*;
-use super::sequence;
-use super::sequence::Sequence;
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::marker::PhantomData;
@@ -41,7 +40,7 @@ impl<'am, TMock> FnConfig<'am, TMock> {
             calls: Vec::new(),
             maybe_callback: None,
             call_base: false,
-            maybe_sequence: sequence::try_get_current_sequence(),
+            maybe_sequence: try_get_current_sequence(),
         }
     }
 
@@ -637,7 +636,7 @@ pub(crate) mod tests {
                 maybe_callback: None,
                 call_base: false,
                 __mock_data: Default::default(),
-                maybe_sequence: None
+                maybe_sequence: None,
             }
         }
 
