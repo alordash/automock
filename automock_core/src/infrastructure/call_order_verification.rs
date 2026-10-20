@@ -2,10 +2,10 @@ use std::rc::Rc;
 use std::sync::{LazyLock, RwLock};
 
 mod sequence;
-mod call_oder_entry;
+mod call_order_entry;
 
 pub(crate) use sequence::Sequence;
-pub(crate) use call_oder_entry::CallOrderEntry;
+pub(crate) use call_order_entry::CallOrderEntry;
 
 pub fn in_sequence(mut setups: impl FnMut()) -> Rc<Sequence> {
     let sequence = Sequence {
