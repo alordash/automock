@@ -1,5 +1,6 @@
 use crate::fn_parameters::*;
 use crate::infrastructure::*;
+use crate::times::*;
 use crate::*;
 use std::cell::RefCell;
 use std::marker::PhantomData;
@@ -87,9 +88,25 @@ impl<
         PASSES_MOCK_TO_CALLBACK,
     >
 {
-    /// Sets return value of this function. This value will be returned only once.
-    // TODO - add returns_once
+    /// Sets return value of this function. This value will be returned multiple [`times`].
     pub fn returns<'a>(
+        &self,
+        return_value: TReturnValue,
+        times: Times,
+    ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+    where
+        TReturnValue: Clone + IReturnValue<'a> + 'a,
+    {
+        let return_value_sources = core::iter::repeat_n(return_value, times.0)
+            .map(|x| ReturnValueSource::SingleTime(transmute_lifetime!(DynReturnValue::new(x))));
+        self.fn_config
+            .borrow_mut()
+            .add_return_value_sources(return_value_sources);
+        return &self.fn_callback_configurator;
+    }
+
+    /// Sets return value of this function. This value will be returned only once.
+    pub fn returns_once<'a>(
         &self,
         return_value: TReturnValue,
     ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
@@ -125,8 +142,30 @@ impl<
     }
 
     /// Sets return value of this function using factory. Factory constructs new return value using
-    /// references to source function argument values. Never ends.
-    pub fn returns_with<'a>(
+    /// references to source function argument values. Constructed value will be returned multiple
+    /// [`times`].
+    pub fn returns_with(
+        &self,
+        f: impl Clone + Fn(TArgRefsTuple) -> TReturnValue + 'am,
+        times: Times,
+    ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+    {
+        let factory = Box::new(move |dyn_arg_refs_tuple: DynArgRefsTuple<'am>| {
+            let arg_refs_tuple: TArgRefsTuple = dyn_arg_refs_tuple.downcast_into::<TArgRefsTuple>();
+            let result = f(arg_refs_tuple);
+            return transmute_lifetime!(DynReturnValue::new(result));
+        });
+        let return_value_sources =
+            core::iter::repeat_n(factory, times.0).map(|x| ReturnValueSource::Factory(x));
+        self.fn_config
+            .borrow_mut()
+            .add_return_value_sources(return_value_sources);
+        return &self.fn_callback_configurator;
+    }
+
+    /// Sets return value of this function using factory. Factory constructs new return value using
+    /// references to source function argument values. Constructed value will be returned only once.
+    pub fn returns_once_with(
         &self,
         f: impl Fn(TArgRefsTuple) -> TReturnValue + 'am,
     ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
@@ -174,15 +213,7 @@ impl<'am, TMock, TOwner, TArgRefsTuple, TReturnValue, TMockArg, const SUPPORTS_B
     }
 }
 
-impl<
-    'am,
-    TMock,
-    TOwner,
-    TArgRefsTuple,
-    TReturnValue,
-    TMockArg,
-    const SUPPORTS_BASE_CALLING: bool,
->
+impl<'am, TMock, TOwner, TArgRefsTuple, TReturnValue, TMockArg, const SUPPORTS_BASE_CALLING: bool>
     FnConfigurator<
         'am,
         TMock,
@@ -313,10 +344,10 @@ pub(crate) mod tests {
     //     let owner = Owner;
     //     let fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
     //     let return_value = ReturnValue(5);
-    // 
+    //
     //     // Act
     //     fn_configurator_mock.always_returns(return_value);
-    // 
+    //
     //     // Assert
     //     fn_configurator_mock.fn_config
     //         .borrow_mut()
