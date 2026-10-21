@@ -47,12 +47,12 @@ fn evil(x: i32) -> i32 {
 #[test]
 fn should_mock_static_function_through_all_invocation_paths() {
     // Arrange
-    target::setup(Arg::Any).returns_with(|(x,)| *x + 100);
+    target::setup(Arg::Any).returns_with(|(x,)| *x + 100, 7.times());
 
     // Act
     let result = evil(5);
 
     // Assert
     assert_eq!(result, 735);
-    target::received(5, 7.times());
+    target::verify_calls();
 }
