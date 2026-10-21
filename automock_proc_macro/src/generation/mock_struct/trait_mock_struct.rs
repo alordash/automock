@@ -2,7 +2,7 @@ use crate::common::*;
 use crate::generation::base_fn;
 use crate::generation::common::*;
 use crate::generation::fn_info::models::*;
-use crate::generation::mock_setup::models::*;
+use crate::generation::mock_controls::models::*;
 use crate::generation::mock_struct::common::*;
 use crate::generation::mock_struct::models::*;
 use crate::generation::mock_struct::*;

@@ -1,6 +1,6 @@
 mod mocked_fn;
 
-use crate::generation::mock_setup::*;
+use crate::generation::mock_controls::*;
 use crate::generation::mock_struct::*;
 use crate::generation::targets::models::*;
 use crate::generation::targets::*;
@@ -63,6 +63,9 @@ pub(crate) fn generate_module(item_fn: ItemFn) -> MockMod {
         &fn_info,
     );
 
+    let fn_static_verify_calls =
+        fn_static_verify_calls::generate(source_span, static_fn_mock_struct.path.clone(), &fn_info);
+
     let mod_ident = fn_info.signature.ident.clone();
     let mocked_fn = mocked_fn::generate(
         source_span,
@@ -77,6 +80,7 @@ pub(crate) fn generate_module(item_fn: ItemFn) -> MockMod {
         .into_iter()
         .chain([
             Item::Fn(fn_static_setup),
+            Item::Fn(fn_static_verify_calls),
             Item::Struct(fn_info.call_struct.item_struct),
             Item::Impl(fn_info.call_struct.generics_info_provider_impl),
             Item::Impl(fn_info.call_struct.call_impl),

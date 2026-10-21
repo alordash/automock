@@ -1,4 +1,4 @@
-use crate::generation::mock_setup::models::*;
+use crate::generation::mock_controls::models::*;
 use syn::*;
 
 pub(crate) struct TraitStaticControls {

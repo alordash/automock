@@ -1,5 +1,5 @@
 use crate::generation::common::*;
-use crate::generation::mock_setup::*;
+use crate::generation::mock_controls::*;
 use crate::generation::mock_struct::*;
 use crate::generation::targets::models::*;
 use crate::generation::targets::*;

@@ -12,4 +12,7 @@ pub trait Mockable<'__ama> {
     type StaticSetup;
     /// Begins mock's static functions set up.
     fn static_setup() -> Self::StaticSetup;
+    
+    /// Verifies that all function `setup` configurations were called.
+    fn verify_calls(&mut self);
 }

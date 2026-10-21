@@ -4,12 +4,6 @@ use automock::*;
 fn work(a: i32, b: i32) -> i32 {
     a + b + 1
 }
-// TODO - need to generate this
-pub fn work_verify_calls<'__aml>() {
-    let fn_data: &::automock::for_generated::FnData<'_, work::workMock<'__aml>, true, true, false> =
-        ::automock::for_generated::get_static_fn_data("work");
-    fn_data.validate_calls()
-}
 
 // #[mock]
 // trait Trait {
@@ -339,7 +333,7 @@ mod tests {
         assert_eq!(actual_result, result);
 
         // work::received(v, 1.time());
-        work_verify_calls();
+        work::verify_calls();
     }
 
     #[test]
