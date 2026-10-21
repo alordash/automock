@@ -138,38 +138,6 @@ mod internal {
                 .push(CallCheck::new(dyn_call));
         }
 
-        pub(crate) fn get_matching_and_non_matching_calls<'a>(
-            &self,
-            dyn_args_checker: &DynArgsChecker<'a>,
-        ) -> (OrderedCallsCheckResult, OrderedCallsCheckResult) {
-            let mut matching_calls_args_check_results = Vec::new();
-            let mut non_matching_calls_args_check_results = Vec::new();
-            let generics_hash_key = dyn_args_checker.get_generics_hash_key();
-            let mut all_call_checks = self.call_checks.borrow_mut();
-            let specific_call_checks = all_call_checks.entry(generics_hash_key).or_default();
-            for call_check in specific_call_checks.iter_mut() {
-                let call_args_check_results = dyn_args_checker.check(call_check.get_dyn_call());
-                let is_matching = call_args_check_results.iter().all(ArgCheckResult::is_ok);
-                let ordered_call_check_result = OrderedCallCheckResult {
-                    call_order_number: call_check.number,
-                    args_check_results: call_args_check_results,
-                };
-                if is_matching {
-                    call_check.mark_as_verified();
-                    matching_calls_args_check_results.push(ordered_call_check_result);
-                } else {
-                    non_matching_calls_args_check_results.push(ordered_call_check_result);
-                }
-            }
-            let matching_calls_check_result = OrderedCallsCheckResult {
-                calls_args_check_results: matching_calls_args_check_results,
-            };
-            let non_matching_calls_check_result = OrderedCallsCheckResult {
-                calls_args_check_results: non_matching_calls_args_check_results,
-            };
-            return (matching_calls_check_result, non_matching_calls_check_result);
-        }
-
         pub(super) fn try_get_matching_config<TReturnValue>(
             &self,
             dyn_call: &DynCall<'am>,

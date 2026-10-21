@@ -2,7 +2,6 @@ use crate::args::*;
 use crate::fn_parameters::*;
 use crate::infrastructure::call_order_verification::CallOrderEntry;
 use crate::infrastructure::{MatchingConfigSearchErr, VerifyCallsResult};
-use crate::settings::*;
 use crate::times::*;
 
 pub(crate) fn panic_unused_configs_error<TMock>(
@@ -123,11 +122,6 @@ pub(crate) fn panic_no_return_value_was_configured(
     );
     let error_msg = format!("No return value found for following call: {call_msg}");
     panic!("{error_msg}");
-}
-
-fn fmt_calls(calls_count: usize) -> &'static str {
-    assert_ne!(calls_count, 0);
-    return if calls_count == 1 { "call" } else { "calls" };
 }
 
 pub(crate) fn panic_invalid_calls_order(expected_calls_order: &mut [CallOrderEntry]) -> ! {

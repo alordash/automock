@@ -11,7 +11,6 @@ mod generics_hasher;
 pub(crate) mod i_args_checker;
 mod i_generics_info_provider;
 mod into_arg;
-mod ordered_calls_check_result;
 mod primitive_type_check;
 
 pub use arg::*;
@@ -27,6 +26,5 @@ pub use generics_hasher::*;
 pub use i_args_checker::*;
 pub use i_generics_info_provider::*;
 pub use into_arg::*;
-pub(crate) use ordered_calls_check_result::*;
 
 use primitive_type_check::*;
