@@ -88,6 +88,7 @@ impl<
     >
 {
     /// Sets return value of this function. This value will be returned only once.
+    // TODO - add returns_once
     pub fn returns<'a>(
         &self,
         return_value: TReturnValue,

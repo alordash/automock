@@ -1,4 +1,5 @@
-use crate::infrastructure::{FnData, IMockData};
+use crate::infrastructure::FnData;
+use crate::infrastructure::error_printing::panic_unused_configs_error;
 use std::any::TypeId;
 use std::cell::UnsafeCell;
 use std::collections::HashMap;
@@ -83,22 +84,34 @@ impl StaticFnDatasGlobalMap {
         map.remove_entry(&type_id);
     }
 
-    pub fn verify_received_nothing_else<TMock>(&self) {
+    pub fn verify_calls<TMock>(&self) {
         let type_id = typeid::of::<TMock>();
         let map = self.get_mut_map();
         let Some(fn_datas_raw_ptrs) = map.get(&type_id) else {
             return;
         };
-        for fn_data_raw_ptr in fn_datas_raw_ptrs.values() {
-            const IRRELEVANT_HAS_RETURN_VALUE: bool = false;
-            const IRRELEVANT_SUPPORTS_BASE_CALLING: bool = false;
-            let fn_data = Self::get_fn_data_ref::<
-                TMock,
-                IRRELEVANT_HAS_RETURN_VALUE,
-                IRRELEVANT_SUPPORTS_BASE_CALLING,
-            >(*fn_data_raw_ptr);
-            fn_data.verify_received_nothing_else();
+        const IRRELEVANT_HAS_RETURN_VALUE: bool = false;
+        const IRRELEVANT_SUPPORTS_BASE_CALLING: bool = false;
+        let verify_calls_results: Vec<_> = fn_datas_raw_ptrs
+            .values()
+            .cloned()
+            .map(
+                Self::get_fn_data_ref::<
+                    'static,
+                    (),
+                    IRRELEVANT_HAS_RETURN_VALUE,
+                    IRRELEVANT_SUPPORTS_BASE_CALLING,
+                >,
+            )
+            .map(|x| x.verify_calls())
+            .collect();
+        if verify_calls_results
+            .iter()
+            .all(|x| x.unused_configs.is_empty())
+        {
+            return;
         }
+        panic_unused_configs_error(verify_calls_results);
     }
 }
 
@@ -139,6 +152,6 @@ pub fn clear_static_fn_data<TMock>() {
     STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.clear_mock_fn_datas::<TMock>());
 }
 
-pub fn verify_static_fn_received_nothing_else<TMock>() {
-    STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.verify_received_nothing_else::<TMock>());
+pub fn verify_static_fn_calls<TMock>() {
+    STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.verify_calls::<TMock>());
 }

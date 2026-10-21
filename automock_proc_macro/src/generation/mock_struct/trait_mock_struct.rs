@@ -260,6 +260,13 @@ fn generate_inner_impl(
             for_mockable_trait: false,
         },
     );
+    let verify_static_calls_fn = verify_calls_fn::generate_static(
+        span,
+        verify_calls_fn::StaticParams {
+            mock_struct_path: mock_struct_path.clone(),
+            for_mockable_trait: false,
+        },
+    );
     let base_fns = trait_info
         .associated_fns
         .iter()
@@ -269,7 +276,7 @@ fn generate_inner_impl(
         .into_iter()
         .chain(maybe_associated_setup_creation_fn.into_iter())
         .chain(maybe_static_controls_creation_fns.into_iter())
-        .chain(core::iter::once(verify_calls_fn))
+        .chain([verify_calls_fn, verify_static_calls_fn])
         .chain(base_fns)
         .map(ImplItem::Fn)
         .collect();

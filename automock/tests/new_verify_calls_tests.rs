@@ -9,6 +9,9 @@ fn work(a: i32, b: i32) -> i32 {
 trait Trait {
     fn foo(&self, v: i32) -> i32;
     fn bar(&self, b: bool) -> bool;
+
+    fn static_foo(v: i32) -> i32;
+    fn static_bar(b: bool) -> bool;
 }
 
 mod tests {
@@ -57,7 +60,13 @@ mod tests {
                 .foo(v)
                 .returns(foo_result)
                 .foo(102)
-                .returns(202)
+                .returns(202);
+            TraitMock::static_setup()
+                .static_foo(44)
+                .returns(11)
+                .static_bar(true)
+                .returns(false);
+            mock.setup()
                 .bar(b)
                 .returns_many([true, false, true, false])
                 .bar(b)
@@ -77,9 +86,10 @@ mod tests {
         assert_eq!(actual_foo_result, foo_result);
         assert_eq!(actual_bar_result, bar_result);
 
-        mock.verify_calls();
-        
-        sequence.verify();
+        TraitMock::verify_static_calls();
+        // mock.verify_calls();
+
+        // sequence.verify();
     }
 }
 

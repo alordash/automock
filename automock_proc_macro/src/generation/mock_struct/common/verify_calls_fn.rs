@@ -1,6 +1,7 @@
 use crate::common::*;
 use not_enough_syntax::*;
 use proc_macro2::Span;
+use syn::punctuated::Punctuated;
 use syn::*;
 
 pub(crate) struct Params {
@@ -31,6 +32,70 @@ pub(crate) fn generate(span: Span, Params { for_mockable_trait }: Params) -> Imp
     let block = Block {
         brace_token: token::Brace(span),
         stmts: vec![Stmt::Expr(verify_calls_stmt, None)],
+    };
+
+    let result = ImplItemFn {
+        attrs: Vec::new(),
+        vis: if for_mockable_trait {
+            Visibility::Inherited
+        } else {
+            Visibility::Public(Token![pub](span))
+        },
+        modifiers: FnModifiers::default(),
+        sig,
+        block,
+    };
+
+    return result;
+}
+
+pub(crate) struct StaticParams {
+    pub mock_struct_path: Path,
+    pub for_mockable_trait: bool,
+}
+
+pub(crate) fn generate_static(
+    span: Span,
+    StaticParams {
+        mock_struct_path,
+        for_mockable_trait,
+    }: StaticParams,
+) -> ImplItemFn {
+    let sig = Signature {
+        constness: None,
+        asyncness: None,
+        safety: Safety::Default,
+        abi: None,
+        fn_token: Token![fn](span),
+        ident: Ident::new("verify_static_calls", span),
+        generics: Generics::default(),
+        paren_token: token::Paren(span),
+        inputs: Punctuated::new(),
+        variadic: None,
+        output: ReturnType::Default,
+    };
+
+    let verify_static_fn_calls_stmt = Expr::Call(expr::call::new(
+        span,
+        Expr::Path(ExprPath {
+            attrs: Vec::new(),
+            qself: None,
+            path: path::new_generics_global(
+                span,
+                ["automock", "for_generated", "verify_static_fn_calls"],
+                [GenericArgument::Type(Type::Path(TypePath {
+                    attrs: Vec::new(),
+                    qself: None,
+                    path: mock_struct_path,
+                }))],
+            ),
+        }),
+        [],
+    ));
+
+    let block = Block {
+        brace_token: token::Brace(span),
+        stmts: vec![Stmt::Expr(verify_static_fn_calls_stmt, None)],
     };
 
     let result = ImplItemFn {

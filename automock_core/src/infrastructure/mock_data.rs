@@ -63,7 +63,6 @@ impl MockData {
                     (),
                     IRRELEVANT_HAS_RETURN_VALUE,
                     IRRELEVANT_SUPPORTS_BASE_CALLING,
-                    IRRELEVANT_PASSES_MOCK_TO_CALLBACK,
                 >,
             )
             .map(|x| x.verify_calls())
@@ -82,14 +81,12 @@ impl MockData {
         TMock,
         const HAS_RETURN_VALUE: bool,
         const SUPPORTS_BASE_CALLING: bool,
-        const PASSES_MOCK_TO_CALLBACK: bool,
     >(
         &'_ self,
         owner_name: &'static str,
         fn_ident: &'static str,
         generics_hash_key: GenericsHashKey,
-    ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
-    {
+    ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, true> {
         let unique_fn_ident = format!("{owner_name}_{fn_ident}");
         let fn_data_ptr = {
             let mut map_write = self.map.write().expect(UNABLE_TO_LOCK_FOR_WRITING_ERROR);
@@ -103,7 +100,7 @@ impl MockData {
                         TMock,
                         HAS_RETURN_VALUE,
                         SUPPORTS_BASE_CALLING,
-                        PASSES_MOCK_TO_CALLBACK,
+                        true,
                     >::new(
                         Some(owner_name), fn_ident
                     ))) as *const _ as *const ()
@@ -120,11 +117,9 @@ impl MockData {
         TMock,
         const HAS_RETURN_VALUE: bool,
         const SUPPORTS_BASE_CALLING: bool,
-        const PASSES_MOCK_TO_CALLBACK: bool,
     >(
         fn_data_ptr: *const (),
-    ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
-    {
+    ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, true> {
         // SAFETY:
         // `as_ref` - ptr is aligned since it was cast from reference returned from `Box::leak`.
         // Pointed value is a newly created valid `FnData`.
@@ -133,13 +128,7 @@ impl MockData {
         // `unwrap_unchecked` - pointer was obtained from reference returned from `Box::leak`.
         let fn_data_ref = unsafe {
             (fn_data_ptr as *const _
-                as *const FnData<
-                    'static,
-                    TMock,
-                    HAS_RETURN_VALUE,
-                    SUPPORTS_BASE_CALLING,
-                    PASSES_MOCK_TO_CALLBACK,
-                >)
+                as *const FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, true>)
                 .as_ref()
                 .unwrap_unchecked()
         };
@@ -167,7 +156,6 @@ impl IMockData for MockData {
                     (),
                     IRRELEVANT_HAS_RETURN_VALUE,
                     IRRELEVANT_SUPPORTS_BASE_CALLING,
-                    IRRELEVANT_PASSES_MOCK_TO_CALLBACK,
                 >,
             )
             .map(FnData::get_unexpected_calls_error_msgs)

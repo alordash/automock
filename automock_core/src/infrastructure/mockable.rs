@@ -15,4 +15,7 @@ pub trait Mockable<'__ama> {
     
     /// Verifies that all function `setup` configurations were called.
     fn verify_calls(&mut self);
+    
+    /// Verifies that all static function `setup` configurations were called.
+    fn verify_static_calls();
 }
