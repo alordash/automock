@@ -2,7 +2,6 @@ use crate::args::*;
 use crate::fn_parameters::*;
 use crate::infrastructure::error_printing::panic_unused_configs_error;
 use crate::infrastructure::*;
-use crate::times::*;
 use crate::*;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -116,90 +115,10 @@ impl<
         }
         panic_unused_configs_error(vec![verify_calls_result]);
     }
-
-    pub fn verify_received<'a, TArgsChecker: IArgsChecker + 'a>(
-        &self,
-        args_checker: TArgsChecker,
-        times: Times,
-    ) {
-        let dyn_args_checker = DynArgsChecker::new(args_checker);
-        let (matching_calls_check_result, non_matching_calls_check_result) =
-            self.get_matching_and_non_matching_calls(&dyn_args_checker);
-        let matching_calls_count = matching_calls_check_result.calls_args_check_results.len();
-        let valid = times.matches(matching_calls_count);
-        if !valid {
-            internal::panic_received_verification_error(
-                self.fn_name,
-                &self.formatted_fn_name,
-                &dyn_args_checker,
-                matching_calls_check_result,
-                non_matching_calls_check_result,
-                times,
-            );
-            return;
-        }
-    }
-
-    pub fn get_unexpected_calls_error_msgs(&self) -> Vec<String> {
-        let all_call_checks = self.call_checks.borrow();
-        let mut unexpected_call_checks: Vec<_> = all_call_checks
-            .values()
-            .flatten()
-            .filter(|x| !x.is_verified())
-            .collect();
-        unexpected_call_checks.sort_by_key(|a| a.number);
-        let unexpected_call_arg_infos = unexpected_call_checks
-            .into_iter()
-            .map(|x| {
-                let call = x.get_dyn_call();
-                error_printing::format_received_unexpected_call_error(
-                    &self.formatted_fn_name,
-                    call.get_arg_infos(),
-                    call.get_generic_parameter_infos(),
-                )
-            })
-            .collect();
-        return unexpected_call_arg_infos;
-    }
-}
-
-// For static fns
-#[cfg_attr(test, automock::mock)]
-impl<
-    'am,
-    TMock,
-    const HAS_RETURN_VALUE: bool,
-    const SUPPORTS_BASE_CALLING: bool,
-    const PASSES_MOCK_TO_CALLBACK: bool,
-> IMockData
-    for FnData<'am, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
-{
-    fn get_received_nothing_else_error_msgs(&self) -> Vec<Vec<String>> {
-        vec![self.get_unexpected_calls_error_msgs()]
-    }
 }
 
 mod internal {
     use super::*;
-
-    #[cfg_attr(test, automock::mock)]
-    pub(super) fn panic_received_verification_error<'am>(
-        fn_name: &str,
-        formatted_fn_name: &str,
-        args_checker: &DynArgsChecker<'am>,
-        matching_calls_check_result: OrderedCallsCheckResult,
-        non_matching_calls_check_result: OrderedCallsCheckResult,
-        times: Times,
-    ) {
-        error_printing::panic_received_verification_error(
-            fn_name,
-            formatted_fn_name,
-            args_checker,
-            matching_calls_check_result,
-            non_matching_calls_check_result,
-            times,
-        );
-    }
 
     #[cfg_attr(test, automock::mock)]
     impl<

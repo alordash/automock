@@ -141,35 +141,6 @@ const IRRELEVANT_HAS_RETURN_VALUE: bool = false;
 const IRRELEVANT_SUPPORTS_BASE_CALLING: bool = false;
 const IRRELEVANT_PASSES_MOCK_TO_CALLBACK: bool = false;
 
-impl IMockData for MockData {
-    fn get_received_nothing_else_error_msgs(&self) -> Vec<Vec<String>> {
-        let result = self
-            .map
-            .read()
-            .expect(UNABLE_TO_LOCK_FOR_READING_ERROR)
-            .values()
-            .flat_map(|y| y.values())
-            .cloned()
-            .map(
-                Self::cast_ptr_to_ref::<
-                    'static,
-                    (),
-                    IRRELEVANT_HAS_RETURN_VALUE,
-                    IRRELEVANT_SUPPORTS_BASE_CALLING,
-                >,
-            )
-            .map(FnData::get_unexpected_calls_error_msgs)
-            .collect();
-        return result;
-    }
-}
-
-impl IMockData for SharedMockData {
-    fn get_received_nothing_else_error_msgs(&self) -> Vec<Vec<String>> {
-        <MockData as IMockData>::get_received_nothing_else_error_msgs(self)
-    }
-}
-
 impl Drop for MockData {
     fn drop(&mut self) {
         for fn_data_ptr in self

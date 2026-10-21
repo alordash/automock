@@ -44,95 +44,6 @@ pub(crate) fn panic_unused_configs_error<TMock>(
     panic!("Expected following calls:\n\t{result}");
 }
 
-pub(crate) fn panic_received_verification_error(
-    fn_name: &str,
-    formatted_fn_name: &str,
-    args_checker: &DynArgsChecker,
-    matching_calls_check_result: OrderedCallsCheckResult,
-    non_matching_calls_check_result: OrderedCallsCheckResult,
-    times: Times,
-) -> ! {
-    let matching_calls_count = matching_calls_check_result.calls_args_check_results.len();
-
-    let generic_parameter_infos = args_checker.get_generic_parameter_infos();
-    let generic_parameters_msg = fmt_generic_parameter_infos(
-        GenericParameterInfosFormattingPolicy::Perform(&generic_parameter_infos),
-    );
-    let expected_call_msg = format!(
-        "\t{formatted_fn_name}{}({})",
-        generic_parameters_msg,
-        args_checker.fmt_args(),
-    );
-    let matching_calls_report = if matching_calls_count == 0 {
-        "Actually received no matching calls".to_string()
-    } else {
-        let max_invalid_calls_listed_count = read_settings().max_invalid_calls_listed_count;
-        let matching_calls_args_msgs: Vec<_> = matching_calls_check_result
-            .calls_args_check_results
-            .into_iter()
-            .take(max_invalid_calls_listed_count)
-            .map(|x| {
-                fmt_call(
-                    fn_name,
-                    x.args_check_results,
-                    GenericParameterInfosFormattingPolicy::Skip,
-                )
-            })
-            .collect();
-        let trimmed_output_disclaimer = if matching_calls_count > max_invalid_calls_listed_count {
-            format!(" (listing only first {})", max_invalid_calls_listed_count)
-        } else {
-            String::new()
-        };
-        let matching_calls_args_msg = matching_calls_args_msgs.join("\n\t");
-        let call_fmt = fmt_calls(matching_calls_count);
-        format!(
-            "Actually received {matching_calls_count} matching {call_fmt}{trimmed_output_disclaimer}:
-\t{matching_calls_args_msg}"
-        )
-    };
-    let non_matching_calls_count = non_matching_calls_check_result
-        .calls_args_check_results
-        .len();
-    let non_matching_calls_report = if non_matching_calls_count == 0 {
-        "Received no non-matching calls".to_string()
-    } else {
-        let max_invalid_calls_listed_count = read_settings().max_invalid_calls_listed_count;
-        let call_fmt = fmt_calls(non_matching_calls_count);
-        let non_matching_calls_args_msgs: Vec<_> = non_matching_calls_check_result
-            .calls_args_check_results
-            .into_iter()
-            .take(max_invalid_calls_listed_count)
-            .map(|x| {
-                fmt_call(
-                    fn_name,
-                    x.args_check_results,
-                    GenericParameterInfosFormattingPolicy::Skip,
-                )
-            })
-            .collect();
-        let trimmed_output_disclaimer = if non_matching_calls_count > max_invalid_calls_listed_count
-        {
-            format!(" (listing only first {})", max_invalid_calls_listed_count)
-        } else {
-            String::new()
-        };
-        let non_matching_calls_args_msg = non_matching_calls_args_msgs.join("\n");
-        format!(
-            "Received {non_matching_calls_count} non-matching {call_fmt}{trimmed_output_disclaimer} (non-matching arguments indicated with '*' characters):
-{non_matching_calls_args_msg}"
-        )
-    };
-    let times_format = format_times(times);
-    let error_msg = format!(
-        r"{times_format} matching:
-{expected_call_msg}
-{matching_calls_report}
-{non_matching_calls_report}"
-    );
-    panic!("{error_msg}");
-}
-
 pub(crate) fn panic_no_suitable_fn_configuration_found(
     fn_name: &str,
     formatted_fn_name: &str,
@@ -140,7 +51,7 @@ pub(crate) fn panic_no_suitable_fn_configuration_found(
     generic_parameter_infos: Vec<GenericParameterInfo>,
     matching_config_search_err: MatchingConfigSearchErr,
 ) -> ! {
-    let call_msg = format_received_unexpected_call_error(
+    let call_msg = format_unexpected_call(
         formatted_fn_name,
         unexpected_call,
         generic_parameter_infos,
@@ -183,7 +94,7 @@ List of existing configuration ordered by number of correctly matched arguments 
 }
 
 #[cfg_attr(test, automock::mock)]
-pub(crate) fn format_received_unexpected_call_error(
+pub(crate) fn format_unexpected_call(
     formatted_fn_name: &str,
     call_args: Vec<ArgInfo>,
     generic_parameter_infos: Vec<GenericParameterInfo>,
@@ -200,38 +111,12 @@ pub(crate) fn format_received_unexpected_call_error(
     return error_msg;
 }
 
-pub(crate) fn panic_received_unexpected_calls_error(error_msgs: Vec<String>) -> ! {
-    let unexpected_calls_count = error_msgs.len();
-    let call_fmt = fmt_calls(unexpected_calls_count);
-    let max_invalid_calls_listed_count = read_settings().max_invalid_calls_listed_count;
-    let unexpected_calls_msgs: Vec<_> = error_msgs
-        .into_iter()
-        .take(max_invalid_calls_listed_count)
-        .enumerate()
-        .map(|(i, error_msg)| {
-            let error_number = i + 1;
-            return format!("{error_number}. {error_msg}");
-        })
-        .collect();
-    let unexpected_calls_msg = unexpected_calls_msgs.join("\n");
-    let trimmed_output_disclaimer = if unexpected_calls_count > max_invalid_calls_listed_count {
-        format!(" (listing only first {})", max_invalid_calls_listed_count)
-    } else {
-        String::new()
-    };
-    let error_msg = format!(
-        "Did not expect to receive any other calls. Received {unexpected_calls_count} unexpected {call_fmt}{trimmed_output_disclaimer}:
-{unexpected_calls_msg}"
-    );
-    panic!("{error_msg}");
-}
-
 pub(crate) fn panic_no_return_value_was_configured(
     formatted_fn_name: &str,
     call_args: Vec<ArgInfo>,
     generic_parameter_infos: Vec<GenericParameterInfo>,
 ) -> ! {
-    let call_msg = format_received_unexpected_call_error(
+    let call_msg = format_unexpected_call(
         formatted_fn_name,
         call_args,
         generic_parameter_infos,
