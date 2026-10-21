@@ -2,6 +2,7 @@ mod common {
     pub mod fn_handle_stmt;
     pub mod mock_struct_fn_new;
     pub mod setup_creation_fn;
+    pub mod verify_calls_fn;
 }
 
 pub mod models {

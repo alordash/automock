@@ -254,6 +254,12 @@ fn generate_inner_impl(
             })),
         )
     });
+    let verify_calls_fn = verify_calls_fn::generate(
+        span,
+        verify_calls_fn::Params {
+            for_mockable_trait: false,
+        },
+    );
     let base_fns = trait_info
         .associated_fns
         .iter()
@@ -263,6 +269,7 @@ fn generate_inner_impl(
         .into_iter()
         .chain(maybe_associated_setup_creation_fn.into_iter())
         .chain(maybe_static_controls_creation_fns.into_iter())
+        .chain(core::iter::once(verify_calls_fn))
         .chain(base_fns)
         .map(ImplItem::Fn)
         .collect();

@@ -3,6 +3,13 @@ use not_enough_syntax::*;
 use proc_macro2::Span;
 use syn::*;
 
+pub(crate) fn new_expr(span: Span) -> ExprField {
+    expr::field::new(
+        Expr::Path(self_expr_path(span)),
+        Ident::new("__mock_data", span),
+    )
+}
+
 pub(crate) fn new_field(span: Span) -> Field {
     let result = Field {
         attrs: Vec::new(),

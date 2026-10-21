@@ -1,4 +1,4 @@
-use crate::common::for_generated;
+use crate::common::*;
 use crate::generation::common::*;
 use crate::generation::fn_info::models::*;
 use not_enough_syntax::*;
@@ -32,7 +32,7 @@ pub(crate) fn new_associated(
             eq_token: Token![=](span),
             expr: Box::new(Expr::MethodCall(expr::method_call::new(
                 span,
-                Expr::Field(expr::field::new_self(Ident::new("__mock_data", span))),
+                Expr::Field(data_field::new_expr(span)),
                 Ident::new("get_fn_data", span),
                 [
                     expr::lit::string(span, owner_name),
