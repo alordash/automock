@@ -62,6 +62,7 @@ pub(crate) fn fmt_fn_parameters_msg(
     return args_msg;
 }
 
+// TODO - replace enum with actual value, add if to call site when used with `Skip` policy
 pub(crate) fn fmt_generic_parameter_infos(
     generic_parameter_infos_formatting: GenericParameterInfosFormattingPolicy,
 ) -> String {

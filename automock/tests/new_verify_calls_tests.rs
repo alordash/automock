@@ -6,6 +6,9 @@ fn work(a: i32, b: i32) -> i32 {
 }
 
 #[mock]
+fn gg<T>(t: T) -> T {t}
+
+#[mock]
 trait Trait {
     fn foo(&self, v: i32) -> i32;
     fn bar(&self, b: bool) -> bool;
@@ -49,13 +52,13 @@ mod tests {
         let b = 15;
         let result = 20;
         work::setup(a, b)
-            .returns(result)
+            .returns_once(result)
             .setup(a + 1, b + 11)
             .returns_many([result + 1, 6, 8, 1])
             .setup(a + 2, Arg::is(|x| *x > 5))
-            .returns(result + 2)
+            .returns_once(result + 2)
             .setup(a + 1, Arg::not_eq(b + 11))
-            .returns(result + 1);
+            .returns_once(result + 1);
 
         // TODO - target API?
         // work::setup(1).returns_once(2)
@@ -82,19 +85,19 @@ mod tests {
         let sequence = in_sequence(|| {
             mock.setup()
                 .foo(v)
-                .returns(foo_result)
+                .returns_once(foo_result)
                 .foo(102)
-                .returns(202);
+                .returns_once(202);
             TraitMock::static_setup()
                 .static_foo(44)
-                .returns(11)
+                .returns_once(11)
                 .static_bar(true)
-                .returns(false);
+                .returns_once(false);
             mock.setup()
                 .bar(b)
                 .returns_many([true, false, true, false])
                 .bar(b)
-                .returns(bar_result);
+                .returns_once(bar_result);
         });
 
         // TODO - target API?
@@ -122,17 +125,17 @@ mod tests {
         Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         let sequence = in_sequence(|| {
-            mock.setup().foo(554).returns(123).foo(23950).returns(3);
+            mock.setup().foo(554).returns_once(123).foo(23950).returns_once(3);
             Struct::static_setup()
                 .static_foo(5)
-                .returns(55)
+                .returns_once(55)
                 .static_bar(true)
-                .returns(false);
+                .returns_once(false);
             mock.setup()
                 .bar(true)
-                .returns(false)
+                .returns_once(false)
                 .bar(false)
-                .returns(false);
+                .returns_once(false);
         });
 
         // Act
@@ -141,6 +144,18 @@ mod tests {
 
         // Assert
         Struct::verify_static_calls();
+    }
+    
+    #[test]
+    fn gg_Ok() {
+        // Arrange
+        gg::setup(1).returns_once(2);
+        
+        // Act
+        // assert_eq!(gg(1), 2);
+        
+        // Assert
+        gg::verify_calls::<i32>();
     }
 }
 

@@ -16,8 +16,11 @@ pub(crate) fn panic_unused_configs_error<TMock>(
                 .map(|rc_config| {
                     let config = rc_config.borrow();
                     let args_checker_fmt = config.args_checker.fmt_args();
+                    let generics_info = config.args_checker.get_generic_parameter_infos();
+                    // TODO - improve formatting
+                    let generics_info_str = fmt_generic_parameter_infos(GenericParameterInfosFormattingPolicy::Perform(&generics_info));
                     let times_fmt = format_times(config.return_value_sources.len().times());
-                    let fn_fmt = format!("{}({})", x.formatted_fn_name, args_checker_fmt);
+                    let fn_fmt = format!("{}{generics_info_str}({})", x.formatted_fn_name, args_checker_fmt);
                     return (fn_fmt, times_fmt);
                 })
                 .collect();
