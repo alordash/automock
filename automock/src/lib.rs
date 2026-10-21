@@ -1228,7 +1228,7 @@
 //!
 //! ## Crate settings
 //!
-//! You can configure some crate level options using [`read_settings`] and [`write_settings`]
+//! You can configure some crate level options using [`read`] and [`write`]
 //! functions (or use [`SETTINGS`] static variable directly). This config contains infrastructure
 //! settings.  
 //! Currently it has only `max_invalid_calls_listed_count` parameter that controls how many invalid
@@ -1243,7 +1243,7 @@
 //!
 //! # fn main() {
 //! // Arrange
-//! write_settings().max_invalid_calls_listed_count = 3;
+//! write().max_invalid_calls_listed_count = 3;
 //!
 //! // Act
 //! for i in 0..10 {

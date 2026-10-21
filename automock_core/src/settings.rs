@@ -17,11 +17,11 @@ pub static SETTINGS: LazyLock<RwLock<Settings>> = LazyLock::new(|| RwLock::new(D
 const LOCK_ERROR_MSG: &str = "Unable to lock `automock` settings.";
 
 /// Reads crate level settings, returning read guard.
-pub fn read_settings<'a>() -> RwLockReadGuard<'a, Settings> {
+pub fn read<'a>() -> RwLockReadGuard<'a, Settings> {
     SETTINGS.read().expect(LOCK_ERROR_MSG)
 }
 
 /// Writes crate level settings, returning write guard.
-pub fn write_settings<'a>() -> RwLockWriteGuard<'a, Settings> {
+pub fn write<'a>() -> RwLockWriteGuard<'a, Settings> {
     SETTINGS.write().expect(LOCK_ERROR_MSG)
 }

@@ -6,7 +6,7 @@
 // > Still, when the pointer metadata APIs are stable, we should definitely move to them:
 // > https://github.com/rust-lang/rust/issues/81513
 #[repr(C)]
-pub struct FatPointer {
+pub(crate) struct FatPointer {
     pub data_pointer: *mut (),
     pub metadata_pointer: *const (),
 }
