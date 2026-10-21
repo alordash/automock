@@ -1,4 +1,4 @@
-mod common {
+pub mod common {
     pub mod fn_handle_stmt;
     pub mod mock_struct_fn_new;
     pub mod setup_creation_fn;

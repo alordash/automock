@@ -14,6 +14,30 @@ trait Trait {
     fn static_bar(b: bool) -> bool;
 }
 
+#[mock]
+struct Struct;
+
+#[mock]
+impl Struct {
+    pub fn new() -> Self {
+        Self
+    }
+
+    fn foo(&self, v: i32) -> i32 {
+        v
+    }
+    fn bar(&self, b: bool) -> bool {
+        b
+    }
+
+    fn static_foo(v: i32) -> i32 {
+        v
+    }
+    fn static_bar(b: bool) -> bool {
+        b
+    }
+}
+
 mod tests {
     #![allow(non_snake_case)]
     use super::*;
@@ -90,6 +114,33 @@ mod tests {
         // mock.verify_calls();
 
         // sequence.verify();
+    }
+
+    #[test]
+    fn struct_mock_Ok() {
+        // Arrange
+        Struct::static_setup().new().call_base();
+        let mut mock = Struct::new();
+        let sequence = in_sequence(|| {
+            mock.setup().foo(554).returns(123).foo(23950).returns(3);
+            Struct::static_setup()
+                .static_foo(5)
+                .returns(55)
+                .static_bar(true)
+                .returns(false);
+            mock.setup()
+                .bar(true)
+                .returns(false)
+                .bar(false)
+                .returns(false);
+        });
+
+        // Act
+        let first = mock.foo(554);
+        let second = mock.bar(true);
+
+        // Assert
+        Struct::verify_static_calls();
     }
 }
 

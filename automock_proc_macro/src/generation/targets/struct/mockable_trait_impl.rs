@@ -1,5 +1,6 @@
 use crate::common::*;
 use crate::generation::common::*;
+use crate::generation::mock_struct::common::*;
 use not_enough_syntax::*;
 use proc_macro2::Span;
 use syn::punctuated::Punctuated;
@@ -43,6 +44,19 @@ pub(crate) fn generate(
     let fn_setup = fn_setup(span);
     let type_static_setup = associated_type_impl(span, "StaticSetup", static_setup_struct_type);
     let fn_static_setup = fn_static_setup(span, GenericArgument::Type(struct_type.clone()));
+    let fn_verify_calls = verify_calls_fn::generate(
+        span,
+        verify_calls_fn::Params {
+            for_mockable_trait: true,
+        },
+    );
+    let fn_verify_static_calls = verify_calls_fn::generate_static(
+        span,
+        verify_calls_fn::StaticParams {
+            mock_struct_path: struct_path,
+            for_mockable_trait: true,
+        },
+    );
     let result = ItemImpl {
         attrs: Vec::new(),
         modifiers: ImplModifiers::default(),
@@ -65,6 +79,8 @@ pub(crate) fn generate(
             ImplItem::Fn(fn_setup),
             ImplItem::Type(type_static_setup),
             ImplItem::Fn(fn_static_setup),
+            ImplItem::Fn(fn_verify_calls),
+            ImplItem::Fn(fn_verify_static_calls),
         ],
     };
     return result;
