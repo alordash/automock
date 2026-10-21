@@ -119,16 +119,17 @@ accept_arc(*{r}*)
         #[test]
         fn return_arc_Ok() {
             // Arrange
-            Struct::static_setup().new(Arg::Any).call_base();
+            Struct::static_setup().new(3).call_base();
             let mut mock = Struct::new(3);
             let r = Arc::new(10);
-            mock.setup().return_arc().returns(r.clone());
+            mock.setup().return_arc().returns_once(r.clone());
 
             // Act
             let actual_r = mock.return_arc();
 
             // Assert
             assert_eq!(r, actual_r);
+            mock.verify_calls();
         }
     }
 
@@ -138,24 +139,20 @@ accept_arc(*{r}*)
         #[test]
         fn accept_arc_return_arc_Ok() {
             // Arrange
-            Struct::static_setup().new(Arg::Any).call_base();
+            Struct::static_setup().new(3).call_base();
             let mut mock = Struct::new(3);
             let accepted_r = Arc::new(10);
             let returned_r = Arc::new(20);
             mock.setup()
                 .accept_arc_return_arc(accepted_r.clone())
-                .returns(returned_r.clone());
+                .returns_once(returned_r.clone());
 
             // Act
             let actual_returned_r = mock.accept_arc_return_arc(accepted_r.clone());
 
             // Assert
             assert_eq!(returned_r, actual_returned_r);
-
-            mock.received()
-                .accept_arc_return_arc(accepted_r.clone(), Times::Once)
-                .accept_arc_return_arc(Arg::not_eq(accepted_r), Times::Never)
-                .no_other_calls();
+            mock.verify_calls();
         }
     }
 
@@ -187,24 +184,21 @@ accept_arc(*{r}*)
         #[test]
         fn accept_two_arcs_return_arc_Ok() {
             // Arrange
-            Struct::static_setup().new(Arg::Any).call_base();
+            Struct::static_setup().new(3).call_base();
             let mut mock = Struct::new(3);
             let r1 = Arc::new(10);
             let r2 = Arc::new(20.2);
             let returned_r = Arc::new(String::from("veridis quo"));
             mock.setup()
                 .accept_two_arcs_return_arc(r1.clone(), r2.clone())
-                .returns(returned_r.clone());
+                .returns_once(returned_r.clone());
 
             // Act
             let actual_returned_r = mock.accept_two_arcs_return_arc(r1.clone(), r2.clone());
 
             // Assert
             assert_eq!(returned_r, actual_returned_r);
-
-            mock.received()
-                .accept_two_arcs_return_arc(r1, r2, Times::Once)
-                .no_other_calls();
+            mock.verify_calls();
         }
     }
 }

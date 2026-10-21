@@ -225,7 +225,7 @@ mod tests {
         // Arrange
         let mut mock = AssociatedTypeMock::<i32>::new();
 
-        mock.setup().get().returns(123);
+        mock.setup().get().returns_once(123);
 
         // Act
         let result = mock.get();
@@ -233,7 +233,7 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received().get(1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -241,7 +241,9 @@ mod tests {
         // Arrange
         let mut mock = MultipleAssociatedTypesMock::<i32, String, bool>::new();
 
-        mock.setup().foo().returns((42, "hello".to_owned(), true));
+        mock.setup()
+            .foo()
+            .returns_once((42, "hello".to_owned(), true));
 
         // Act
         let result = mock.foo();
@@ -249,7 +251,7 @@ mod tests {
         // Assert
         assert_eq!(result, (42, "hello".to_owned(), true,));
 
-        mock.received().foo(1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -356,11 +358,13 @@ mod tests {
         // Arrange
         let mut mock = FunctionPointersMock::new();
 
-        mock.setup().foo(increment as fn(i32) -> i32).returns(42);
+        mock.setup()
+            .foo(increment as fn(i32) -> i32)
+            .returns_once(42);
 
         mock.setup()
             .bar(pointer_length as unsafe fn(*const u8) -> usize)
-            .returns(123);
+            .returns_once(123);
 
         let value = 42u8;
 
@@ -375,10 +379,7 @@ mod tests {
         assert_eq!(result, 42);
         assert_eq!(unsafe_result, 123);
 
-        mock.received().foo(increment as fn(i32) -> i32, 1.time());
-
-        mock.received()
-            .bar(pointer_length as unsafe fn(*const u8) -> usize, 1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -471,9 +472,9 @@ mod tests {
         let mut a = TraitAMock::new();
         let mut b = TraitBMock::new();
 
-        a.setup().foo().returns(1);
+        a.setup().foo().returns_once(1);
 
-        b.setup().foo().returns(2);
+        b.setup().foo().returns_once(2);
 
         // Act
         let a_result = a.foo();
@@ -483,9 +484,9 @@ mod tests {
         assert_eq!(a_result, 1);
         assert_eq!(b_result, 2);
 
-        a.received().foo(1.time());
+        a.verify_calls();
 
-        b.received().foo(1.time());
+        b.verify_calls();
     }
 
     #[test]
@@ -493,11 +494,11 @@ mod tests {
         // Arrange
         let mut mock = AssociatedFunctionsMock::new();
 
-        mock.setup().method().returns(10);
+        mock.setup().method().returns_once(10);
 
         AssociatedFunctionsMock::static_setup()
             .static_function()
-            .returns(20);
+            .returns_once(20);
 
         // Act
         let method_result = mock.method();
@@ -508,9 +509,9 @@ mod tests {
         assert_eq!(method_result, 10);
         assert_eq!(static_result, 20);
 
-        mock.received().method(1.time());
+        mock.verify_calls();
 
-        AssociatedFunctionsMock::static_received().static_function(1.time());
+        AssociatedFunctionsMock::verify_static_calls();
     }
 
     #[test]
@@ -533,7 +534,7 @@ mod tests {
         // `Self` return types require a concrete value.
         // This assumes your generated mock can construct
         // the mocked Self value.
-        mock.setup().foo().returns(SelfTypesMock::new());
+        mock.setup().foo().returns_once(SelfTypesMock::new());
 
         // Act
         let result = mock.foo();
@@ -541,7 +542,7 @@ mod tests {
         // Assert
         let _ = result;
 
-        mock.received().foo(1.time());
+        mock.verify_calls();
     }
 
     #[test]

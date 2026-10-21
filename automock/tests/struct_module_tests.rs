@@ -72,7 +72,7 @@ mod tests {
     #[test]
     fn DiffStructSetup_work_DoesNotAffectAnotherModule() {
         // Arrange
-        a::Struct::static_setup().work().returns(10);
+        a::Struct::static_setup().work().returns_once(10);
 
         // Act
         let panic_message = record_panic(b::Struct::work);
@@ -91,7 +91,10 @@ mod tests {
     #[test]
     fn DiffTraitSameStructSetup_work_DoesNotAffectAnotherModule() {
         // Arrange
-        a::Struct::static_setup().as_ta_Trait().work().returns(10);
+        a::Struct::static_setup()
+            .as_ta_Trait()
+            .work()
+            .returns_once(10);
 
         // Act
         let panic_message = record_panic(<a::Struct as tb::Trait>::work);
@@ -110,7 +113,10 @@ mod tests {
     #[test]
     fn SameTraitDiffStructSetup_work_DoesNotAffectAnotherModule() {
         // Arrange
-        a::Struct::static_setup().as_ta_Trait().work().returns(10);
+        a::Struct::static_setup()
+            .as_ta_Trait()
+            .work()
+            .returns_once(10);
 
         // Act
         let panic_message = record_panic(<b::Struct as ta::Trait>::work);
@@ -129,7 +135,10 @@ mod tests {
     #[test]
     fn DiffTraitDiffStructSetup_work_DoesNotAffectAnotherModule() {
         // Arrange
-        a::Struct::static_setup().as_ta_Trait().work().returns(10);
+        a::Struct::static_setup()
+            .as_ta_Trait()
+            .work()
+            .returns_once(10);
 
         // Act
         let panic_message = record_panic(<b::Struct as tb::Trait>::work);

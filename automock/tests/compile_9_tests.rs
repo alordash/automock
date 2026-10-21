@@ -33,14 +33,14 @@ mod tests {
             .work::<_, i32, true, 2>(10, &"amogus")
             .call_base()
             .work::<_, _, true, 4>(10, &"amogus")
-            .returns(v2)
+            .returns_once(v2)
             .and_does(|_, _| {})
             .work::<_, _, false, 2>(10, &"amogus")
-            .returns(v3)
+            .returns_once(v3)
             .work::<_, _, false, 2>(10, &"amogus")
-            .returns(v4)
-            .work::<Foo, _, false, 2>(23, Arg::Any)
-            .returns(v5);
+            .returns_once(v4)
+            .work::<Foo, _, false, 2>(23, Arg::is(|foo: &&Foo| foo.amogus == 53.2f32))
+            .returns_once(v5);
 
         let av3 = mock.work::<_, i32, false, 2>(10, &"amogus");
         let av2 = mock.work::<_, i32, true, 4>(10, &"amogus");
@@ -53,20 +53,6 @@ mod tests {
         assert_eq!(v3, av3);
         assert_eq!(v4, av4);
         assert_eq!(v5, av5);
-
-        mock.received()
-            .work::<_, i32, true, 4>(10, &"amogus", Times::Once)
-            .work::<_, i32, false, 2>(10, &"amogus", Times::Once)
-            .work::<_, [i32; 5], false, 2>(10, &"amogus", Times::Once)
-            .work::<_, i32, true, 2>(10, &"quo vadis", Times::Never)
-            .work::<_, i32, true, 4>(11, &"amogus", Times::Never)
-            .work::<_, i32, false, 2>(10, &"quo vadis", Times::Never)
-            .work::<_, i32, true, 2>(10, &true, Times::Never)
-            .work::<Foo, char, false, 2>(
-                23,
-                Arg::is(|foo: &&Foo| foo.amogus == 53.2f32),
-                Times::Once,
-            )
-            .no_other_calls();
+        mock.verify_calls();
     }
 }

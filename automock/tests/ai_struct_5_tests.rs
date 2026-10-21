@@ -532,13 +532,13 @@ mod tests {
 
         mock.setup()
             .generic::<String>("hello".to_owned())
-            .returns("world".to_owned());
+            .returns_once("world".to_owned());
 
         mock.setup()
             .generic_two::<i32, String>(42, "hello".to_owned())
-            .returns((123, "world".to_owned()));
+            .returns_once((123, "world".to_owned()));
 
-        mock.setup().generic_bounded::<i32>(42).returns(123);
+        mock.setup().generic_bounded::<i32>(42).returns_once(123);
 
         // Act
         let result = mock.generic::<String>("hello".to_owned());
@@ -554,13 +554,7 @@ mod tests {
 
         assert_eq!(bounded, 123);
 
-        mock.received()
-            .generic::<String>("hello".to_owned(), Times::Once);
-
-        mock.received()
-            .generic_two::<i32, String>(42, "hello".to_owned(), Times::Once);
-
-        mock.received().generic_bounded::<i32>(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -570,7 +564,7 @@ mod tests {
 
         let value = 42;
 
-        mock.setup().generic_lifetime(&value).returns(&value);
+        mock.setup().generic_lifetime(&value).returns_once(&value);
 
         // Act
         let result = mock.generic_lifetime(&value);
@@ -578,7 +572,7 @@ mod tests {
         // Assert
         assert_eq!(result, &42);
 
-        mock.received().generic_lifetime(&value, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -588,7 +582,7 @@ mod tests {
 
         mock.setup()
             .const_generic::<4>([1, 2, 3, 4])
-            .returns([4, 3, 2, 1]);
+            .returns_once([4, 3, 2, 1]);
 
         // Act
         let result = mock.const_generic::<4>([1, 2, 3, 4]);
@@ -596,8 +590,7 @@ mod tests {
         // Assert
         assert_eq!(result, [4, 3, 2, 1]);
 
-        mock.received()
-            .const_generic::<4>([1, 2, 3, 4], Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -607,11 +600,11 @@ mod tests {
 
         let value = 42;
 
-        mock.setup().lifetime(&value).returns(&value);
+        mock.setup().lifetime(&value).returns_once(&value);
 
         mock.setup()
             .multiple_lifetimes("hello", "world")
-            .returns(("foo", "bar"));
+            .returns_once(("foo", "bar"));
 
         // Act
         let result = mock.lifetime(&value);
@@ -623,10 +616,7 @@ mod tests {
 
         assert_eq!(pair, ("foo", "bar"));
 
-        mock.received().lifetime(&value, Times::Once);
-
-        mock.received()
-            .multiple_lifetimes("hello", "world", Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -635,8 +625,8 @@ mod tests {
         let mut mock = create_mock();
 
         mock.setup()
-            .references(Arg::Any, Arg::Any, Arg::Any, Arg::Any)
-            .returns(123);
+            .references(&10, &mut 20, &&10, &mut &10)
+            .returns_once(123);
 
         let value = 10;
         let mut mutable = 20;
@@ -648,8 +638,7 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received()
-            .references(Arg::Any, Arg::Any, Arg::Any, Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -658,8 +647,11 @@ mod tests {
         let mut mock = create_mock();
 
         mock.setup()
-            .raw_pointers(Arg::Any, Arg::Any)
-            .returns(std::ptr::null());
+            .raw_pointers(
+                Arg::is(|pointer: &*const i32| unsafe { **pointer } == 42),
+                Arg::is(|mutable_pointer: &*mut i32| unsafe { **mutable_pointer } == 123),
+            )
+            .returns_once(std::ptr::null());
 
         let value = 42;
         let mut mutable = 123;
@@ -670,8 +662,7 @@ mod tests {
         // Assert
         assert!(result.is_null());
 
-        mock.received()
-            .raw_pointers(Arg::Any, Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -681,7 +672,7 @@ mod tests {
 
         mock.setup()
             .function_pointer(increment as fn(i32) -> i32, 42)
-            .returns(123);
+            .returns_once(123);
 
         // Act
         let result = mock.function_pointer(increment as fn(i32) -> i32, 42);
@@ -689,8 +680,7 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received()
-            .function_pointer(increment as fn(i32) -> i32, 42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -699,8 +689,11 @@ mod tests {
         let mut mock = create_mock();
 
         mock.setup()
-            .unsafe_function_pointer(pointer_length as unsafe fn(*const u8) -> usize, Arg::Any)
-            .returns(123);
+            .unsafe_function_pointer(
+                pointer_length as unsafe fn(*const u8) -> usize,
+                Arg::is(|pointer: &*const u8| unsafe { **pointer } == 42),
+            )
+            .returns_once(123);
 
         let value = 42u8;
 
@@ -712,11 +705,7 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received().unsafe_function_pointer(
-            pointer_length as unsafe fn(*const u8) -> usize,
-            Arg::Any,
-            Times::Once,
-        );
+        mock.verify_calls();
     }
 
     #[test]
@@ -724,11 +713,11 @@ mod tests {
         // Arrange
         let mut mock = create_mock();
 
-        mock.setup().closure(Arg::Any, 42).returns(100);
+        mock.setup().closure(Arg::Any, 42).returns_once(100);
 
-        mock.setup().closure_mut(Arg::Any, 42).returns(200);
+        mock.setup().closure_mut(Arg::Any, 42).returns_once(200);
 
-        mock.setup().closure_once(Arg::Any, 42).returns(300);
+        mock.setup().closure_once(Arg::Any, 42).returns_once(300);
 
         // Act
         let a = mock.closure(|x| x + 1, 42);
@@ -742,11 +731,7 @@ mod tests {
         assert_eq!(b, 200);
         assert_eq!(c, 300);
 
-        mock.received().closure(Arg::Any, 42, Times::Once);
-
-        mock.received().closure_mut(Arg::Any, 42, Times::Once);
-
-        mock.received().closure_once(Arg::Any, 42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -754,11 +739,19 @@ mod tests {
         // Arrange
         let mut mock = create_mock();
 
-        mock.setup().iterator(Arg::Any).returns(123);
+        mock.setup().iterator(Arg::Any).returns_once(123);
 
-        mock.setup().display(Arg::Any).returns("mocked".to_owned());
+        mock.setup()
+            .display(Arg::is(|value: &Box<dyn std::fmt::Display>| {
+                value.to_string() == "42"
+            }))
+            .returns_once("mocked".to_owned());
 
-        mock.setup().debug(Arg::Any).returns("debugged".to_owned());
+        mock.setup()
+            .debug(Arg::is(|value: &&dyn std::fmt::Debug| {
+                format!("{value:?}") == "\"hello\""
+            }))
+            .returns_once("debugged".to_owned());
 
         // Act
         let iterator_result = mock.iterator(vec![1, 2, 3].into_iter());
@@ -774,11 +767,7 @@ mod tests {
 
         assert_eq!(debug_result, "debugged");
 
-        mock.received().iterator(Arg::Any, Times::Once);
-
-        mock.received().display(Arg::Any, Times::Once);
-
-        mock.received().debug(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -786,7 +775,11 @@ mod tests {
         // Arrange
         let mut mock = create_mock();
 
-        mock.setup().self_argument(Arg::Any).returns(true);
+        mock.setup()
+            .self_argument(Arg::is(
+                |value: &Option<Box<MonsterStruct<'static, i32, 4>>>| value.is_none(),
+            ))
+            .returns_once(true);
 
         // Act
         let result = mock.self_argument(None);
@@ -794,7 +787,7 @@ mod tests {
         // Assert
         assert!(result);
 
-        mock.received().self_argument(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -804,11 +797,11 @@ mod tests {
 
         mock.setup()
             .return_self()
-            .returns(MonsterStruct::<'static, i32, 4>::new());
+            .returns_once(MonsterStruct::<'static, i32, 4>::new());
 
         mock.setup()
             .return_option_self()
-            .returns(Some(MonsterStruct::<'static, i32, 4>::new()));
+            .returns_once(Some(MonsterStruct::<'static, i32, 4>::new()));
 
         // Act
         let result = mock.return_self();
@@ -820,9 +813,7 @@ mod tests {
 
         assert!(option.is_some());
 
-        mock.received().return_self(Times::Once);
-
-        mock.received().return_option_self(Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -831,8 +822,8 @@ mod tests {
         let mut mock = create_mock();
 
         mock.setup()
-            .unsafe_method(Arg::Any)
-            .returns(std::ptr::null_mut());
+            .unsafe_method(Arg::is(|pointer: &*mut i32| unsafe { **pointer } == 42))
+            .returns_once(std::ptr::null_mut());
 
         let mut value = 42;
 
@@ -842,7 +833,7 @@ mod tests {
         // Assert
         assert!(result.is_null());
 
-        mock.received().unsafe_method(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -850,15 +841,15 @@ mod tests {
         // Arrange
         let mut mock = create_mock();
 
-        mock.setup().extern_c(42).returns(123);
+        mock.setup().extern_c(42).returns_once(123);
 
         mock.setup()
-            .unsafe_extern_c(Arg::Any)
-            .returns(std::ptr::null_mut());
+            .unsafe_extern_c(Arg::is(|pointer: &*mut i32| unsafe { **pointer } == 42))
+            .returns_once(std::ptr::null_mut());
 
         mock.setup()
             .extern_c_function_pointer(c_increment as extern "C" fn(i32) -> i32, 42)
-            .returns(456);
+            .returns_once(456);
 
         let mut value = 42;
 
@@ -877,15 +868,7 @@ mod tests {
 
         assert_eq!(function_result, 456);
 
-        mock.received().extern_c(42, Times::Once);
-
-        mock.received().unsafe_extern_c(Arg::Any, Times::Once);
-
-        mock.received().extern_c_function_pointer(
-            c_increment as extern "C" fn(i32) -> i32,
-            42,
-            Times::Once,
-        );
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -936,8 +919,8 @@ mod tests {
         let mut mock = create_mock();
 
         mock.setup()
-            .async_unsafe(Arg::Any)
-            .returns(std::ptr::null_mut());
+            .async_unsafe(Arg::is(|pointer: &*mut i32| unsafe { **pointer } == 42))
+            .returns_once(std::ptr::null_mut());
 
         let mut value = 42;
 
@@ -947,7 +930,7 @@ mod tests {
         // Assert
         assert!(result.is_null());
 
-        mock.received().async_unsafe(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -1030,13 +1013,13 @@ mod tests {
         // Arrange
         let mut mock = create_mock();
 
-        mock.setup().default_method(42).returns(123);
+        mock.setup().default_method(42).returns_once(123);
 
         mock.setup()
             .default_generic::<String>("hello".to_owned())
-            .returns("world".to_owned());
+            .returns_once("world".to_owned());
 
-        mock.setup().default_const::<4>().returns([1, 2, 3, 4]);
+        mock.setup().default_const::<4>().returns_once([1, 2, 3, 4]);
 
         // Act
         let result = mock.default_method(42);
@@ -1052,11 +1035,6 @@ mod tests {
 
         assert_eq!(array, [1, 2, 3, 4]);
 
-        mock.received().default_method(42, Times::Once);
-
-        mock.received()
-            .default_generic::<String>("hello".to_owned(), Times::Once);
-
-        mock.received().default_const::<4>(Times::Once);
+        mock.verify_calls();
     }
 }

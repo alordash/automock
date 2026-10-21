@@ -56,34 +56,32 @@ mod tests {
     #[test]
     fn simple_struct_method() {
         // Arrange
-        Calculator::static_setup().new(Arg::Any).call_base();
+        Calculator::static_setup().new(1).call_base();
         let mut mock = Calculator::new(1);
 
-        mock.setup().add(10).returns(42);
+        mock.setup().add(10).returns_once(42);
 
         // Act
         let result = mock.add(10);
 
         // Assert
         assert_eq!(result, 42);
-
-        mock.received().add(10, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
     fn struct_through_consumer() {
         // Arrange
-        Calculator::static_setup().new(Arg::Any).call_base();
+        Calculator::static_setup().new(1).call_base();
         let mut mock = Calculator::new(1);
 
-        mock.setup().add(10).returns(42);
+        mock.setup().add(10).returns_once(42);
 
         // Act
         let result = consumer::add(&mock, 10);
 
         // Assert
         assert_eq!(result, 42);
-
-        mock.received().add(10, Times::Once);
+        mock.verify_calls();
     }
 }

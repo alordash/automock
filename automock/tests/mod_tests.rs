@@ -47,8 +47,14 @@ mod tests {
         let a_return_value = 10;
         let b_return_value = 20;
 
-        mock.setup().as_a_Trait().work().returns(a_return_value);
-        mock.setup().as_b_Trait().work().returns(b_return_value);
+        mock.setup()
+            .as_a_Trait()
+            .work()
+            .returns_once(a_return_value);
+        mock.setup()
+            .as_b_Trait()
+            .work()
+            .returns_once(b_return_value);
 
         // Act
         let a_result = a::Trait::work(&mock);
@@ -57,8 +63,6 @@ mod tests {
         // Assert
         assert_eq!(a_return_value, a_result);
         assert_eq!(b_return_value, b_result);
-        mock.received().as_a_Trait().work(Times::Once);
-        mock.received().as_b_Trait().work(Times::Once);
-        mock.received().no_other_calls();
+        mock.verify_calls();
     }
 }

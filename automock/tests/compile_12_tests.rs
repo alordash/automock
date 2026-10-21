@@ -56,13 +56,13 @@ mod tests {
     fn struct_test() {
         // Arrange
         let mock_number = 10;
-        Struct::static_setup().new(Arg::Any).call_base();
+        Struct::static_setup().new(mock_number).call_base();
         let mut mock = Struct::new(mock_number);
 
         let get_number_returned_value = 22;
         mock.setup()
             .get_number()
-            .always_returns(get_number_returned_value)
+            .returns(get_number_returned_value, 2.times())
             .format()
             .call_base();
 
@@ -73,11 +73,11 @@ mod tests {
         mock.setup()
             .as_MyTrait()
             .work(get_number_returned_value)
-            .returns(my_trait_work_returned_value_for_format.clone())
+            .returns_once(my_trait_work_returned_value_for_format.clone())
             .work(my_trait_work_accepted_value_for_call_base)
             .call_base()
             .work(my_trait_work_accepted_value_for_mock)
-            .returns(my_trait_work_returned_value_for_mock.clone());
+            .returns_once(my_trait_work_returned_value_for_mock.clone());
 
         // Act
         let actual_get_number_returned_value = mock.get_number();
@@ -104,12 +104,6 @@ mod tests {
             my_trait_work_returned_value_for_mock,
             actual_my_trait_work_returned_value_for_mock
         );
-
-        mock.received().get_number(Times::Exactly(2));
-        mock.received()
-            .as_MyTrait()
-            .work(my_trait_work_accepted_value_for_mock, Times::Once)
-            .work(get_number_returned_value, Times::Once);
-        mock.received().no_other_calls();
+        mock.verify_calls();
     }
 }

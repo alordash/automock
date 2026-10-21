@@ -57,12 +57,9 @@ mod tests {
         // = 50
         //
         assert_eq!(result, 50);
-
-        calculate::received_nothing();
-
-        adjust::received_nothing();
-
-        transform::received_nothing();
+        calculate::verify_calls();
+        adjust::verify_calls();
+        transform::verify_calls();
     }
 
     #[test]
@@ -70,7 +67,7 @@ mod tests {
         // Arrange
         calculate::setup(10).call_base();
 
-        transform::setup(10).always_returns(100);
+        transform::setup(10).returns(100, 2.times());
 
         adjust::setup(10).call_base();
 
@@ -88,12 +85,9 @@ mod tests {
         // = 210
         //
         assert_eq!(result, 210);
-
-        calculate::received_nothing();
-
-        transform::received(10, Times::Exactly(2));
-
-        adjust::received_nothing();
+        calculate::verify_calls();
+        transform::verify_calls();
+        adjust::verify_calls();
     }
 
     #[test]
@@ -101,9 +95,9 @@ mod tests {
         // Arrange
         calculate::setup(10).call_base();
 
-        adjust::setup(10).returns(500);
+        adjust::setup(10).returns_once(500);
 
-        transform::setup(10).returns(100);
+        transform::setup(10).returns_once(100);
 
         // Act
         let result = calculate(10);
@@ -117,11 +111,8 @@ mod tests {
         // transform must only be called once.
         //
         assert_eq!(result, 600);
-
-        calculate::received_nothing();
-
-        adjust::received(10, Times::Once);
-
-        transform::received(10, Times::Once);
+        calculate::verify_calls();
+        adjust::verify_calls();
+        transform::verify_calls();
     }
 }

@@ -1,4 +1,3 @@
-use crate::constants;
 use crate::generation::common::{fn_data_stmt, generic_arguments};
 use crate::generation::fn_info::models::*;
 use not_enough_syntax::expr;
@@ -7,8 +6,6 @@ use syn::punctuated::Punctuated;
 use syn::*;
 
 pub(crate) fn generate(span: Span, mock_path: Path, fn_info: &FnInfo) -> ItemFn {
-    let generics =
-        generics_with_default_arg_lifetime(span, fn_info.merged_generics.clone());
     let sig = Signature {
         constness: None,
         asyncness: None,
@@ -16,7 +13,7 @@ pub(crate) fn generate(span: Span, mock_path: Path, fn_info: &FnInfo) -> ItemFn 
         abi: None,
         fn_token: Token![fn](span),
         ident: Ident::new("verify_calls", span),
-        generics,
+        generics: fn_info.merged_generics.clone(),
         paren_token: token::Paren(span),
         inputs: Punctuated::new(),
         variadic: None,
@@ -28,7 +25,7 @@ pub(crate) fn generate(span: Span, mock_path: Path, fn_info: &FnInfo) -> ItemFn 
         generic_arguments::Params {
             mock_struct_path: mock_path.clone(),
             fn_info,
-            remove_lifetime_generic_arguments: false,
+            remove_lifetime_generic_arguments: true,
         },
     );
     let (fn_data_var_path, fn_data_stmt) = fn_data_stmt::new_static(
@@ -61,14 +58,4 @@ pub(crate) fn generate(span: Span, mock_path: Path, fn_info: &FnInfo) -> ItemFn 
     };
 
     return result;
-}
-
-fn generics_with_default_arg_lifetime(span: Span, mut generics: Generics) -> Generics {
-    let lifetime = Lifetime::new(constants::DEFAULT_ARG_LIFETIME_IDENT_STR, span);
-    for type_param in generics.type_params_mut() {
-        type_param
-            .bounds
-            .push(TypeParamBound::Lifetime(lifetime.clone()));
-    }
-    return generics;
 }

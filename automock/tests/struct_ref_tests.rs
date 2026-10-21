@@ -130,13 +130,14 @@ accept_ref(*{r}*)
             Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
             let r = Box::leak(Box::new(11));
-            mock.setup().return_ref().returns(r);
+            mock.setup().return_ref().returns_once(r);
 
             // Act
             let actual_r = mock.return_ref();
 
             // Assert
             assert_eq!(r, actual_r);
+            mock.verify_calls();
         }
     }
 
@@ -152,18 +153,14 @@ accept_ref(*{r}*)
             let returned_r = &20;
             mock.setup()
                 .accept_ref_return_ref(accepted_r)
-                .returns(returned_r);
+                .returns_once(returned_r);
 
             // Act
             let actual_returned_r = mock.accept_ref_return_ref(accepted_r);
 
             // Assert
             assert_eq!(returned_r, actual_returned_r);
-
-            mock.received()
-                .accept_ref_return_ref(accepted_r, Times::Once)
-                .accept_ref_return_ref(Arg::not_eq(accepted_r), Times::Never)
-                .no_other_calls();
+            mock.verify_calls();
         }
     }
 
@@ -202,17 +199,14 @@ accept_ref(*{r}*)
             let returned_r = "veridis quo";
             mock.setup()
                 .accept_two_refs_return_ref(r1, r2)
-                .returns(returned_r);
+                .returns_once(returned_r);
 
             // Act
             let actual_returned_r = mock.accept_two_refs_return_ref(r1, r2);
 
             // Assert
             assert_eq!(returned_r, actual_returned_r);
-
-            mock.received()
-                .accept_two_refs_return_ref(r1, r2, Times::Once)
-                .no_other_calls();
+            mock.verify_calls();
         }
     }
 }

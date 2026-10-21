@@ -69,14 +69,14 @@ mod tests {
 
         calculator
             .setup()
-            .add(Arg::Any, Arg::Any)
-            .returns_with(|(_, _)| 100)
-            .multiply(Arg::Any, Arg::Any)
-            .returns_with(|(_, _)| 200)
-            .generic::<i32>(Arg::Any)
-            .returns_with(|(_,)| 300)
+            .add(2, 3)
+            .returns_once_with(|(_, _)| 100)
+            .multiply(4, 5)
+            .returns_once_with(|(_, _)| 200)
+            .generic::<i32>(6)
+            .returns_once_with(|(_,)| 300)
             .get()
-            .returns(&400) //400
+            .returns_once(&400) //400
             .reset()
             .does(|_, _| {});
 
@@ -85,5 +85,6 @@ mod tests {
 
         // Assert
         assert_eq!(result, 100 + 200 + 300 + 400);
+        calculator.verify_calls();
     }
 }

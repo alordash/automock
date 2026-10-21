@@ -32,15 +32,14 @@ mod tests {
 
         mock.setup().calculate().call_base();
 
-        mock.setup().work(1).returns(10);
+        mock.setup().work(1).returns_once(10);
 
         // Act
         let result = mock.calculate();
 
         // Assert
         assert_eq!(result, 10);
-
-        mock.received().work(1, 1.time()).no_other_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -50,14 +49,13 @@ mod tests {
 
         mock.setup().calculate().call_base();
 
-        mock.setup().work(1).returns(20);
+        mock.setup().work(1).returns_once(20);
 
         // Act
         let result = mock.calculate();
 
         // Assert
         assert_eq!(result, 20);
-
-        mock.received().work(1, 1.time()).no_other_calls();
+        mock.verify_calls();
     }
 }

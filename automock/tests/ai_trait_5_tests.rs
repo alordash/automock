@@ -26,9 +26,9 @@ mod same_name_tests {
         let mut b = SameNamesBMock::new();
         let mut c = SameNamesDifferentGenericsMock::new();
 
-        a.setup().foo(1).returns(10);
-        b.setup().foo(1).returns(20);
-        c.setup().foo(1).returns(30);
+        a.setup().foo(1).returns_once(10);
+        b.setup().foo(1).returns_once(20);
+        c.setup().foo(1).returns_once(30);
 
         // Act
         let a_result = a.foo(1);
@@ -39,9 +39,8 @@ mod same_name_tests {
         assert_eq!(a_result, 10);
         assert_eq!(b_result, 20);
         assert_eq!(c_result, 30);
-
-        a.received().foo(1, Times::Once);
-        b.received().foo(1, Times::Once);
-        c.received().foo(1, Times::Once);
+        a.verify_calls();
+        b.verify_calls();
+        c.verify_calls();
     }
 }

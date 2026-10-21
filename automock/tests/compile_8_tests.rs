@@ -25,14 +25,16 @@ mod tests {
 
         mock.setup()
             .work(v1)
-            .returns(r1)
+            .returns_once(r1)
             .work(v2)
-            .returns(r2)
+            .returns_once(r2)
             .work(Arg::is(|x| *x < 0))
-            .returns_with(move |(number,)| *number + r3)
+            .returns_once_with(move |(number,)| *number + r3)
             .and_does(|_, (_,)| {})
-            .work(Arg::Any)
-            .always_returns(r45);
+            .work(v4)
+            .returns_once(r45)
+            .work(v5)
+            .returns_once(r45);
 
         // Act
         let actual_r1 = mock.work(v1);
@@ -47,14 +49,6 @@ mod tests {
         assert_eq!(r3 + v3, actual_r3);
         assert_eq!(r45, actual_r4);
         assert_eq!(r45, actual_r5);
-
-        mock.received()
-            .work(v1, Times::Once)
-            .work(v2, Times::Once)
-            .work(v3, Times::Once)
-            .work(v4, Times::Once)
-            .work(v5, Times::Once)
-            .work(Arg::Any, Times::Exactly(5))
-            .no_other_calls();
+        mock.verify_calls();
     }
 }

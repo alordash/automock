@@ -354,7 +354,7 @@ mod tests {
 
         let value = 42;
 
-        mock.setup().generic_lifetime(&value).returns(&value);
+        mock.setup().generic_lifetime(&value).returns_once(&value);
 
         // Act
         let result = mock.generic_lifetime(&value);
@@ -362,7 +362,7 @@ mod tests {
         // Assert
         assert_eq!(result, &42);
 
-        mock.received().generic_lifetime(&value, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -420,11 +420,11 @@ mod tests {
         // Arrange
         let mut mock = MonsterMock::<i32, 4, DefaultOutput, DefaultIterator<i32>>::new();
 
-        mock.setup().associated_type(42).returns(123);
+        mock.setup().associated_type(42).returns_once(123);
 
         mock.setup()
             .associated_type_nested(Some(vec![42]))
-            .returns(Some(vec![123]));
+            .returns_once(Some(vec![123]));
 
         // Act
         let result = mock.associated_type(42);
@@ -435,10 +435,7 @@ mod tests {
         assert_eq!(result, 123);
         assert_eq!(nested, Some(vec![123]));
 
-        mock.received().associated_type(42, Times::Once);
-
-        mock.received()
-            .associated_type_nested(Some(vec![42]), Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -482,15 +479,15 @@ mod tests {
 
         mock.setup()
             .function_pointer(increment as fn(i32) -> i32)
-            .returns(123);
+            .returns_once(123);
 
         mock.setup()
             .unsafe_function_pointer(pointer_length as unsafe fn(*const u8) -> usize)
-            .returns(456);
+            .returns_once(456);
 
         mock.setup()
             .c_function_pointer(c_increment as extern "C" fn(i32) -> i32)
-            .returns(789);
+            .returns_once(789);
 
         // Act
         let normal = mock.function_pointer(increment as fn(i32) -> i32);
@@ -506,14 +503,7 @@ mod tests {
         assert_eq!(unsafe_result, 456);
         assert_eq!(c_result, 789);
 
-        mock.received()
-            .function_pointer(increment as fn(i32) -> i32, Times::Once);
-
-        mock.received()
-            .unsafe_function_pointer(pointer_length as unsafe fn(*const u8) -> usize, Times::Once);
-
-        mock.received()
-            .c_function_pointer(c_increment as extern "C" fn(i32) -> i32, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -521,11 +511,11 @@ mod tests {
         // Arrange
         let mut mock = MonsterMock::<i32, 4, DefaultOutput, DefaultIterator<i32>>::new();
 
-        mock.setup().closure(Arg::Any).returns(10);
+        mock.setup().closure(Arg::Any).returns_once(10);
 
-        mock.setup().closure_mut(Arg::Any).returns(20);
+        mock.setup().closure_mut(Arg::Any).returns_once(20);
 
-        mock.setup().closure_once(Arg::Any).returns(30);
+        mock.setup().closure_once(Arg::Any).returns_once(30);
 
         // Act
         let result1 = mock.closure(|x| x + 1);
@@ -539,11 +529,7 @@ mod tests {
         assert_eq!(result2, 20);
         assert_eq!(result3, 30);
 
-        mock.received().closure(Arg::Any, Times::Once);
-
-        mock.received().closure_mut(Arg::Any, Times::Once);
-
-        mock.received().closure_once(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -582,7 +568,7 @@ mod tests {
         // Arrange
         let mut mock = MonsterMock::<i32, 4, DefaultOutput, DefaultIterator<i32>>::new();
 
-        mock.setup().return_self().returns(MonsterMock::<
+        mock.setup().return_self().returns_once(MonsterMock::<
             i32,
             4,
             DefaultOutput,
@@ -591,7 +577,7 @@ mod tests {
 
         mock.setup()
             .return_option_self()
-            .returns(Some(MonsterMock::<
+            .returns_once(Some(MonsterMock::<
                 i32,
                 4,
                 DefaultOutput,
@@ -607,9 +593,7 @@ mod tests {
         let _ = result;
         assert!(option.is_some());
 
-        mock.received().return_self(Times::Once);
-
-        mock.received().return_option_self(Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -740,11 +724,11 @@ mod tests {
         // Arrange
         let mut mock = MonsterMock::<i32, 4, DefaultOutput, DefaultIterator<i32>>::new();
 
-        mock.setup().default_method(42).returns(123);
+        mock.setup().default_method(42).returns_once(123);
 
         mock.setup()
             .default_generic::<String>("hello".to_owned())
-            .returns("world".to_owned());
+            .returns_once("world".to_owned());
 
         // Act
         let result = mock.default_method(42);
@@ -755,10 +739,7 @@ mod tests {
         assert_eq!(result, 123);
         assert_eq!(generic, "world");
 
-        mock.received().default_method(42, Times::Once);
-
-        mock.received()
-            .default_generic::<String>("hello".to_owned(), Times::Once);
+        mock.verify_calls();
     }
 
     #[test]

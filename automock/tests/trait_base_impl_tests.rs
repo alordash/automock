@@ -20,18 +20,14 @@ mod tests {
         let mut mock = TraitMock::new();
 
         let value = 302;
-        mock.setup().get_plus_one().returns(value);
+        mock.setup().get_plus_one().returns_once(value);
 
         // Act
         let actual_value = mock.get_plus_one();
 
         // Assert
         assert_eq!(value, actual_value);
-
-        mock.received()
-            .get_plus_one(Times::Once)
-            .get(Times::Never)
-            .no_other_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -40,7 +36,11 @@ mod tests {
         let mut mock = TraitMock::new();
 
         let value = 302;
-        mock.setup().get().returns(value).get_plus_one().call_base();
+        mock.setup()
+            .get()
+            .returns_once(value)
+            .get_plus_one()
+            .call_base();
 
         // Act
         let actual_value = mock.get_plus_one();
@@ -48,7 +48,6 @@ mod tests {
         // Assert
         let expected_value = value + 1;
         assert_eq!(expected_value, actual_value);
-
-        mock.received().get(Times::Once).no_other_calls();
+        mock.verify_calls();
     }
 }

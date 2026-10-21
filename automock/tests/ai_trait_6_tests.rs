@@ -62,15 +62,14 @@ mod tests {
         // Arrange
         let mut mock = dependency::DependencyMock::new();
 
-        mock.setup().simple(42).returns(123);
+        mock.setup().simple(42).returns_once(123);
 
         // Act
         let result = consumer::call_simple(&mock, 42);
 
         // Assert
         assert_eq!(result, 123);
-
-        mock.received().simple(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -80,16 +79,14 @@ mod tests {
 
         mock.setup()
             .generic::<String>("input".to_owned())
-            .returns("output".to_owned());
+            .returns_once("output".to_owned());
 
         // Act
         let result = consumer::call_generic(&mock, "input".to_owned());
 
         // Assert
         assert_eq!(result, "output");
-
-        mock.received()
-            .generic::<String>("input".to_owned(), Times::Once);
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -97,15 +94,14 @@ mod tests {
         // Arrange
         let mut mock = dependency::DependencyMock::new();
 
-        mock.setup().async_call(42).returns(123);
+        mock.setup().async_call(42).returns_once(123);
 
         // Act
         let result = consumer::call_async(&mock, 42).await;
 
         // Assert
         assert_eq!(result, 123);
-
-        mock.received().async_call(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -129,14 +125,13 @@ mod tests {
         // Arrange
         dependency::DependencyMock::static_setup()
             .static_call(42)
-            .returns(123);
+            .returns_once(123);
 
         // Act
         let result = consumer::call_static(42);
 
         // Assert
         assert_eq!(result, 123);
-
-        dependency::DependencyMock::static_received().static_call(42, Times::Once);
+        dependency::DependencyMock::verify_static_calls();
     }
 }

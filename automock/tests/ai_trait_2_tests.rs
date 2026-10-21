@@ -279,43 +279,46 @@ mod tests {
         let mut repo = RepositoryMock::<Item, RepoError, 'm', 3>::new();
         repo.setup()
             .name()
-            .returns('v')
-            .get(Arg::Any)
-            .returns_with(|(id,)| Ok(Item(*id as i32 + 100)))
-            .update(Arg::Any, Arg::Any)
-            .returns_with(|(id, value)| {
+            .returns_once('v')
+            .get(10)
+            .returns_once_with(|(id,)| Ok(Item(*id as i32 + 100)))
+            .update(20, Arg::is(|value: &Item| value.0 == 30))
+            .returns_once_with(|(id, value)| {
                 assert_eq!(*id, 20);
                 assert_eq!(value.0, 30);
 
                 Ok(())
             })
-            .find(Arg::Any)
-            .returns_with(|(ids,)| {
+            .find(&[1, 2, 3, 4][..])
+            .returns_once_with(|(ids,)| {
                 assert_eq!(ids, &[1, 2, 3, 4]);
 
                 Some(&Item(300))
             })
-            .process::<i32>(Arg::Any, Arg::Any)
-            .returns_with(|(value, callback)| {
+            .process::<i32>(40, Arg::Any)
+            .returns_once_with(|(value, callback)| {
                 let value = *value + 100;
                 Ok(callback(Item(value)))
             })
-            .combine(Arg::Any, Arg::Any)
-            .returns_with(|(values, extra): (&mut &[Item], &mut Option<Item>)| {
+            .combine(
+                Arg::is(|values: &&[Item]| values.iter().map(|x| x.0).eq([1, 2, 3])),
+                Arg::is(|extra: &Option<Item>| extra.as_ref().map(|x| x.0) == Some(4)),
+            )
+            .returns_once_with(|(values, extra): (&mut &[Item], &mut Option<Item>)| {
                 let sum = values.iter().map(|x| x.0).sum::<i32>();
 
                 let extra = extra.clone().map(|x| x.0).unwrap_or_default();
 
                 Ok(Item(sum + extra + 400))
             })
-            .mutate(Arg::Any)
-            .returns_with(|(value,)| {
+            .mutate(Arg::is(|value: &&mut Item| value.0 == 50))
+            .returns_once_with(|(value,)| {
                 value.0 += 500;
 
                 Ok(value)
             })
             .sized_only()
-            .returns(600.into());
+            .returns_once(600.into());
 
         // Act
         let result = use_repository(&mut repo);
@@ -330,6 +333,7 @@ mod tests {
                 + 550   // mutate
                 + 600 // sized_only
         );
+        repo.verify_calls();
     }
 
     #[test]
@@ -337,20 +341,23 @@ mod tests {
         // Arrange
         let mut repo = DynRepositoryMock::<Item, RepoError>::new();
         repo.setup()
-            .get(Arg::Any)
-            .returns_with(|(id,)| Ok(Item(*id as i32 + 100)))
-            .update(Arg::Any, Arg::Any)
-            .returns(Ok(()))
-            .find(Arg::Any)
-            .returns(Some(&Item(200)))
-            .combine(Arg::Any, Arg::Any)
-            .returns_with(|(values, extra)| {
+            .get(1)
+            .returns_once_with(|(id,)| Ok(Item(*id as i32 + 100)))
+            .update(2, Arg::is(|value: &Item| value.0 == 3))
+            .returns_once(Ok(()))
+            .find(&[4, 5, 6][..])
+            .returns_once(Some(&Item(200)))
+            .combine(
+                Arg::is(|values: &&[Item]| values.iter().map(|x| x.0).eq([7, 8])),
+                Arg::is(|extra: &Option<Item>| extra.as_ref().map(|x| x.0) == Some(9)),
+            )
+            .returns_once_with(|(values, extra)| {
                 let sum = values.iter().map(|x| x.0).sum::<i32>();
 
                 Ok(Item(sum + extra.clone().map(|x| x.0).unwrap_or_default()))
             })
-            .mutate(Arg::Any)
-            .returns_with(|(value,)| {
+            .mutate(Arg::is(|value: &&mut Item| value.0 == 10))
+            .returns_once_with(|(value,)| {
                 value.0 += 100;
 
                 Ok(value)
@@ -367,5 +374,6 @@ mod tests {
                 + 24  // combine: 7 + 8 + 9
                 + 110 // mutate
         );
+        repo.verify_calls();
     }
 }

@@ -98,13 +98,14 @@ accept_rc(*{r}*)
             // Arrange
             let mut mock = TraitMock::new();
             let r = Rc::new(10);
-            mock.setup().return_rc().returns(r.clone());
+            mock.setup().return_rc().returns_once(r.clone());
 
             // Act
             let actual_r = mock.return_rc();
 
             // Assert
             assert_eq!(r, actual_r);
+            mock.verify_calls();
         }
     }
 
@@ -119,18 +120,14 @@ accept_rc(*{r}*)
             let returned_r = Rc::new(20);
             mock.setup()
                 .accept_rc_return_rc(accepted_r.clone())
-                .returns(returned_r.clone());
+                .returns_once(returned_r.clone());
 
             // Act
             let actual_returned_r = mock.accept_rc_return_rc(accepted_r.clone());
 
             // Assert
             assert_eq!(returned_r, actual_returned_r);
-
-            mock.received()
-                .accept_rc_return_rc(accepted_r.clone(), Times::Once)
-                .accept_rc_return_rc(Arg::not_eq(accepted_r), Times::Never)
-                .no_other_calls();
+            mock.verify_calls();
         }
     }
 
@@ -167,17 +164,14 @@ accept_rc(*{r}*)
             let returned_r = Rc::new(String::from("veridis quo"));
             mock.setup()
                 .accept_two_rcs_return_rc(r1.clone(), r2.clone())
-                .returns(returned_r.clone());
+                .returns_once(returned_r.clone());
 
             // Act
             let actual_returned_r = mock.accept_two_rcs_return_rc(r1.clone(), r2.clone());
 
             // Assert
             assert_eq!(returned_r, actual_returned_r);
-
-            mock.received()
-                .accept_two_rcs_return_rc(r1, r2, Times::Once)
-                .no_other_calls();
+            mock.verify_calls();
         }
     }
 }

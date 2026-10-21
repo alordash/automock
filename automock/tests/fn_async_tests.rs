@@ -73,14 +73,14 @@ mod tests {
     async fn output_Ok() {
         // Arrange
         let result = 2;
-        output::setup().returns(result);
+        output::setup().returns_once(result);
 
         // Act
         let actual_result = output().await;
 
         // Assert
         assert_eq!(result, actual_result);
-        output::received(Times::Once).no_other_calls();
+        output::verify_calls();
     }
 
     #[tokio::test]
@@ -88,14 +88,14 @@ mod tests {
         // Arrange
         let value = 1;
         let result = 2;
-        input_output::setup(Arg::Any).returns(result);
+        input_output::setup(value).returns_once(result);
 
         // Act
         let actual_result = input_output(value).await;
 
         // Assert
         assert_eq!(result, actual_result);
-        input_output::received(value, Times::Once).no_other_calls();
+        input_output::verify_calls();
     }
 
     #[tokio::test]

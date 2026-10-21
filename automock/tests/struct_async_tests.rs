@@ -119,14 +119,14 @@ mod tests {
         Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         let result = 2;
-        mock.setup().output().returns(result);
+        mock.setup().output().returns_once(result);
 
         // Act
         let actual_result = mock.output().await;
 
         // Assert
         assert_eq!(result, actual_result);
-        mock.received().output(Times::Once).no_other_calls();
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -136,16 +136,14 @@ mod tests {
         let mut mock = Struct::new();
         let value = 1;
         let result = 2;
-        mock.setup().input_output(Arg::Any).returns(result);
+        mock.setup().input_output(value).returns_once(result);
 
         // Act
         let actual_result = mock.input_output(value).await;
 
         // Assert
         assert_eq!(result, actual_result);
-        mock.received()
-            .input_output(value, Times::Once)
-            .no_other_calls();
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -178,16 +176,14 @@ mod tests {
     async fn static_output_Ok() {
         // Arrange
         let result = 2;
-        Struct::static_setup().static_output().returns(result);
+        Struct::static_setup().static_output().returns_once(result);
 
         // Act
         let actual_result = Struct::static_output().await;
 
         // Assert
         assert_eq!(result, actual_result);
-        Struct::static_received()
-            .static_output(Times::Once)
-            .no_other_calls();
+        Struct::verify_static_calls();
     }
 
     #[tokio::test]
@@ -196,17 +192,15 @@ mod tests {
         let value = 1;
         let result = 2;
         Struct::static_setup()
-            .static_input_output(Arg::Any)
-            .returns(result);
+            .static_input_output(value)
+            .returns_once(result);
 
         // Act
         let actual_result = Struct::static_input_output(value).await;
 
         // Assert
         assert_eq!(result, actual_result);
-        Struct::static_received()
-            .static_input_output(value, Times::Once)
-            .no_other_calls();
+        Struct::verify_static_calls();
     }
 
     #[tokio::test]

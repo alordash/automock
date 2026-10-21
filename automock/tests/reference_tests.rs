@@ -290,7 +290,7 @@ mod tests {
                                                         xaxbxcxdx_t2_ref,
                                                         xapx,
                                                     )
-                                                    .returns(return_value);
+                                                    .returns_once(return_value);
 
                                                 // Act
                                                 let actual_return_value = mock.work(
@@ -316,30 +316,7 @@ mod tests {
 
                                                 // Assert
                                                 assert_eq!(return_value, actual_return_value);
-
-                                                mock.received()
-                                                    .work(
-                                                        a,
-                                                        b,
-                                                        c,
-                                                        d,
-                                                        axb,
-                                                        cxd,
-                                                        abxbax,
-                                                        cdxdcx,
-                                                        abcd,
-                                                        xaxbxcxdx,
-                                                        data,
-                                                        t1,
-                                                        t1_ref,
-                                                        xaxbxcxdx_t1_ref,
-                                                        t2,
-                                                        t2_ref,
-                                                        xaxbxcxdx_t2_ref,
-                                                        xapx,
-                                                        Times::Once,
-                                                    )
-                                                    .no_other_calls()
+                                                mock.verify_calls();
                                             }
                                         }
                                     }
@@ -405,7 +382,7 @@ mod tests {
                                                     xaxbxcxdx_t2_ref,
                                                     xapx,
                                                 )
-                                                .returns(return_value);
+                                                .returns_once(return_value);
 
                                                 // Act
                                                 let actual_return_value = work(
@@ -431,29 +408,7 @@ mod tests {
 
                                                 // Assert
                                                 assert_eq!(return_value, actual_return_value);
-
-                                                work::received(
-                                                    a,
-                                                    b,
-                                                    c,
-                                                    d,
-                                                    axb,
-                                                    cxd,
-                                                    abxbax,
-                                                    cdxdcx,
-                                                    abcd,
-                                                    xaxbxcxdx,
-                                                    data,
-                                                    t1,
-                                                    t1_ref,
-                                                    xaxbxcxdx_t1_ref,
-                                                    t2,
-                                                    t2_ref,
-                                                    xaxbxcxdx_t2_ref,
-                                                    xapx,
-                                                    Times::Once,
-                                                )
-                                                .no_other_calls()
+                                                work::verify_calls::<[i32; 2], bool>();
                                             }
                                         }
                                     }
@@ -523,7 +478,7 @@ mod tests {
                                                         xaxbxcxdx_t2_ref,
                                                         xapx,
                                                     )
-                                                    .returns(return_value);
+                                                    .returns_once(return_value);
                                                 mock.setup()
                                                     .as_Trait()
                                                     .work(
@@ -575,30 +530,7 @@ mod tests {
 
                                                 // Assert
                                                 assert_eq!(return_value, actual_return_value);
-
-                                                mock.received()
-                                                    .work(
-                                                        a,
-                                                        b,
-                                                        c,
-                                                        d,
-                                                        axb,
-                                                        cxd,
-                                                        abxbax,
-                                                        cdxdcx,
-                                                        abcd,
-                                                        xaxbxcxdx,
-                                                        data,
-                                                        t1,
-                                                        t1_ref,
-                                                        xaxbxcxdx_t1_ref,
-                                                        t2,
-                                                        t2_ref,
-                                                        xaxbxcxdx_t2_ref,
-                                                        xapx,
-                                                        Times::Once,
-                                                    )
-                                                    .no_other_calls()
+                                                mock.verify_calls();
                                             }
                                         }
                                     }

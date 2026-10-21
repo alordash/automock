@@ -22,12 +22,12 @@ mod tests {
 
         mock.setup()
             .work(v1)
-            .returns(r1)
+            .returns_once(r1)
             .work(v2)
-            .returns(r2)
+            .returns_once(r2)
             .and_does(|_, _| {})
             .work(Arg::is(|x: &&i32| **x < 0))
-            .returns(r3);
+            .returns_once(r3);
 
         // Act
         let actual_r1 = mock.work(v1);
@@ -38,12 +38,6 @@ mod tests {
         assert_eq!(r1, actual_r1);
         assert_eq!(r2, actual_r2);
         assert_eq!(r3, actual_r3);
-
-        mock.received()
-            .work(v1, Times::Once)
-            .work(v2, Times::Once)
-            .work(v3, Times::Once)
-            .work(Arg::Any, Times::Exactly(3))
-            .no_other_calls();
+        mock.verify_calls();
     }
 }

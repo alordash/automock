@@ -49,15 +49,14 @@ fn received_nothing_else_Ok() {
     // Arrange
     let mut mock = MyTraitMock::new();
     let returned_value = 11;
-    mock.setup().get().returns(returned_value);
+    mock.setup().get().returns_once(returned_value);
 
     // Act
     let actual_returned_value = mock.get();
 
     // Assert
     assert_eq!(returned_value, actual_returned_value);
-
-    mock.received().get(Times::Once).no_other_calls();
+    mock.verify_calls();
 }
 
 #[test]

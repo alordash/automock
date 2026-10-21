@@ -148,13 +148,14 @@ accept_ref(*{r}*)
         fn return_ref_Ok() {
             // Arrange
             let r = Box::leak(Box::new(11));
-            return_ref::setup().returns(r);
+            return_ref::setup().returns_once(r);
 
             // Act
             let actual_r = return_ref();
 
             // Assert
             assert_eq!(r, actual_r);
+            return_ref::verify_calls();
         }
 
         #[test]
@@ -178,17 +179,14 @@ accept_ref(*{r}*)
             // Arrange
             let accepted_r = &10;
             let returned_r = &20;
-            accept_ref_return_ref::setup(accepted_r).returns(returned_r);
+            accept_ref_return_ref::setup(accepted_r).returns_once(returned_r);
 
             // Act
             let actual_returned_r = accept_ref_return_ref(accepted_r);
 
             // Assert
             assert_eq!(returned_r, actual_returned_r);
-
-            accept_ref_return_ref::received(accepted_r, Times::Once)
-                .received(Arg::not_eq(accepted_r), Times::Never)
-                .no_other_calls();
+            accept_ref_return_ref::verify_calls();
         }
 
         #[test]
@@ -202,7 +200,6 @@ accept_ref(*{r}*)
 
             // Assert
             assert_eq!(BASE_ACCEPT_REF_RETURN_REF, actual_returned_r);
-            accept_ref_return_ref::received_nothing();
         }
     }
 
@@ -234,15 +231,14 @@ accept_ref(*{r}*)
             let r1 = &10;
             let r2 = &20.2;
             let returned_r = "veridis quo";
-            accept_two_refs_return_ref::setup(r1, r2).returns(returned_r);
+            accept_two_refs_return_ref::setup(r1, r2).returns_once(returned_r);
 
             // Act
             let actual_returned_r = accept_two_refs_return_ref(r1, r2);
 
             // Assert
             assert_eq!(returned_r, actual_returned_r);
-
-            accept_two_refs_return_ref::received(r1, r2, Times::Once).no_other_calls();
+            accept_two_refs_return_ref::verify_calls();
         }
 
         #[test]
@@ -257,8 +253,6 @@ accept_ref(*{r}*)
 
             // Assert
             assert_eq!(ACCEPT_TWO_REFS_RETURN_REF, actual_returned_r);
-
-            accept_two_refs_return_ref::received_nothing();
         }
     }
 }

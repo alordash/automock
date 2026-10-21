@@ -46,17 +46,14 @@ mod tests {
 
         mock.setup().run().call_base();
 
-        mock.setup().step(3).returns(999);
+        mock.setup().step(3).returns_once(999);
 
         // Act
         let result = mock.run();
 
         // Assert
         assert_eq!(result, 999);
-
-        mock.received().run(Times::Never);
-
-        mock.received().step(3, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -73,14 +70,13 @@ mod tests {
 
         mock.setup().step(1).call_base();
 
-        mock.setup().step(0).returns(999);
+        mock.setup().step(0).returns_once(999);
 
         // Act
         let result = mock.run();
 
         // Assert
         assert_eq!(result, 999);
-
-        mock.received().step(0, Times::Once).no_other_calls();
+        mock.verify_calls();
     }
 }

@@ -77,16 +77,18 @@ mod tests {
             let mut mock = TraitMock::new();
             mock.setup()
                 .work()
-                .returns(Box::new(Bar))
+                .returns_once(Box::new(Bar))
                 .work()
-                .returns(Box::new(Foo));
+                .returns_once(Box::new(Foo));
 
             // Act
-            let result = mock.work();
+            let first_result = mock.work();
+            let second_result = mock.work();
 
             // Assert
-            assert_eq!(result.name(), "Bar");
-            mock.received().work(1.time()).no_other_calls();
+            assert_eq!(first_result.name(), "Bar");
+            assert_eq!(second_result.name(), "Foo");
+            mock.verify_calls();
         }
 
         #[test]
@@ -94,16 +96,14 @@ mod tests {
             // Arrange
             TraitMock::static_setup()
                 .static_work()
-                .returns(Box::new(Bar));
+                .returns_once(Box::new(Bar));
 
             // Act
             let result = TraitMock::static_work();
 
             // Assert
             assert_eq!(result.name(), "Bar");
-            TraitMock::static_received()
-                .static_work(1.time())
-                .no_other_calls();
+            TraitMock::verify_static_calls();
         }
 
         #[test]
@@ -117,7 +117,7 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
-            mock.received().no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
@@ -130,7 +130,6 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
-            TraitMock::static_received().no_other_calls();
         }
     }
 
@@ -142,29 +141,29 @@ mod tests {
             // Arrange
             Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
-            mock.setup().work().returns(Box::new(Bar));
+            mock.setup().work().returns_once(Box::new(Bar));
 
             // Act
             let result = mock.work();
 
             // Assert
             assert_eq!(result.name(), "Bar");
-            mock.received().work(1.time()).no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
         fn Struct_static_work_Ok() {
             // Arrange
-            Struct::static_setup().static_work().returns(Box::new(Bar));
+            Struct::static_setup()
+                .static_work()
+                .returns_once(Box::new(Bar));
 
             // Act
             let result = Struct::static_work();
 
             // Assert
             assert_eq!(result.name(), "Bar");
-            Struct::static_received()
-                .static_work(1.time())
-                .no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[test]
@@ -179,7 +178,7 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
-            mock.received().no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
@@ -192,7 +191,6 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
-            Struct::static_received().no_other_calls();
         }
     }
 
@@ -204,14 +202,14 @@ mod tests {
             // Arrange
             Struct::static_setup().new().call_base();
             let mut mock = Struct::new();
-            mock.setup().as_Trait().work().returns(Box::new(Bar));
+            mock.setup().as_Trait().work().returns_once(Box::new(Bar));
 
             // Act
             let result = Trait::work(&mock);
 
             // Assert
             assert_eq!(result.name(), "Bar");
-            mock.received().as_Trait().work(1.time()).no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
@@ -220,17 +218,14 @@ mod tests {
             Struct::static_setup()
                 .as_Trait()
                 .static_work()
-                .returns(Box::new(Bar));
+                .returns_once(Box::new(Bar));
 
             // Act
             let result = <Struct as Trait>::static_work();
 
             // Assert
             assert_eq!(result.name(), "Bar");
-            Struct::static_received()
-                .as_Trait()
-                .static_work(1.time())
-                .no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[test]
@@ -245,7 +240,7 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
-            mock.received().as_Trait().no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
@@ -258,7 +253,6 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
-            Struct::static_received().as_Trait().no_other_calls();
         }
     }
 }

@@ -32,7 +32,7 @@ mod tests {
         let mut mock = TraitMock::new();
         {
             mock.setup().mutate().does(move |_, _| flag_copy.set(true));
-            mock.setup().consume().returns(33);
+            mock.setup().consume().returns_once(33);
         }
 
         mock.mutate();
