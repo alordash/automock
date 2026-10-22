@@ -1,4 +1,5 @@
 use crate::args::*;
+use crate::fn_parameters::{GenericParameterInfosFormattingPolicy, fmt_generic_parameter_infos};
 use crate::infrastructure::*;
 use error_printing::panic_unused_configs_error;
 use indexmap::IndexMap;
@@ -49,10 +50,7 @@ impl MockData {
         self.id
     }
 
-    pub fn verify_calls(
-        &self,
-        #[allow(unused_variables)] generics_info: Vec<GenericParameterInfo>,
-    ) {
+    pub fn verify_calls(&self, generics_info: Vec<GenericParameterInfo>) {
         let verify_calls_results: Vec<_> = self
             .map
             .read()
@@ -81,16 +79,21 @@ impl MockData {
 
     pub fn get_fn_data<
         'a,
-        TMock,
+        'b,
+        TMock: Mockable<'b>,
         const HAS_RETURN_VALUE: bool,
         const SUPPORTS_BASE_CALLING: bool,
     >(
         &'_ self,
-        owner_name: &'static str,
+        owner_type_name: &'static str,
         fn_ident: &'static str,
         generics_hash_key: GenericsHashKey,
     ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, true> {
-        let unique_fn_ident = format!("{owner_name}_{fn_ident}");
+        let unique_fn_ident = format!("{owner_type_name}_{fn_ident}");
+        let generics_info_str = fmt_generic_parameter_infos(
+            GenericParameterInfosFormattingPolicy::Perform(&TMock::get_generic_parameter_infos()),
+        );
+        let owner_name = format!("{owner_type_name}{generics_info_str}");
         let fn_data_ptr = {
             let mut map_write = self.map.write().expect(UNABLE_TO_LOCK_FOR_WRITING_ERROR);
             let fn_data_ptr_ref = map_write

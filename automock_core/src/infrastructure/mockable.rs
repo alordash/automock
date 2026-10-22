@@ -1,7 +1,7 @@
 use crate::infrastructure::*;
 
 /// Interface of every mock.
-pub trait Mockable<'__ama> {
+pub trait Mockable<'__am> {
     /// Returns id of this mock. Each mock object has unique id, regardless of mock type.
     fn id(&self) -> usize;
 

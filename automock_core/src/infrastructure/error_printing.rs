@@ -53,11 +53,8 @@ pub(crate) fn panic_no_suitable_fn_configuration_found(
     generic_parameter_infos: Vec<GenericParameterInfo>,
     matching_config_search_err: MatchingConfigSearchErr,
 ) -> ! {
-    let call_msg = format_unexpected_call(
-        formatted_fn_name,
-        unexpected_call,
-        generic_parameter_infos,
-    );
+    let call_msg =
+        format_unexpected_call(formatted_fn_name, unexpected_call, generic_parameter_infos);
     let calls = matching_config_search_err
         .args_check_results_sorted_by_number_of_correctly_matched_args_descending;
     let needed_return_value = matching_config_search_err.needed_return_value;
@@ -118,11 +115,7 @@ pub(crate) fn panic_no_return_value_was_configured(
     call_args: Vec<ArgInfo>,
     generic_parameter_infos: Vec<GenericParameterInfo>,
 ) -> ! {
-    let call_msg = format_unexpected_call(
-        formatted_fn_name,
-        call_args,
-        generic_parameter_infos,
-    );
+    let call_msg = format_unexpected_call(formatted_fn_name, call_args, generic_parameter_infos);
     let error_msg = format!("No return value found for following call: {call_msg}");
     panic!("{error_msg}");
 }

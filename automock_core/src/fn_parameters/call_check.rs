@@ -3,7 +3,8 @@ use std::cell::Cell;
 use std::rc::Rc;
 use std::sync::atomic::*;
 
-mod formatting;
+// TODO - restructure - this should go somewhere else
+pub mod formatting;
 pub(crate) use formatting::*;
 
 #[cfg_attr(test, allow(unused))]

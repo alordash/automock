@@ -39,7 +39,7 @@ impl<
     const PASSES_MOCK_TO_CALLBACK: bool,
 > FnData<'am, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
 {
-    pub(crate) fn new(maybe_owner_name: Option<&'static str>, fn_name: &'static str) -> Self {
+    pub(crate) fn new(maybe_owner_name: Option<String>, fn_name: &'static str) -> Self {
         let formatted_fn_name = match maybe_owner_name {
             None => fn_name.to_owned(),
             Some(owner_name) => format!("{owner_name}::{fn_name}"),
