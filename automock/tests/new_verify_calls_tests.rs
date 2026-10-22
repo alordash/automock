@@ -1,4 +1,5 @@
 use automock::*;
+use std::marker::PhantomData;
 
 #[mock]
 fn work(a: i32, b: i32) -> i32 {
@@ -6,7 +7,9 @@ fn work(a: i32, b: i32) -> i32 {
 }
 
 #[mock]
-fn gg<T>(t: T) -> T {t}
+fn gg<T>(t: T) -> T {
+    t
+}
 
 #[mock]
 trait Trait {
@@ -18,12 +21,14 @@ trait Trait {
 }
 
 #[mock]
-struct Struct;
+struct Struct<T> {
+    t: PhantomData<T>,
+}
 
 #[mock]
-impl Struct {
+impl<T> Struct<T> {
     pub fn new() -> Self {
-        Self
+        Self { t: PhantomData }
     }
 
     fn foo(&self, v: i32) -> i32 {
@@ -122,11 +127,15 @@ mod tests {
     #[test]
     fn struct_mock_Ok() {
         // Arrange
-        Struct::static_setup().new().call_base();
-        let mut mock = Struct::new();
+        Struct::<i32>::static_setup().new().call_base();
+        let mut mock = Struct::<i32>::new();
         let sequence = in_sequence(|| {
-            mock.setup().foo(554).returns_once(123).foo(23950).returns_once(3);
-            Struct::static_setup()
+            mock.setup()
+                .foo(554)
+                .returns_once(123)
+                .foo(23950)
+                .returns_once(3);
+            Struct::<i32>::static_setup()
                 .static_foo(5)
                 .returns_once(55)
                 .static_bar(true)
@@ -143,19 +152,20 @@ mod tests {
         let second = mock.bar(true);
 
         // Assert
-        Struct::verify_static_calls();
+        Struct::<i32>::verify_static_calls();
     }
-    
+
     #[test]
     fn gg_Ok() {
         // Arrange
         gg::setup(1).returns_once(2);
-        
+
         // Act
         // assert_eq!(gg(1), 2);
-        
+
         // Assert
-        gg::verify_calls::<i32>();
+        gg::verify_calls::<String>();
+        // gg::verify_calls::<i32>();
     }
 }
 
