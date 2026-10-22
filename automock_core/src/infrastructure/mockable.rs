@@ -1,3 +1,5 @@
+use crate::infrastructure::*;
+
 /// Interface of every mock.
 pub trait Mockable<'__ama> {
     /// Returns id of this mock. Each mock object has unique id, regardless of mock type.
@@ -18,4 +20,7 @@ pub trait Mockable<'__ama> {
     
     /// Verifies that all static function `setup` configurations were called.
     fn verify_static_calls();
+
+    #[doc(hidden)]
+    fn get_generic_parameter_infos() -> Vec<GenericParameterInfo>;
 }

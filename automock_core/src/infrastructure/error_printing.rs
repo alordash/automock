@@ -1,7 +1,7 @@
 use crate::args::*;
 use crate::fn_parameters::*;
 use crate::infrastructure::call_order_verification::CallOrderEntry;
-use crate::infrastructure::{MatchingConfigSearchErr, VerifyCallsResult};
+use crate::infrastructure::*;
 use crate::times::*;
 
 pub(crate) fn panic_unused_configs_error<TMock>(

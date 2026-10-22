@@ -1,5 +1,5 @@
-use crate::infrastructure::FnData;
 use crate::infrastructure::error_printing::panic_unused_configs_error;
+use crate::infrastructure::*;
 use std::any::TypeId;
 use std::cell::UnsafeCell;
 use std::collections::HashMap;
@@ -84,7 +84,10 @@ impl StaticFnDatasGlobalMap {
         map.remove_entry(&type_id);
     }
 
-    pub fn verify_calls<TMock>(&self) {
+    pub fn verify_calls<TMock>(
+        &self,
+        #[allow(unused_variables)] generics_info: Vec<GenericParameterInfo>,
+    ) {
         let type_id = typeid::of::<TMock>();
         let map = self.get_mut_map();
         let Some(fn_datas_raw_ptrs) = map.get(&type_id) else {
@@ -152,6 +155,6 @@ pub fn clear_static_fn_data<TMock>() {
     STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.clear_mock_fn_datas::<TMock>());
 }
 
-pub fn verify_static_fn_calls<TMock>() {
-    STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.verify_calls::<TMock>());
+pub fn verify_static_fn_calls<TMock>(generics_info: Vec<GenericParameterInfo>) {
+    STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.verify_calls::<TMock>(generics_info));
 }

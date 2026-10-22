@@ -12,7 +12,7 @@ fn gg<T>(t: T) -> T {
 }
 
 #[mock]
-trait Trait {
+trait Trait<T> {
     fn foo(&self, v: i32) -> i32;
     fn bar(&self, b: bool) -> bool;
 
@@ -82,7 +82,7 @@ mod tests {
     #[test]
     fn object_mock_Ok() {
         // Arrange
-        let mut mock = TraitMock::new();
+        let mut mock = TraitMock::<i32>::new();
         let v = 10;
         let b = false;
         let foo_result = 20;
@@ -93,7 +93,7 @@ mod tests {
                 .returns_once(foo_result)
                 .foo(102)
                 .returns_once(202);
-            TraitMock::static_setup()
+            TraitMock::<i32>::static_setup()
                 .static_foo(44)
                 .returns_once(11)
                 .static_bar(true)
@@ -118,7 +118,7 @@ mod tests {
         assert_eq!(actual_foo_result, foo_result);
         assert_eq!(actual_bar_result, bar_result);
 
-        TraitMock::verify_static_calls();
+        TraitMock::<i32>::verify_static_calls();
         // mock.verify_calls();
 
         // sequence.verify();
@@ -152,7 +152,7 @@ mod tests {
         let second = mock.bar(true);
 
         // Assert
-        Struct::<i32>::verify_static_calls();
+        Struct::<String>::verify_static_calls();
     }
 
     #[test]

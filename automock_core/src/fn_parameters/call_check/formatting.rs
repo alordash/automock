@@ -1,4 +1,5 @@
 use crate::args::*;
+use crate::infrastructure::*;
 
 pub(crate) enum GenericParameterInfosFormattingPolicy<'a> {
     Perform(&'a [GenericParameterInfo]),

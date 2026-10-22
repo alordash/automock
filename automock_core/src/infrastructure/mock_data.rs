@@ -49,7 +49,10 @@ impl MockData {
         self.id
     }
 
-    pub fn verify_calls(&self) {
+    pub fn verify_calls(
+        &self,
+        #[allow(unused_variables)] generics_info: Vec<GenericParameterInfo>,
+    ) {
         let verify_calls_results: Vec<_> = self
             .map
             .read()

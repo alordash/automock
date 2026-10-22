@@ -27,7 +27,14 @@ pub(crate) fn generate(span: Span, Params { for_mockable_trait }: Params) -> Imp
         span,
         Expr::Field(data_field::new_expr(span)),
         Ident::new("verify_calls", span),
-        [],
+        [Expr::Call(expr::call::new(
+            span,
+            Expr::Path(expr::path::new(
+                span,
+                ["Self", "get_generic_parameter_infos"],
+            )),
+            [],
+        ))],
     ));
     let block = Block {
         brace_token: token::Brace(span),
@@ -90,7 +97,14 @@ pub(crate) fn generate_static(
                 }))],
             ),
         }),
-        [],
+        [Expr::Call(expr::call::new(
+            span,
+            Expr::Path(expr::path::new(
+                span,
+                ["Self", "get_generic_parameter_infos"],
+            )),
+            [],
+        ))],
     ));
 
     let block = Block {

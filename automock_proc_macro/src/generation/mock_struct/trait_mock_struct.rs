@@ -1,6 +1,7 @@
 use crate::common::*;
 use crate::generation::base_fn;
 use crate::generation::common::*;
+use crate::generation::fn_info::*;
 use crate::generation::fn_info::models::*;
 use crate::generation::mock_controls::models::*;
 use crate::generation::mock_struct::common::*;
@@ -267,6 +268,14 @@ fn generate_inner_impl(
             for_mockable_trait: false,
         },
     );
+    let get_generic_parameter_infos_fn =
+        generics_info_provider_impl::generate_fn_get_generic_parameter_infos(
+            span,
+            generics_info_provider_impl::Params {
+                generics: &generics_for_impl,
+                is_static: true,
+            },
+        );
     let base_fns = trait_info
         .associated_fns
         .iter()
@@ -276,7 +285,11 @@ fn generate_inner_impl(
         .into_iter()
         .chain(maybe_associated_setup_creation_fn.into_iter())
         .chain(maybe_static_controls_creation_fns.into_iter())
-        .chain([verify_calls_fn, verify_static_calls_fn])
+        .chain([
+            verify_calls_fn,
+            verify_static_calls_fn,
+            get_generic_parameter_infos_fn,
+        ])
         .chain(base_fns)
         .map(ImplItem::Fn)
         .collect();
