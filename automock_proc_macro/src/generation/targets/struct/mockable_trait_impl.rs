@@ -1,6 +1,5 @@
 use crate::common::*;
 use crate::generation::common::*;
-use crate::generation::fn_info::*;
 use crate::generation::mock_struct::common::*;
 use not_enough_syntax::*;
 use proc_macro2::Span;
@@ -58,14 +57,6 @@ pub(crate) fn generate(
             for_mockable_trait: true,
         },
     );
-    let fn_get_generic_parameter_infos =
-        generics_info_provider_impl::generate_fn_get_generic_parameter_infos(
-            span,
-            generics_info_provider_impl::Params {
-                generics: &generics,
-                is_static: true,
-            },
-        );
     let result = ItemImpl {
         attrs: Vec::new(),
         modifiers: ImplModifiers::default(),
@@ -90,7 +81,6 @@ pub(crate) fn generate(
             ImplItem::Fn(fn_static_setup),
             ImplItem::Fn(fn_verify_calls),
             ImplItem::Fn(fn_verify_static_calls),
-            ImplItem::Fn(fn_get_generic_parameter_infos),
         ],
     };
     return result;

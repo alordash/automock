@@ -4,6 +4,7 @@ mod struct_setup_struct;
 
 use crate::common::patch_lifetime;
 use crate::generation::common::*;
+use crate::generation::fn_info::*;
 use crate::generation::targets::common::*;
 use crate::generation::targets::models::*;
 use not_enough_syntax::*;
@@ -57,6 +58,19 @@ pub(crate) fn generate_module(mut item_struct: ItemStruct) -> MockMod {
             static_setup_struct_ident: struct_static_setup_struct.ident.clone(),
         },
     );
+    let generics_mock_generics_info_provider = generics::remove_defaults(item_struct.generics.clone());
+    let mock_generics_info_provider_impl = generics_info_provider_impl::generate_mock_impl(
+        source_span,
+        generics_mock_generics_info_provider.clone(),
+        Type::Path(TypePath {
+            attrs: Vec::new(),
+            qself: None,
+            path: path::from_ident_with_generics(
+                item_struct.ident.clone(),
+                &generics_mock_generics_info_provider,
+            ),
+        }),
+    );
 
     let mod_visibility = item_struct.vis.clone();
     let mod_ident = format_ident!("__automock_generated_{}Mock", item_struct.ident);
@@ -64,6 +78,7 @@ pub(crate) fn generate_module(mut item_struct: ItemStruct) -> MockMod {
     let items = vec![
         Item::Use(use_super),
         Item::Impl(mockable_trait_impl),
+        Item::Impl(mock_generics_info_provider_impl),
         Item::Struct(struct_setup_struct),
         Item::Impl(struct_setup_struct_clone_impl),
         Item::Struct(struct_static_setup_struct),

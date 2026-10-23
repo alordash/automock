@@ -65,6 +65,15 @@ pub(crate) fn generate(
         path.clone(),
         mod_ident,
     );
+    let mock_generics_info_provider_impl = generics_info_provider_impl::generate_mock_impl(
+        span,
+        generics_for_impl.clone(),
+        Type::Path(TypePath {
+            attrs: Vec::new(),
+            qself: None,
+            path: path.clone(),
+        }),
+    );
     let inner_impl = generate_inner_impl(
         span,
         trait_info,
@@ -80,6 +89,7 @@ pub(crate) fn generate(
         clone_impl,
         trait_impl,
         inner_impl,
+        mock_generics_info_provider_impl,
         maybe_associated_setup,
         maybe_static_setup,
     };
@@ -268,14 +278,6 @@ fn generate_inner_impl(
             for_mockable_trait: false,
         },
     );
-    let get_generic_parameter_infos_fn =
-        generics_info_provider_impl::generate_fn_get_generic_parameter_infos(
-            span,
-            generics_info_provider_impl::Params {
-                generics: &generics_for_impl,
-                is_static: true,
-            },
-        );
     let base_fns = trait_info
         .associated_fns
         .iter()
@@ -285,11 +287,7 @@ fn generate_inner_impl(
         .into_iter()
         .chain(maybe_associated_setup_creation_fn.into_iter())
         .chain(maybe_static_controls_creation_fns.into_iter())
-        .chain([
-            verify_calls_fn,
-            verify_static_calls_fn,
-            get_generic_parameter_infos_fn,
-        ])
+        .chain([verify_calls_fn, verify_static_calls_fn])
         .chain(base_fns)
         .map(ImplItem::Fn)
         .collect();

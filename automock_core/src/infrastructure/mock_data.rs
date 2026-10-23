@@ -79,8 +79,7 @@ impl MockData {
 
     pub fn get_fn_data<
         'a,
-        'b,
-        TMock: Mockable<'b>,
+        TMock: IMockGenericsInfoProvider,
         const HAS_RETURN_VALUE: bool,
         const SUPPORTS_BASE_CALLING: bool,
     >(

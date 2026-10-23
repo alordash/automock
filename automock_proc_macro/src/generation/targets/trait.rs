@@ -106,6 +106,7 @@ pub(crate) fn generate_module(item_trait: ItemTrait) -> MockMod {
             Item::Impl(trait_mock_struct.clone_impl),
             Item::Impl(trait_mock_struct.trait_impl),
             Item::Impl(trait_mock_struct.inner_impl),
+            Item::Impl(trait_mock_struct.mock_generics_info_provider_impl),
         ])
         .chain(
             trait_mock_struct

@@ -143,8 +143,7 @@ pub fn get_static_fn_data<
 
 pub fn get_static_fn_data_for_struct<
     'a,
-    'b,
-    TMock: Mockable<'b>,
+    TMock: IMockGenericsInfoProvider,
     const HAS_RETURN_VALUE: bool,
     const SUPPORTS_BASE_CALLING: bool,
 >(

@@ -45,12 +45,37 @@ pub(crate) fn generate(impl_generics: Generics, generics: Generics, target_type:
     return result;
 }
 
-pub(crate) struct Params<'a> {
-    pub generics: &'a Generics,
-    pub is_static: bool,
+pub(crate) fn generate_mock_impl(span: Span, generics: Generics, target_type: Type) -> ItemImpl {
+    let fn_get_generic_parameter_infos = generate_fn_get_generic_parameter_infos(
+        span,
+        Params {
+            generics: &generics,
+            is_static: true,
+        },
+    );
+    let result = ItemImpl {
+        attrs: Vec::new(),
+        modifiers: ImplModifiers::default(),
+        unsafety: None,
+        impl_token: Token![impl](span),
+        generics,
+        trait_: Some((
+            path::new_global(span, for_generated::new("IMockGenericsInfoProvider")),
+            Token![for](span),
+        )),
+        self_ty: Box::new(target_type),
+        brace_token: token::Brace(span),
+        items: vec![ImplItem::Fn(fn_get_generic_parameter_infos)],
+    };
+    return result;
 }
 
-pub(crate) fn generate_fn_get_generic_parameter_infos(
+struct Params<'a> {
+    generics: &'a Generics,
+    is_static: bool,
+}
+
+fn generate_fn_get_generic_parameter_infos(
     span: Span,
     Params {
         generics,
