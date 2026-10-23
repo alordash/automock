@@ -21,7 +21,6 @@ pub struct FnConfigurator<
 > {
     _phantom_return_value: PhantomData<TReturnValue>,
     fn_config: Rc<RefCell<FnConfig<'am, TMock>>>,
-    owner: &'am TOwner,
     fn_callback_configurator: FnCallbackConfigurator<
         'am,
         TMock,
@@ -60,7 +59,6 @@ impl<
         Self {
             _phantom_return_value: PhantomData,
             fn_config: fn_config.clone(),
-            owner,
             fn_callback_configurator: FnCallbackConfigurator::new(fn_config.clone(), owner),
         }
     }
