@@ -18,9 +18,14 @@ pub(crate) fn panic_unused_configs_error<TMock>(
                     let args_checker_fmt = config.args_checker.fmt_args();
                     let generics_info = config.args_checker.get_generic_parameter_infos();
                     // TODO - improve formatting
-                    let generics_info_str = fmt_generic_parameter_infos(GenericParameterInfosFormattingPolicy::Perform(&generics_info));
+                    let generics_info_str = fmt_generic_parameter_infos(
+                        GenericParameterInfosFormattingPolicy::Perform(&generics_info),
+                    );
                     let times_fmt = format_times(config.return_value_sources.len().times());
-                    let fn_fmt = format!("{}{generics_info_str}({})", x.formatted_fn_name, args_checker_fmt);
+                    let fn_fmt = format!(
+                        "{}{generics_info_str}({})",
+                        x.formatted_fn_name, args_checker_fmt
+                    );
                     return (fn_fmt, times_fmt);
                 })
                 .collect();
@@ -57,7 +62,6 @@ pub(crate) fn panic_no_suitable_fn_configuration_found(
         format_unexpected_call(formatted_fn_name, unexpected_call, generic_parameter_infos);
     let calls = matching_config_search_err
         .args_check_results_sorted_by_number_of_correctly_matched_args_descending;
-    let needed_return_value = matching_config_search_err.needed_return_value;
     let configs_report = if !calls.calls_args_check_results.is_empty() {
         let args_check_results_msgs: Vec<_> = calls
             .calls_args_check_results
@@ -80,13 +84,8 @@ List of existing configuration ordered by number of correctly matched arguments 
     } else {
         String::new()
     };
-    let needed_return_value_msg = if needed_return_value {
-        " because no return value was provided"
-    } else {
-        ""
-    };
     let error_msg = format!(
-        "Mock wasn't configured to handle following call{needed_return_value_msg}:
+        "Mock wasn't configured to handle following call:
 \t{call_msg}{configs_report}"
     );
     panic!("{error_msg}");
@@ -110,13 +109,13 @@ pub(crate) fn format_unexpected_call(
     return error_msg;
 }
 
-pub(crate) fn panic_no_return_value_was_configured(
+pub(crate) fn panic_return_values_exhausted(
     formatted_fn_name: &str,
     call_args: Vec<ArgInfo>,
     generic_parameter_infos: Vec<GenericParameterInfo>,
 ) -> ! {
     let call_msg = format_unexpected_call(formatted_fn_name, call_args, generic_parameter_infos);
-    let error_msg = format!("No return value found for following call: {call_msg}");
+    let error_msg = format!("Return values for following call have been exhausted: {call_msg}");
     panic!("{error_msg}");
 }
 

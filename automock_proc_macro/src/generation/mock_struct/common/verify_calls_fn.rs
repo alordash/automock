@@ -27,7 +27,7 @@ pub(crate) fn generate(span: Span, Params { for_mockable_trait }: Params) -> Imp
         span,
         Expr::Field(data_field::new_expr(span)),
         Ident::new("verify_calls", span),
-        [get_generic_parameter_infos_call(span)],
+        [],
     ));
     let block = Block {
         brace_token: token::Brace(span),
@@ -90,7 +90,7 @@ pub(crate) fn generate_static(
                 }))],
             ),
         }),
-        [get_generic_parameter_infos_call(span)],
+        [],
     ));
 
     let block = Block {
@@ -110,25 +110,5 @@ pub(crate) fn generate_static(
         block,
     };
 
-    return result;
-}
-
-fn get_generic_parameter_infos_call(span: Span) -> Expr {
-    let trait_path_length = for_generated::new("IMockGenericsInfoProvider").len();
-    let fn_path = ExprPath {
-        attrs: Vec::new(),
-        qself: Some(QSelf {
-            lt_token: Token![<](span),
-            ty: Box::new(Type::Path(r#type::path::new(span, ["Self"]))),
-            position: trait_path_length,
-            as_token: Some(Token![as](span)),
-            gt_token: Token![>](span),
-        }),
-        path: path::new_global(
-            span,
-            for_generated::new2("IMockGenericsInfoProvider", "get_generic_parameter_infos"),
-        ),
-    };
-    let result = Expr::Call(expr::call::new(span, Expr::Path(fn_path), []));
     return result;
 }

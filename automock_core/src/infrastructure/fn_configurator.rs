@@ -185,7 +185,16 @@ impl<
     }
 }
 
-impl<'am, TMock, TOwner, TArgRefsTuple, TReturnValue, TMockArg, const SUPPORTS_BASE_CALLING: bool>
+impl<
+    'am,
+    TMock,
+    TOwner,
+    TArgRefsTuple,
+    TReturnValue: Default,
+    TMockArg,
+    const SUPPORTS_BASE_CALLING: bool,
+    const PASSES_MOCK_TO_CALLBACK: bool,
+>
     FnConfigurator<
         'am,
         TMock,
@@ -195,47 +204,42 @@ impl<'am, TMock, TOwner, TArgRefsTuple, TReturnValue, TMockArg, const SUPPORTS_B
         TMockArg,
         false,
         SUPPORTS_BASE_CALLING,
-        false,
+        PASSES_MOCK_TO_CALLBACK,
     >
 {
-    /// Adds callback that is called after source function was called. Callback receives references
-    /// to source function argument values. If function has enabled base implementation, this
-    /// callback is called BEFORE the base implementation.
-    pub fn does(&self, mut callback: impl FnMut(TArgRefsTuple) + 'static) -> &'am TOwner
+    /// Specifies how many times this function must be called.
+    pub fn expect(
+        &self,
+        times: Times,
+    ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     where
         TMock: 'am,
         TArgRefsTuple: 'am,
     {
-        let callback_with_mock =
-            move |_mock: &TMock, arg_refs_tuple: TArgRefsTuple| callback(arg_refs_tuple);
-        self.fn_config.borrow_mut().set_callback(callback_with_mock);
-        return self.owner;
+        let return_values = core::iter::repeat_with(TReturnValue::default)
+            .take(times.0)
+            .map(|x| transmute_lifetime!(DynReturnValue::new(x)))
+            .map(ReturnValueSource::SingleTime);
+        self.fn_config
+            .borrow_mut()
+            .add_return_value_sources(return_values);
+        return &self.fn_callback_configurator;
     }
-}
 
-impl<'am, TMock, TOwner, TArgRefsTuple, TReturnValue, TMockArg, const SUPPORTS_BASE_CALLING: bool>
-    FnConfigurator<
-        'am,
-        TMock,
-        TOwner,
-        TArgRefsTuple,
-        TReturnValue,
-        TMockArg,
-        false,
-        SUPPORTS_BASE_CALLING,
-        true,
-    >
-{
-    /// Adds callback that is called after source function was called. Callback receives reference
-    /// to mock object and references to source function argument values. If function has enabled
-    /// base implementation, this callback is called BEFORE the base implementation.
-    pub fn does(&self, callback: impl FnMut(&TMockArg, TArgRefsTuple) + 'static) -> &'am TOwner
+    /// Specifies that this function must be called exactly once.
+    pub fn expect_once(
+        &self,
+    ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     where
-        TMockArg: 'am,
+        TMock: 'am,
         TArgRefsTuple: 'am,
     {
-        self.fn_config.borrow_mut().set_callback(callback);
-        return self.owner;
+        self.fn_config
+            .borrow_mut()
+            .add_return_value_source(ReturnValueSource::SingleTime(transmute_lifetime!(
+                DynReturnValue::new(TReturnValue::default())
+            )));
+        return &self.fn_callback_configurator;
     }
 }
 

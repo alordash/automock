@@ -50,7 +50,7 @@ impl MockData {
         self.id
     }
 
-    pub fn verify_calls(&self, generics_info: Vec<GenericParameterInfo>) {
+    pub fn verify_calls(&self) {
         let verify_calls_results: Vec<_> = self
             .map
             .read()

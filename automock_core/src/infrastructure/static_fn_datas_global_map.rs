@@ -90,7 +90,7 @@ impl StaticFnDatasGlobalMap {
         map.remove_entry(&type_id);
     }
 
-    pub fn verify_calls<TMock>(&self, generics_info: Vec<GenericParameterInfo>) {
+    pub fn verify_calls<TMock>(&self) {
         let type_id = typeid::of::<TMock>();
         let map = self.get_mut_map();
         let Some(fn_datas_raw_ptrs) = map.get(&type_id) else {
@@ -163,6 +163,6 @@ pub fn clear_static_fn_data<TMock>() {
     STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.clear_mock_fn_datas::<TMock>());
 }
 
-pub fn verify_static_fn_calls<TMock>(generics_info: Vec<GenericParameterInfo>) {
-    STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.verify_calls::<TMock>(generics_info));
+pub fn verify_static_fn_calls<TMock>() {
+    STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.verify_calls::<TMock>());
 }

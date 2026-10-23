@@ -50,7 +50,7 @@ mod tests {
 
         // Assert
         let actual_debug_string = common::debug_string("5");
-        let expected_panic_msg = format!("Mock wasn't configured to handle following call because no return value was provided:
+        let expected_panic_msg = format!("Mock wasn't configured to handle following call:
 	Trait::work<f32, 1>({actual_debug_string})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: work(*{actual_debug_string}*)");
@@ -158,7 +158,7 @@ List of existing configuration ordered by number of correctly matched arguments 
 
         let actual_second_debug_string = common::debug_string("100");
         let expected_panic_msg = format!(
-            "Mock wasn't configured to handle following call because no return value was provided:
+            "Mock wasn't configured to handle following call:
 	Trait::work<[i32; 3], 200>({actual_second_debug_string})"
         );
         assert_eq!(Some(expected_panic_msg.to_owned()), panic_msg);
@@ -199,7 +199,7 @@ List of existing configuration ordered by number of correctly matched arguments 
 
         // Assert
         let expected_debug_string = common::debug_string("5");
-        let expected_panic_msg = format!("Mock wasn't configured to handle following call because no return value was provided:
+        let expected_panic_msg = format!("Mock wasn't configured to handle following call:
 	Trait::static_work<f32, 1>({expected_debug_string})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: static_work(*{expected_debug_string}*)");
@@ -305,7 +305,7 @@ List of existing configuration ordered by number of correctly matched arguments 
 
         let actual_second_debug_string = common::debug_string("100");
         let expected_panic_msg = format!(
-            "Mock wasn't configured to handle following call because no return value was provided:
+            "Mock wasn't configured to handle following call:
 	Trait::static_work<[i32; 3], 200>({actual_second_debug_string})"
         );
         assert_eq!(Some(expected_panic_msg.to_owned()), panic_msg);

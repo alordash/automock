@@ -141,7 +141,6 @@ mod internal {
         pub(super) fn try_get_matching_config<TReturnValue>(
             &self,
             dyn_call: &DynCall<'am>,
-            with_return_value: bool,
         ) -> MatchingConfigSearchResult<'am, TMock> {
             let generics_hash_key = dyn_call.get_generics_hash_key();
             let all_configs = self.configs.borrow();
@@ -151,10 +150,7 @@ mod internal {
             let mut calls_args_check_results = Vec::with_capacity(matching_configs.len());
             for config in matching_configs.iter() {
                 let config_ref = config.borrow();
-                if size_of::<TReturnValue>() != 0
-                    && with_return_value
-                    && !config_ref.has_return_value()
-                {
+                if !config_ref.has_return_value() {
                     continue;
                 }
                 let args_check_result = config_ref.check_call(dyn_call);
@@ -180,7 +176,6 @@ mod internal {
             return MatchingConfigSearchResult::Err(MatchingConfigSearchErr {
                 args_check_results_sorted_by_number_of_correctly_matched_args_descending:
                     calls_check_result,
-                needed_return_value: with_return_value,
             });
         }
     }

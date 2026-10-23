@@ -728,7 +728,7 @@ accept_value(*{first_value}*)
             assert_panics(
                 || mock.accept_two_values_return_value(v1, v2),
                 format!(
-                    "Mock wasn't configured to handle following call because no return value was provided:
+                    "Mock wasn't configured to handle following call:
 	Trait::accept_two_values_return_value({v1}, {v2})"
                 ),
             );
@@ -752,7 +752,7 @@ accept_value(*{first_value}*)
 
             // Assert
             let expected_error_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	Trait::accept_two_values_return_value({invalid_v1}, {invalid_v2})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/2 arguments: accept_two_values_return_value(*{invalid_v1}*, *{invalid_v2}*)"
@@ -780,7 +780,7 @@ List of existing configuration ordered by number of correctly matched arguments 
 
             // Assert
             let expected_error_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	Trait::accept_two_values_return_value({unexpected_v1}, {unexpected_v2})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/2 arguments: accept_two_values_return_value(*{unexpected_v1}*, *{unexpected_v2}*)"

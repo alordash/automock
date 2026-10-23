@@ -22,7 +22,7 @@ mod tests {
 
         // Assert
         assert_eq!(result, 10);
-        assert_eq!(panic_message, Some(r#"Mock wasn't configured to handle following call because no return value was provided:
+        assert_eq!(panic_message, Some(r#"Mock wasn't configured to handle following call:
 	work()"#.to_owned()));
         work::verify_calls();
     }
@@ -42,8 +42,23 @@ mod tests {
         assert_eq!(first, 10);
         assert_eq!(second, 20);
         assert_eq!(third, 30);
-        assert_eq!(panic_message, Some(r#"Mock wasn't configured to handle following call because no return value was provided:
+        assert_eq!(panic_message, Some(r#"Mock wasn't configured to handle following call:
 	work()"#.to_owned()));
+        work::verify_calls();
+    }
+
+    #[test]
+    fn returns_once_SameArgsTwoConfigs_UsesNextConfigAfterFirstIsExhausted() {
+        // Arrange
+        work::setup().returns_once(10).setup().returns_once(20);
+
+        // Act
+        let first = work();
+        let second = work();
+
+        // Assert
+        assert_eq!(first, 10);
+        assert_eq!(second, 20);
         work::verify_calls();
     }
 

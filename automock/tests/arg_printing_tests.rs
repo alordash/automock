@@ -141,7 +141,7 @@ mod tests {
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	accept_ref({unexpected_r})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: accept_ref(*{unexpected_r}*)"
@@ -209,7 +209,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	accept_ref_ptr({unexpected_r:?})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: accept_ref_ptr(*{unexpected_r:?}*)"
@@ -319,7 +319,7 @@ List of existing configuration ordered by number of correctly matched arguments 
 
             let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	generic<{t1_name}, {t2_name}>({unexpected_t1_debug_string})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: generic(*{unexpected_t1_debug_string}*)"
@@ -397,7 +397,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	Trait::accept_ref({unexpected_r})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: accept_ref(*{unexpected_r}*)"
@@ -471,7 +471,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	Trait::accept_ref_ptr({unexpected_r:?})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: accept_ref_ptr(*{unexpected_r:?}*)"
@@ -585,7 +585,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             assert_eq!(return_value, actual_return_value);
             let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	Trait::generic<{t1_name}, {t2_name}>({unexpected_t1_debug_string})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: generic(*{unexpected_t1_debug_string}*)"
@@ -666,7 +666,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	Struct::accept_ref({unexpected_r})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: accept_ref(*{unexpected_r}*)"
@@ -743,7 +743,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	Struct::accept_ref_ptr({unexpected_r:?})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: accept_ref_ptr(*{unexpected_r:?}*)"
@@ -861,7 +861,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             assert_eq!(return_value, actual_return_value);
             let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	Struct::generic<{t1_name}, {t2_name}>({unexpected_t1_debug_string})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: generic(*{unexpected_t1_debug_string}*)"
@@ -949,7 +949,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	<Struct as Trait>::accept_ref({unexpected_r})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: accept_ref(*{unexpected_r}*)"
@@ -1033,7 +1033,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	<Struct as Trait>::accept_ref_ptr({unexpected_r:?})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: accept_ref_ptr(*{unexpected_r:?}*)"
@@ -1162,7 +1162,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             assert_eq!(return_value, actual_return_value);
             let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
-                "Mock wasn't configured to handle following call because no return value was provided:
+                "Mock wasn't configured to handle following call:
 	<Struct as Trait>::generic<{t1_name}, {t2_name}>({unexpected_t1_debug_string})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: generic(*{unexpected_t1_debug_string}*)"
