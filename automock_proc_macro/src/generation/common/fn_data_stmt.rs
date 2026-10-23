@@ -23,6 +23,14 @@ pub(crate) fn new_associated(
         .maybe_owner_name
         .as_ref()
         .expect("Associated function must have owner name.");
+    let maybe_trait_name = match &fn_info.maybe_trait_name {
+        Some(trait_name) => Expr::Call(expr::call::new(
+            span,
+            Expr::Path(expr::path::new(span, ["Some"])),
+            [expr::lit::string(span, trait_name)],
+        )),
+        None => Expr::Path(expr::path::new(span, ["None"])),
+    };
     let fn_data_stmt = Local {
         attrs: Vec::new(),
         let_token: Token![let](span),
@@ -36,6 +44,7 @@ pub(crate) fn new_associated(
                 Ident::new("get_fn_data", span),
                 [
                     expr::lit::string(span, owner_name),
+                    maybe_trait_name,
                     expr::lit::string(span, &fn_info.fn_data_name),
                     Expr::Call(expr::call::new(
                         span,
@@ -74,10 +83,16 @@ pub(crate) fn new_static(
     let fn_name = expr::lit::string(span, &fn_info.fn_data_name);
     let (fn_data_fn_name, args) = match &fn_info.maybe_owner_name {
         None => ("get_static_fn_data", punctuated([fn_name])),
-        Some(owner_name) => (
-            "get_static_fn_data_for_struct",
-            punctuated([expr::lit::string(span, owner_name), fn_name]),
-        ),
+        Some(owner_name) => {
+            let owner_type_name = match &fn_info.maybe_trait_name {
+                Some(trait_name) => format!("<{owner_name} as {trait_name}>"),
+                None => owner_name.clone(),
+            };
+            (
+                "get_static_fn_data_for_struct",
+                punctuated([expr::lit::string(span, &owner_type_name), fn_name]),
+            )
+        }
     };
     let fn_data_stmt = Local {
         attrs: Vec::new(),

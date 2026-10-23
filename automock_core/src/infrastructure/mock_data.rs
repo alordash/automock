@@ -85,14 +85,21 @@ impl MockData {
     >(
         &'_ self,
         owner_type_name: &'static str,
+        maybe_trait_name: Option<&'static str>,
         fn_ident: &'static str,
         generics_hash_key: GenericsHashKey,
     ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, true> {
-        let unique_fn_ident = format!("{owner_type_name}_{fn_ident}");
         let generics_info_str = fmt_generic_parameter_infos(
             GenericParameterInfosFormattingPolicy::Perform(&TMock::get_generic_parameter_infos()),
         );
-        let owner_name = format!("{owner_type_name}{generics_info_str}");
+        let unique_fn_ident = match maybe_trait_name {
+            Some(trait_name) => format!("<{owner_type_name}{generics_info_str} as {trait_name}>_{fn_ident}"),
+            None => format!("{owner_type_name}_{fn_ident}"),
+        };
+        let owner_name = match maybe_trait_name {
+            Some(trait_name) => format!("<{owner_type_name}{generics_info_str} as {trait_name}>"),
+            None => format!("{owner_type_name}{generics_info_str}"),
+        };
         let fn_data_ptr = {
             let mut map_write = self.map.write().expect(UNABLE_TO_LOCK_FOR_WRITING_ERROR);
             let fn_data_ptr_ref = map_write

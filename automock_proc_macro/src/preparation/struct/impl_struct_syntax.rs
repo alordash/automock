@@ -125,7 +125,7 @@ impl<'a> IFnOwner for ImplStructSyntaxAsFnOwner<'a> {
         None
     }
 
-    fn format_name(&self) -> String {
+    fn name(&self) -> String {
         self.struct_ident.to_string()
     }
 

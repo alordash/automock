@@ -37,6 +37,7 @@ fn generate_core(fn_syntax: FnSyntax, generics_for_impl: Generics) -> FnInfo {
         visibility: fn_syntax.visibility,
         merged_generics: fn_syntax.merged_generics,
         maybe_owner_name: fn_syntax.maybe_owner_name,
+        maybe_trait_name: fn_syntax.maybe_trait_name,
         fn_ident: fn_syntax.fn_ident,
         fn_data_name: fn_syntax.fn_data_name,
         maybe_self_type: fn_syntax.maybe_self_type,

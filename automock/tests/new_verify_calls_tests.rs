@@ -46,6 +46,15 @@ impl<T> Struct<T> {
     }
 }
 
+trait Grait<G> {
+    fn work(&self, _: G);
+}
+
+#[mock]
+impl<T, G> Grait<G> for Struct<T> {
+    fn work(&self, _: G) {}
+}
+
 mod tests {
     #![allow(non_snake_case)]
     use super::*;
@@ -104,23 +113,23 @@ mod tests {
                 .bar(b)
                 .returns_once(bar_result);
         });
-    
+
         // TODO - target API?
         // mock.setup()
         //     .work(1).returns_once(2)
         //     .work(3).returns(4, 5.times());
-    
+
         // Act
         let actual_bar_result = mock.bar(b);
         let actual_foo_result = mock.foo(v);
-    
+
         // Assert
         assert_eq!(actual_foo_result, foo_result);
         assert_eq!(actual_bar_result, bar_result);
-    
+
         TraitMock::<i32>::verify_static_calls();
         // mock.verify_calls();
-    
+
         // sequence.verify();
     }
 
@@ -166,6 +175,18 @@ mod tests {
         // Assert
         // gg::verify_calls::<String>();
         gg::verify_calls::<i32>();
+    }
+
+    #[test]
+    fn grait_Ok() {
+        // Arrange
+        Struct::<i32>::static_setup().new().call_base();
+        let mut mock = Struct::<i32>::new();
+
+        mock.setup().as_Grait::<u8>().work(Arg::Any).call_base();
+
+        // Act
+        mock.work("asd");
     }
 }
 

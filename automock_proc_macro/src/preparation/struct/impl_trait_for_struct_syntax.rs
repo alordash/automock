@@ -139,8 +139,12 @@ impl<'a> IFnOwner for ImplTraitForStructSyntaxAsFnOwner<'a> {
         Some(self.trait_ident)
     }
 
-    fn format_name(&self) -> String {
-        format!("<{} as {}>", self.struct_ident, self.trait_ident)
+    fn name(&self) -> String {
+        self.struct_ident.to_string()
+    }
+
+    fn maybe_trait_name(&self) -> Option<String> {
+        Some(self.trait_ident.to_string())
     }
 
     fn generics(&self) -> &Generics {

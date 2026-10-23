@@ -211,7 +211,7 @@ impl<'a> IFnOwner for TraitSyntaxAsFnOwner<'a> {
         None
     }
 
-    fn format_name(&self) -> String {
+    fn name(&self) -> String {
         self.trait_ident.to_string()
     }
 

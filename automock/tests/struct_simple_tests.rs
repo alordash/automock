@@ -213,7 +213,7 @@ mod tests {
             assert_panics(
                 || Trait::f(&mock),
                 r#"Mock wasn't configured to handle following call:
-	<Struct as Trait><i32>::f()"#,
+	<Struct<i32> as Trait>::f()"#,
             );
             mock.verify_calls();
         }
@@ -234,7 +234,7 @@ mod tests {
             assert_panics(
                 || mock.verify_calls(),
                 r#"Expected following calls:
-	<Struct as Trait><i32>::f() 1 time"#,
+	<Struct<i32> as Trait>::f() 1 time"#,
             );
         }
     }
