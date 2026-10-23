@@ -1355,7 +1355,6 @@ pub use automock_proc_macro::mock;
 pub use automock_core::args::*;
 pub use automock_core::in_sequence;
 pub use automock_core::infrastructure::{FnCallbackConfigurator, FnConfigurator, Mockable};
-pub use automock_core::settings::*;
 pub use automock_core::times::*;
 pub use automock_core::transmute_lifetime;
 

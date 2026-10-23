@@ -18,14 +18,15 @@ mod tests {
     fn CallbackIsCalledBeforeBaseImpl() {
         // Arrange
         f::setup().call_base().and_does(|_| callback_dep());
+        let sequence = in_sequence(|| {
+            callback_dep::setup().expect_once();
+            base_dep::setup().expect_once();
+        });
 
         // Act
         f();
 
         // Assert
-        verify_call_order(|| {
-            callback_dep::received(Times::Once).no_other_calls();
-            base_dep::received(Times::Once).no_other_calls();
-        });
+        sequence.verify();
     }
 }

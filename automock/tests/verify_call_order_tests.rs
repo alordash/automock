@@ -39,6 +39,10 @@ mod tests {
     #[test]
     fn OnlyFn_NoVerificationValidOrder_Ok() {
         // Arrange
+        foo::setup(1).expect_once().setup(2).expect_once();
+        foo::setup("amogus").expect_once();
+        bar::setup(false).expect_once();
+
         // Act
         foo(1);
         foo(2);
@@ -46,15 +50,18 @@ mod tests {
         bar(false);
 
         // Assert
-        foo::received(1, Times::Once);
-        foo::received(2, Times::Once);
-        foo::received("amogus", Times::Once).no_other_calls();
-        bar::received(false, Times::Once).no_other_calls();
+        foo::verify_calls::<i32>();
+        foo::verify_calls::<&str>();
+        bar::verify_calls::<bool>();
     }
 
     #[test]
     fn OnlyFn_NoVerificationInvalidOrder_Ok() {
         // Arrange
+        foo::setup(1).expect_once().setup(2).expect_once();
+        foo::setup("amogus").expect_once();
+        bar::setup(false).expect_once();
+
         // Act
         bar(false);
         foo("amogus");
@@ -62,15 +69,20 @@ mod tests {
         foo(1);
 
         // Assert
-        foo::received(1, Times::Once);
-        foo::received(2, Times::Once);
-        foo::received("amogus", Times::Once).no_other_calls();
-        bar::received(false, Times::Once).no_other_calls();
+        foo::verify_calls::<i32>();
+        foo::verify_calls::<&str>();
+        bar::verify_calls::<bool>();
     }
 
     #[test]
     fn OnlyFn_WithVerificationValidOrder_Ok() {
         // Arrange
+        let sequence = in_sequence(|| {
+            foo::setup(1).expect_once().setup(2).expect_once();
+            foo::setup("amogus").expect_once();
+            bar::setup(false).expect_once();
+        });
+
         // Act
         foo(1);
         foo(2);
@@ -78,17 +90,18 @@ mod tests {
         bar(false);
 
         // Assert
-        verify_call_order(|| {
-            foo::received(1, Times::Once);
-            foo::received(2, Times::Once);
-            foo::received("amogus", Times::Once).no_other_calls();
-            bar::received(false, Times::Once).no_other_calls();
-        });
+        sequence.verify();
     }
 
     #[test]
     fn OnlyFn_WithVerification_Panics() {
         // Arrange
+        let sequence = in_sequence(|| {
+            foo::setup(1).expect_once().setup(2).expect_once();
+            foo::setup("amogus").expect_once();
+            bar::setup(false).expect_once();
+        });
+
         // Act
         bar(false);
         foo("amogus");
@@ -101,14 +114,7 @@ mod tests {
         let third_foo_debug_string = common::debug_string(r#""amogus""#);
         let bar_debug_string = common::debug_string("false");
         assert_panics(
-            || {
-                verify_call_order(|| {
-                    foo::received(1, Times::Once);
-                    foo::received(2, Times::Once);
-                    foo::received("amogus", Times::Once).no_other_calls();
-                    bar::received(false, Times::Once).no_other_calls();
-                })
-            },
+            || sequence.verify(),
             format!(
                 r#"Expected to receive these calls in order:
 
@@ -134,6 +140,11 @@ Actually received matching calls in this order:
         let mut trait_mock = TraitMock::new();
         Struct::static_setup().new().call_base();
         let mut struct_mock = Struct::new();
+        foo::setup(1).expect_once();
+        trait_mock.setup().traiting(2).expect_once();
+        struct_mock.setup().structing(3).expect_once();
+        bar::setup(4).expect_once();
+        struct_mock.setup().as_Trait().traiting(5).expect_once();
 
         // Act
         foo(1);
@@ -143,17 +154,10 @@ Actually received matching calls in this order:
         struct_mock.traiting(5);
 
         // Assert
-        foo::received(1, Times::Once).no_other_calls();
-        trait_mock
-            .received()
-            .traiting(2, Times::Once)
-            .no_other_calls();
-        struct_mock
-            .received()
-            .structing(3, Times::Once)
-            .no_other_calls();
-        bar::received(4, Times::Once).no_other_calls();
-        struct_mock.received().as_Trait().traiting(5, Times::Once);
+        foo::verify_calls::<i32>();
+        trait_mock.verify_calls();
+        struct_mock.verify_calls();
+        bar::verify_calls::<i32>();
     }
 
     #[test]
@@ -162,6 +166,11 @@ Actually received matching calls in this order:
         let mut trait_mock = TraitMock::new();
         Struct::static_setup().new().call_base();
         let mut struct_mock = Struct::new();
+        foo::setup(1).expect_once();
+        trait_mock.setup().traiting(2).expect_once();
+        struct_mock.setup().structing(3).expect_once();
+        bar::setup(4).expect_once();
+        struct_mock.setup().as_Trait().traiting(5).expect_once();
 
         // Act
         struct_mock.traiting(5);
@@ -171,18 +180,10 @@ Actually received matching calls in this order:
         foo(1);
 
         // Assert
-        foo::received(1, Times::Once).no_other_calls();
-        trait_mock
-            .received()
-            .traiting(2, Times::Once)
-            .no_other_calls();
-        struct_mock.received().structing(3, Times::Once);
-        bar::received(4, Times::Once).no_other_calls();
-        struct_mock
-            .received()
-            .as_Trait()
-            .traiting(5, Times::Once)
-            .no_other_calls();
+        foo::verify_calls::<i32>();
+        trait_mock.verify_calls();
+        struct_mock.verify_calls();
+        bar::verify_calls::<i32>();
     }
 
     #[test]
@@ -191,6 +192,13 @@ Actually received matching calls in this order:
         let mut trait_mock = TraitMock::new();
         Struct::static_setup().new().call_base();
         let mut struct_mock = Struct::new();
+        let sequence = in_sequence(|| {
+            foo::setup(1).expect_once();
+            trait_mock.setup().traiting(2).expect_once();
+            struct_mock.setup().structing(3).expect_once();
+            bar::setup(4).expect_once();
+            struct_mock.setup().as_Trait().traiting(5).expect_once();
+        });
 
         // Act
         foo(1);
@@ -200,19 +208,7 @@ Actually received matching calls in this order:
         struct_mock.traiting(5);
 
         // Assert
-        verify_call_order(|| {
-            foo::received(1, Times::Once).no_other_calls();
-            trait_mock
-                .received()
-                .traiting(2, Times::Once)
-                .no_other_calls();
-            struct_mock
-                .received()
-                .structing(3, Times::Once)
-                .no_other_calls();
-            bar::received(4, Times::Once).no_other_calls();
-            struct_mock.received().as_Trait().traiting(5, Times::Once);
-        });
+        sequence.verify();
     }
 
     #[test]
@@ -221,6 +217,13 @@ Actually received matching calls in this order:
         let mut trait_mock = TraitMock::new();
         Struct::static_setup().new().call_base();
         let mut struct_mock = Struct::new();
+        let sequence = in_sequence(|| {
+            foo::setup(1).expect_once();
+            trait_mock.setup().traiting(2).expect_once();
+            struct_mock.setup().structing(3).expect_once();
+            bar::setup(4).expect_once();
+            struct_mock.setup().as_Trait().traiting(5).expect_once();
+        });
 
         // Act
         struct_mock.traiting(5);
@@ -233,22 +236,7 @@ Actually received matching calls in this order:
         let foo_debug_string = common::debug_string("1");
         let bar_debug_string = common::debug_string("4");
         assert_panics(
-            || {
-                verify_call_order(|| {
-                    foo::received(1, Times::Once).no_other_calls();
-                    trait_mock
-                        .received()
-                        .traiting(2, Times::Once)
-                        .no_other_calls();
-                    struct_mock.received().structing(3, Times::Once);
-                    bar::received(4, Times::Once).no_other_calls();
-                    struct_mock
-                        .received()
-                        .as_Trait()
-                        .traiting(5, Times::Once)
-                        .no_other_calls();
-                });
-            },
+            || sequence.verify(),
             format!(
                 r#"Expected to receive these calls in order:
 
