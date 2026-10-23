@@ -244,6 +244,8 @@ List of existing configuration ordered by number of correctly matched arguments 
             // Arrange
             type T1 = i32;
             type T2 = f64;
+            let t1_name = core::any::type_name::<T1>();
+            let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t1: T1 = 235;
@@ -262,7 +264,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let arg_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
                 "Expected following calls:
-	generic({arg_debug_string}) 1 time"
+	generic<{t1_name}, {t2_name}>({arg_debug_string}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -274,6 +276,8 @@ List of existing configuration ordered by number of correctly matched arguments 
             type T2 = f64;
             type T3 = usize;
             type T4 = String;
+            let t3_name = core::any::type_name::<T3>();
+            let t4_name = core::any::type_name::<T4>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t3: T3 = 11;
@@ -291,7 +295,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let arg_debug_string = common::debug_string(unexpected_t3.to_string());
             let expected_panic_msg = format!(
                 "Expected following calls:
-	generic({arg_debug_string}) 1 time"
+	generic<{t3_name}, {t4_name}>({arg_debug_string}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
             generic::verify_calls::<T1, T2>();
@@ -343,9 +347,10 @@ List of existing configuration ordered by number of correctly matched arguments 
             let panic_msg = record_panic(|| mock.accept_ref(r));
 
             // Assert
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Trait::accept_ref({r})"
+	Trait<{t0_name}>::accept_ref({r})"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -371,9 +376,10 @@ List of existing configuration ordered by number of correctly matched arguments 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Expected following calls:
-	Trait::accept_ref(&&&i32 == {unexpected_r}) 1 time"
+	Trait<{t0_name}>::accept_ref(&&&i32 == {unexpected_r}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -396,9 +402,10 @@ List of existing configuration ordered by number of correctly matched arguments 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Trait::accept_ref({unexpected_r})
+	Trait<{t0_name}>::accept_ref({unexpected_r})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: accept_ref(*{unexpected_r}*)"
             );
@@ -417,9 +424,10 @@ List of existing configuration ordered by number of correctly matched arguments 
             let panic_msg = record_panic(|| mock.accept_ref_ptr(r));
 
             // Assert
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Trait::accept_ref_ptr({r:?})"
+	Trait<{t0_name}>::accept_ref_ptr({r:?})"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -445,9 +453,10 @@ List of existing configuration ordered by number of correctly matched arguments 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Expected following calls:
-	Trait::accept_ref_ptr(&&*const &&i32 == {unexpected_r:?}) 1 time"
+	Trait<{t0_name}>::accept_ref_ptr(&&*const &&i32 == {unexpected_r:?}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -470,9 +479,10 @@ List of existing configuration ordered by number of correctly matched arguments 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Trait::accept_ref_ptr({unexpected_r:?})
+	Trait<{t0_name}>::accept_ref_ptr({unexpected_r:?})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: accept_ref_ptr(*{unexpected_r:?}*)"
             );
@@ -486,6 +496,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let mock = TraitMock::<T0>::new();
             type T1 = i32;
             type T2 = f64;
+            let t0_name = core::any::type_name::<T0>();
             let t1_name = core::any::type_name::<T1>();
             let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
@@ -497,7 +508,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let t1_debug_string = common::debug_string(t1.to_string());
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Trait::generic<{t1_name}, {t2_name}>({t1_debug_string})",
+	Trait<{t0_name}>::generic<{t1_name}, {t2_name}>({t1_debug_string})",
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -508,6 +519,9 @@ List of existing configuration ordered by number of correctly matched arguments 
             let mut mock = TraitMock::<T0>::new();
             type T1 = i32;
             type T2 = f64;
+            let t0_name = core::any::type_name::<T0>();
+            let t1_name = core::any::type_name::<T1>();
+            let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t1: T1 = 235;
@@ -526,7 +540,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let arg_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
                 "Expected following calls:
-	Trait::generic({arg_debug_string}) 1 time"
+	Trait<{t0_name}>::generic<{t1_name}, {t2_name}>({arg_debug_string}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -539,6 +553,9 @@ List of existing configuration ordered by number of correctly matched arguments 
             type T2 = f64;
             type T3 = usize;
             type T4 = String;
+            let t0_name = core::any::type_name::<T0>();
+            let t3_name = core::any::type_name::<T3>();
+            let t4_name = core::any::type_name::<T4>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t3: T3 = 11;
@@ -558,7 +575,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let arg_debug_string = common::debug_string(unexpected_t3.to_string());
             let expected_panic_msg = format!(
                 "Expected following calls:
-	Trait::generic({arg_debug_string}) 1 time"
+	Trait<{t0_name}>::generic<{t3_name}, {t4_name}>({arg_debug_string}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -569,6 +586,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let mut mock = TraitMock::<T0>::new();
             type T1 = i32;
             type T2 = f64;
+            let t0_name = core::any::type_name::<T0>();
             let t1_name = core::any::type_name::<T1>();
             let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
@@ -586,7 +604,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Trait::generic<{t1_name}, {t2_name}>({unexpected_t1_debug_string})
+	Trait<{t0_name}>::generic<{t1_name}, {t2_name}>({unexpected_t1_debug_string})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: generic(*{unexpected_t1_debug_string}*)"
             );
@@ -610,9 +628,10 @@ List of existing configuration ordered by number of correctly matched arguments 
             let panic_msg = record_panic(|| mock.accept_ref(r));
 
             // Assert
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Struct::accept_ref({r})"
+	Struct<{t0_name}>::accept_ref({r})"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -639,9 +658,10 @@ List of existing configuration ordered by number of correctly matched arguments 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Expected following calls:
-	Struct::accept_ref(&&&i32 == {unexpected_r}) 1 time"
+	Struct<{t0_name}>::accept_ref(&&&i32 == {unexpected_r}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -665,9 +685,10 @@ List of existing configuration ordered by number of correctly matched arguments 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Struct::accept_ref({unexpected_r})
+	Struct<{t0_name}>::accept_ref({unexpected_r})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: accept_ref(*{unexpected_r}*)"
             );
@@ -687,9 +708,10 @@ List of existing configuration ordered by number of correctly matched arguments 
             let panic_msg = record_panic(|| mock.accept_ref_ptr(r));
 
             // Assert
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Struct::accept_ref_ptr({r:?})"
+	Struct<{t0_name}>::accept_ref_ptr({r:?})"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -716,9 +738,10 @@ List of existing configuration ordered by number of correctly matched arguments 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Expected following calls:
-	Struct::accept_ref_ptr(&&*const &&i32 == {unexpected_r:?}) 1 time"
+	Struct<{t0_name}>::accept_ref_ptr(&&*const &&i32 == {unexpected_r:?}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -742,9 +765,10 @@ List of existing configuration ordered by number of correctly matched arguments 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Struct::accept_ref_ptr({unexpected_r:?})
+	Struct<{t0_name}>::accept_ref_ptr({unexpected_r:?})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: accept_ref_ptr(*{unexpected_r:?}*)"
             );
@@ -759,6 +783,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
+            let t0_name = core::any::type_name::<T0>();
             let t1_name = core::any::type_name::<T1>();
             let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
@@ -770,7 +795,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let t1_debug_string = common::debug_string(t1.to_string());
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Struct::generic<{t1_name}, {t2_name}>({t1_debug_string})",
+	Struct<{t0_name}>::generic<{t1_name}, {t2_name}>({t1_debug_string})",
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -782,6 +807,9 @@ List of existing configuration ordered by number of correctly matched arguments 
             let mut mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
+            let t0_name = core::any::type_name::<T0>();
+            let t1_name = core::any::type_name::<T1>();
+            let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t1: T1 = 235;
@@ -800,7 +828,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let arg_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
                 "Expected following calls:
-	Struct::generic({arg_debug_string}) 1 time"
+	Struct<{t0_name}>::generic<{t1_name}, {t2_name}>({arg_debug_string}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -814,6 +842,9 @@ List of existing configuration ordered by number of correctly matched arguments 
             type T2 = f64;
             type T3 = usize;
             type T4 = String;
+            let t0_name = core::any::type_name::<T0>();
+            let t3_name = core::any::type_name::<T3>();
+            let t4_name = core::any::type_name::<T4>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t3: T3 = 11;
@@ -833,7 +864,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let arg_debug_string = common::debug_string(unexpected_t3.to_string());
             let expected_panic_msg = format!(
                 "Expected following calls:
-	Struct::generic({arg_debug_string}) 1 time"
+	Struct<{t0_name}>::generic<{t3_name}, {t4_name}>({arg_debug_string}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -845,6 +876,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let mut mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
+            let t0_name = core::any::type_name::<T0>();
             let t1_name = core::any::type_name::<T1>();
             let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
@@ -862,7 +894,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Struct::generic<{t1_name}, {t2_name}>({unexpected_t1_debug_string})
+	Struct<{t0_name}>::generic<{t1_name}, {t2_name}>({unexpected_t1_debug_string})
 List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
 	1. Matched 0/1 arguments: generic(*{unexpected_t1_debug_string}*)"
             );

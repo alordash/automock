@@ -97,7 +97,7 @@ mod tests {
 
         // Assert
         assert_eq!(TEST_CONST, actual_const_value);
-        mock.received().get_const(Times::Once).no_other_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -161,13 +161,13 @@ mod tests {
     #[test]
     fn get_my_type_StructBase_Ok() {
         // Arrange
+        Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
 
         type FirstTT = u128;
         let first_input: [i32; 4] = [10, 11, 111, 12];
         type SecondTT = f64;
         let second_input: [i32; 4] = [20, 2, 3, 33];
-        type UnknownTT = i16;
 
         mock.setup()
             .as_Trait()
@@ -184,13 +184,6 @@ mod tests {
         let expected_output = u8::default();
         assert_eq!(expected_output, actual_first_output);
         assert_eq!(expected_output, actual_second_output);
-
-        mock.received()
-            .as_Trait()
-            .get_my_type::<FirstTT>(first_input, Times::Once)
-            .get_my_type::<UnknownTT>(first_input, Times::Never)
-            .get_my_type::<SecondTT>(second_input, Times::Once)
-            .get_my_type::<UnknownTT>(second_input, Times::Never);
-        mock.received().no_other_calls();
+        mock.verify_calls();
     }
 }

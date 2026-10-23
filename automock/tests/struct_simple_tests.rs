@@ -51,13 +51,14 @@ mod tests {
         fn f_Ok() {
             // Arrange
             let value = 22;
-            Struct::<i32>::static_setup().new(Arg::Any).call_base();
+            Struct::<i32>::static_setup().new(value).call_base();
             let mut mock = Struct::new(value);
             let callback_flag = Arc::new(RefCell::new(false));
             let callback_flag_clone = callback_flag.clone();
             mock.setup()
                 .f()
-                .does(move |_, _| *callback_flag_clone.borrow_mut() = true);
+                .expect_once()
+                .and_does(move |_, _| *callback_flag_clone.borrow_mut() = true);
 
             // Act
             Struct::non_associative();
@@ -66,27 +67,29 @@ mod tests {
             // Assert
             assert_eq!(value, mock.value);
             assert!(*callback_flag.borrow());
-            mock.received().f(Times::Once).no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
         fn f_NoConfig_Ok() {
             // Arrange
-            Struct::<i32>::static_setup().new(Arg::Any).call_base();
+            Struct::<i32>::static_setup().new(1).call_base();
             let mut mock = Struct::new(1);
+            mock.setup().f().expect_once();
 
             // Act
             mock.f();
 
             // Assert
-            mock.received().f(Times::Once).no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
         fn f_MultipleTimes_Ok() {
             // Arrange
-            Struct::<i32>::static_setup().new(Arg::Any).call_base();
+            Struct::<i32>::static_setup().new(1).call_base();
             let mut mock = Struct::new(1);
+            mock.setup().f().expect(3.times());
 
             // Act
             mock.f();
@@ -94,14 +97,35 @@ mod tests {
             mock.f();
 
             // Assert
-            mock.received().f(Times::Exactly(3)).no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
-        fn f_MultipleTimes_Panics() {
+        fn f_TooManyCalls_Panics() {
             // Arrange
-            Struct::<i32>::static_setup().new(Arg::Any).call_base();
+            Struct::<i32>::static_setup().new(1).call_base();
             let mut mock = Struct::new(1);
+            mock.setup().f().expect(2.times());
+
+            // Act
+            mock.f();
+            mock.f();
+
+            // Assert
+            assert_panics(
+                || mock.f(),
+                r#"Mock wasn't configured to handle following call:
+	Struct<i32>::f()"#,
+            );
+            mock.verify_calls();
+        }
+
+        #[test]
+        fn f_NotEnoughCalls_Panics() {
+            // Arrange
+            Struct::<i32>::static_setup().new(1).call_base();
+            let mut mock = Struct::new(1);
+            mock.setup().f().expect(4.times());
 
             // Act
             mock.f();
@@ -110,47 +134,9 @@ mod tests {
 
             // Assert
             assert_panics(
-                || mock.received().f(Times::Once),
-                r#"Expected to receive a call exactly once matching:
-	Struct::f()
-Actually received 3 matching calls:
-	f()
-	f()
-	f()
-Received no non-matching calls"#,
-            );
-
-            assert_panics(
-                || mock.received().f(Times::Exactly(1)),
-                r#"Expected to receive a call exactly once matching:
-	Struct::f()
-Actually received 3 matching calls:
-	f()
-	f()
-	f()
-Received no non-matching calls"#,
-            );
-
-            assert_panics(
-                || mock.received().f(Times::Exactly(2)),
-                r#"Expected to receive a call 2 times matching:
-	Struct::f()
-Actually received 3 matching calls:
-	f()
-	f()
-	f()
-Received no non-matching calls"#,
-            );
-
-            assert_panics(
-                || mock.received().f(Times::Exactly(4)),
-                r#"Expected to receive a call 4 times matching:
-	Struct::f()
-Actually received 3 matching calls:
-	f()
-	f()
-	f()
-Received no non-matching calls"#,
+                || mock.verify_calls(),
+                r#"Expected following calls:
+	Struct<i32>::f() 1 time"#,
             );
         }
     }
@@ -162,14 +148,15 @@ Received no non-matching calls"#,
         fn Trait_f_Ok() {
             // Arrange
             let value = 22;
-            Struct::<i32>::static_setup().new(Arg::Any).call_base();
+            Struct::<i32>::static_setup().new(value).call_base();
             let mut mock = Struct::new(value);
             let callback_flag = Arc::new(RefCell::new(false));
             let callback_flag_clone = callback_flag.clone();
             mock.setup()
                 .as_Trait()
                 .f()
-                .does(move |_, _| *callback_flag_clone.borrow_mut() = true);
+                .expect_once()
+                .and_does(move |_, _| *callback_flag_clone.borrow_mut() = true);
 
             // Act
             Struct::non_associative();
@@ -178,29 +165,29 @@ Received no non-matching calls"#,
             // Assert
             assert_eq!(value, mock.value);
             assert!(*callback_flag.borrow());
-            mock.received().as_Trait().f(Times::Once);
-            mock.received().no_other_calls()
+            mock.verify_calls();
         }
 
         #[test]
         fn Trait_f_NoConfig_Ok() {
             // Arrange
-            Struct::<i32>::static_setup().new(Arg::Any).call_base();
+            Struct::<i32>::static_setup().new(1).call_base();
             let mut mock = Struct::new(1);
+            mock.setup().as_Trait().f().expect_once();
 
             // Act
             Trait::f(&mock);
 
             // Assert
-            mock.received().as_Trait().f(Times::Once);
-            mock.received().no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
         fn Trait_f_MultipleTimes_Ok() {
             // Arrange
-            Struct::<i32>::static_setup().new(Arg::Any).call_base();
+            Struct::<i32>::static_setup().new(1).call_base();
             let mut mock = Struct::new(1);
+            mock.setup().as_Trait().f().expect(3.times());
 
             // Act
             Trait::f(&mock);
@@ -208,15 +195,35 @@ Received no non-matching calls"#,
             Trait::f(&mock);
 
             // Assert
-            mock.received().as_Trait().f(Times::Exactly(3));
-            mock.received().no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
-        fn Trait_f_MultipleTimes_Panics() {
+        fn Trait_f_TooManyCalls_Panics() {
             // Arrange
-            Struct::<i32>::static_setup().new(Arg::Any).call_base();
+            Struct::<i32>::static_setup().new(1).call_base();
             let mut mock = Struct::new(1);
+            mock.setup().as_Trait().f().expect(2.times());
+
+            // Act
+            Trait::f(&mock);
+            Trait::f(&mock);
+
+            // Assert
+            assert_panics(
+                || Trait::f(&mock),
+                r#"Mock wasn't configured to handle following call:
+	<Struct as Trait><i32>::f()"#,
+            );
+            mock.verify_calls();
+        }
+
+        #[test]
+        fn Trait_f_NotEnoughCalls_Panics() {
+            // Arrange
+            Struct::<i32>::static_setup().new(1).call_base();
+            let mut mock = Struct::new(1);
+            mock.setup().as_Trait().f().expect(4.times());
 
             // Act
             Trait::f(&mock);
@@ -225,47 +232,9 @@ Received no non-matching calls"#,
 
             // Assert
             assert_panics(
-                || mock.received().as_Trait().f(Times::Once),
-                r#"Expected to receive a call exactly once matching:
-	<Struct as Trait>::f()
-Actually received 3 matching calls:
-	f()
-	f()
-	f()
-Received no non-matching calls"#,
-            );
-
-            assert_panics(
-                || mock.received().as_Trait().f(Times::Exactly(1)),
-                r#"Expected to receive a call exactly once matching:
-	<Struct as Trait>::f()
-Actually received 3 matching calls:
-	f()
-	f()
-	f()
-Received no non-matching calls"#,
-            );
-
-            assert_panics(
-                || mock.received().as_Trait().f(Times::Exactly(2)),
-                r#"Expected to receive a call 2 times matching:
-	<Struct as Trait>::f()
-Actually received 3 matching calls:
-	f()
-	f()
-	f()
-Received no non-matching calls"#,
-            );
-
-            assert_panics(
-                || mock.received().as_Trait().f(Times::Exactly(4)),
-                r#"Expected to receive a call 4 times matching:
-	<Struct as Trait>::f()
-Actually received 3 matching calls:
-	f()
-	f()
-	f()
-Received no non-matching calls"#,
+                || mock.verify_calls(),
+                r#"Expected following calls:
+	<Struct as Trait><i32>::f() 1 time"#,
             );
         }
     }

@@ -66,6 +66,7 @@ mod tests {
 
         // Assert
         assert_eq!(result, 42);
+        Calculator::verify_static_calls();
         mock.verify_calls();
     }
 
@@ -82,6 +83,7 @@ mod tests {
 
         // Assert
         assert_eq!(result, 42);
+        Calculator::verify_static_calls();
         mock.verify_calls();
     }
 }

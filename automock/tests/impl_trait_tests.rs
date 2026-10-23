@@ -185,7 +185,7 @@ mod tests {
 
             // Assert
             assert_eq!(DUMMY_VALUE, result_value);
-            output::received_nothing();
+            output::verify_calls();
         }
     }
 
@@ -318,7 +318,7 @@ mod tests {
 
             // Assert
             assert_eq!(DUMMY_VALUE, result_value);
-            mock.received().no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
@@ -351,7 +351,7 @@ mod tests {
 
             // Assert
             assert_eq!(DUMMY_VALUE, result_value);
-            ReturnTraitMock::static_received().no_other_calls();
+            ReturnTraitMock::verify_static_calls();
         }
     }
 
@@ -488,7 +488,7 @@ mod tests {
 
             // Assert
             assert_eq!(DUMMY_VALUE, result_value);
-            mock.received().no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
@@ -521,7 +521,7 @@ mod tests {
 
             // Assert
             assert_eq!(DUMMY_VALUE, result_value);
-            Struct::static_received().no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[test]
@@ -663,7 +663,7 @@ mod tests {
 
             // Assert
             assert_eq!(DUMMY_VALUE, result_value);
-            mock.received().as_ReturnTrait().no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
@@ -700,7 +700,7 @@ mod tests {
 
             // Assert
             assert_eq!(DUMMY_VALUE, result_value);
-            Struct::static_received().as_ReturnTrait().no_other_calls();
+            Struct::verify_static_calls();
         }
     }
 }

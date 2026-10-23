@@ -130,6 +130,7 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
+            TraitMock::verify_static_calls();
         }
     }
 
@@ -191,6 +192,7 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
+            Struct::verify_static_calls();
         }
     }
 
@@ -253,6 +255,7 @@ mod tests {
 
             // Assert
             assert_eq!(result.name(), "Foo");
+            Struct::verify_static_calls();
         }
     }
 }

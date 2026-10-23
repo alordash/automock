@@ -104,6 +104,7 @@ mod tests {
             my_trait_work_returned_value_for_mock,
             actual_my_trait_work_returned_value_for_mock
         );
+        Struct::verify_static_calls();
         mock.verify_calls();
     }
 }

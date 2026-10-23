@@ -36,11 +36,7 @@ mod tests {
         let mut mock = TraitMock::new();
 
         let value = 302;
-        mock.setup()
-            .get()
-            .returns_once(value)
-            .get_plus_one()
-            .call_base();
+        mock.setup().get().returns_once(value).get_plus_one().call_base();
 
         // Act
         let actual_value = mock.get_plus_one();

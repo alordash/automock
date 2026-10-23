@@ -46,70 +46,48 @@ mod tests {
         #[test]
         fn accept_arc_Ok() {
             // Arrange
-            Struct::static_setup().new(Arg::Any).call_base();
+            Struct::static_setup().new(3).call_base();
             let mut mock = Struct::new(3);
             let r = Arc::new(1);
+            mock.setup().accept_arc(r.clone()).expect_once();
 
             // Act
             mock.accept_arc(r.clone());
 
             // Assert
-            mock.received().accept_arc(r, Times::Once).no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
         fn accept_arc_Panics() {
             // Arrange
-            Struct::static_setup().new(Arg::Any).call_base();
+            Struct::static_setup().new(3).call_base();
             let mut mock = Struct::new(3);
             let r = Arc::new(11);
-            let r_ptr = Arc::as_ptr(&r);
+            let invalid_r = Arc::new(22);
+            mock.setup()
+                .accept_arc(Arg::ref_eq(invalid_r.clone()))
+                .expect_once();
 
             // Act
-            mock.accept_arc(r.clone());
+            let actual_error_msg = record_panic(|| mock.accept_arc(r.clone()));
 
             // Assert
+            let expected_error_msg = format!(
+                "Mock wasn't configured to handle following call:
+	Struct::accept_arc({r})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_arc(*{r}*)"
+            );
+            assert_eq!(Some(expected_error_msg), actual_error_msg);
             let arc_type_name = std::any::type_name::<Arc<i32>>();
             assert_panics(
-                || mock.received().accept_arc(Arg::Any, Times::Never),
+                || mock.verify_calls(),
                 format!(
-                    "Expected to never receive a call matching:
-	Struct::accept_arc(({arc_type_name}): any)
-Actually received 1 matching call:
-	accept_arc({r})
-Received no non-matching calls"
+                    "Expected following calls:
+	Struct::accept_arc({arc_type_name} == {invalid_r}) 1 time"
                 ),
             );
-
-            assert_panics(
-                || mock.received().accept_arc(Arg::Any, Times::Exactly(3)),
-                format!(
-                    "Expected to receive a call 3 times matching:
-	Struct::accept_arc(({arc_type_name}): any)
-Actually received 1 matching call:
-	accept_arc({r})
-Received no non-matching calls"
-                ),
-            );
-
-            let invalid_r = Arc::new(22);
-            let invalid_r_ptr = Arc::as_ptr(&invalid_r);
-            assert_panics(
-                || {
-                    mock.received()
-                        .accept_arc(Arg::ref_eq(invalid_r.clone()), Times::Once)
-                },
-                format!(
-                    "Expected to receive a call exactly once matching:
-	Struct::accept_arc(({arc_type_name}): equal to {invalid_r})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_arc(*{r}*)
-	1. r ({arc_type_name}):
-		Expected (ptr: {invalid_r_ptr:?}): {invalid_r}
-		Actual   (ptr: {r_ptr:?}): {r}"
-                ),
-            )
         }
     }
 
@@ -162,19 +140,19 @@ accept_arc(*{r}*)
         #[test]
         fn accept_two_arcs_Ok() {
             // Arrange
-            Struct::static_setup().new(Arg::Any).call_base();
+            Struct::static_setup().new(3).call_base();
             let mut mock = Struct::new(3);
             let r1 = Arc::new(10);
             let r2 = Arc::new(20.2);
+            mock.setup()
+                .accept_two_arcs(r1.clone(), r2.clone())
+                .expect_once();
 
             // Act
             mock.accept_two_arcs(r1.clone(), r2.clone());
 
             // Assert
-            mock.received()
-                .accept_two_arcs(r1.clone(), r2.clone(), Times::Once)
-                .accept_two_arcs(Arg::not_eq(r1), Arg::not_eq(r2), Times::Never)
-                .no_other_calls();
+            mock.verify_calls();
         }
     }
 

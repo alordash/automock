@@ -64,13 +64,12 @@ fn get_CallBase_Ok() {
     // Arrange
     let mut mock = MyTraitMock::new();
     mock.setup().get().call_base();
+    mock.setup().work(DEFAULT_MY_TRAIT_GET).expect_once();
 
     // Act
     let actual_value = mock.get();
 
     // Assert
     assert_eq!(DEFAULT_MY_TRAIT_GET, actual_value);
-    mock.received()
-        .work(actual_value, Times::Once)
-        .no_other_calls();
+    mock.verify_calls();
 }

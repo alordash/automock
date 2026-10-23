@@ -50,6 +50,7 @@ mod tests {
 
         // Assert
         assert_eq!(42, result);
+        C::verify_static_calls();
         mock.verify_calls();
     }
 
@@ -65,6 +66,7 @@ mod tests {
 
         // Assert
         assert_eq!(A_DEFAULT, result);
+        C::verify_static_calls();
         mock.verify_calls();
     }
 
@@ -80,6 +82,7 @@ mod tests {
 
         // Assert
         assert_eq!(42, result);
+        C::verify_static_calls();
         mock.verify_calls();
     }
 
@@ -95,6 +98,7 @@ mod tests {
 
         // Assert
         assert_eq!(B_DEFAULT, result);
+        C::verify_static_calls();
         mock.verify_calls();
     }
 }

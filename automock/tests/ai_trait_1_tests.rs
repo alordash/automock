@@ -78,7 +78,7 @@ mod tests {
             .get()
             .returns_once(&400) //400
             .reset()
-            .does(|_, _| {});
+            .expect_once();
 
         // Act
         let result = use_calculator(&mut calculator);

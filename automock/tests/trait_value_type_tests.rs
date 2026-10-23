@@ -31,6 +31,11 @@ mod tests {
             let mut mock = TraitMock::new();
             let first_value = 10;
             let second_value = 22;
+            mock.setup()
+                .accept_value(first_value)
+                .expect_once()
+                .accept_value(second_value)
+                .expect(2.times());
 
             // Act
             mock.accept_value(first_value);
@@ -38,19 +43,7 @@ mod tests {
             mock.accept_value(second_value);
 
             // Assert
-            mock.received()
-                .accept_value(Arg::Any, Times::Exactly(3))
-                .accept_value(first_value, Times::Once)
-                .accept_value(
-                    Arg::is(|actual_value| *actual_value == first_value),
-                    Times::Once,
-                )
-                .accept_value(Arg::eq(second_value), Times::Exactly(2))
-                .accept_value(
-                    Arg::is(|actual_value| *actual_value == second_value),
-                    Times::Exactly(2),
-                )
-                .no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
@@ -61,13 +54,15 @@ mod tests {
             let callback_flag_clone = callback_flag.clone();
             mock.setup()
                 .accept_value(1)
-                .does(move |_, _| *callback_flag_clone.borrow_mut() = true);
+                .expect_once()
+                .and_does(move |_, _| *callback_flag_clone.borrow_mut() = true);
 
             // Act
             mock.accept_value(1);
 
             // Assert
             assert!(*callback_flag.borrow());
+            mock.verify_calls();
         }
 
         #[test]
@@ -76,6 +71,7 @@ mod tests {
             let mut mock = TraitMock::new();
             let first_value = 10;
             let second_value = 22;
+            mock.setup().accept_value(Arg::Any).expect(3.times());
 
             // Act
             mock.accept_value(first_value);
@@ -83,37 +79,9 @@ mod tests {
 
             // Assert
             assert_panics(
-                || mock.received().accept_value(Arg::Any, Times::Never),
-                format!(
-                    r#"Expected to never receive a call matching:
-	Trait::accept_value((i32): any)
-Actually received 2 matching calls:
-	accept_value({first_value})
-	accept_value({second_value})
-Received no non-matching calls"#
-                ),
-            );
-            assert_panics(
-                || mock.received().accept_value(Arg::Any, Times::Once),
-                format!(
-                    r#"Expected to receive a call exactly once matching:
-	Trait::accept_value((i32): any)
-Actually received 2 matching calls:
-	accept_value({first_value})
-	accept_value({second_value})
-Received no non-matching calls"#
-                ),
-            );
-            assert_panics(
-                || mock.received().accept_value(Arg::Any, Times::Exactly(3)),
-                format!(
-                    r#"Expected to receive a call 3 times matching:
-	Trait::accept_value((i32): any)
-Actually received 2 matching calls:
-	accept_value({first_value})
-	accept_value({second_value})
-Received no non-matching calls"#
-                ),
+                || mock.verify_calls(),
+                "Expected following calls:
+	Trait::accept_value((i32): any) 1 time",
             );
         }
 
@@ -123,80 +91,21 @@ Received no non-matching calls"#
             let mut mock = TraitMock::new();
             let first_value = 10;
             let second_value = 22;
+            mock.setup().accept_value(Arg::eq(first_value)).expect_once();
 
             // Act
+            let actual_error_msg = record_panic(|| mock.accept_value(second_value));
             mock.accept_value(first_value);
-            mock.accept_value(second_value);
 
             // Assert
-            assert_panics(
-                || {
-                    mock.received()
-                        .accept_value(Arg::eq(first_value), Times::Never)
-                },
-                format!(
-                    r#"Expected to never receive a call matching:
-	Trait::accept_value((i32): equal to {first_value})
-Actually received 1 matching call:
-	accept_value({first_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{second_value}*)
-	1. v (i32):
-		Expected: {first_value}
-		Actual:   {second_value}"#
-                ),
+            let expected_error_msg = format!(
+                "Mock wasn't configured to handle following call:
+	Trait::accept_value({second_value})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_value(*{second_value}*)"
             );
-            assert_panics(
-                || {
-                    mock.received()
-                        .accept_value(Arg::eq(first_value), Times::Exactly(3))
-                },
-                format!(
-                    r#"Expected to receive a call 3 times matching:
-	Trait::accept_value((i32): equal to {first_value})
-Actually received 1 matching call:
-	accept_value({first_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{second_value}*)
-	1. v (i32):
-		Expected: {first_value}
-		Actual:   {second_value}"#
-                ),
-            );
-            assert_panics(
-                || {
-                    mock.received()
-                        .accept_value(Arg::eq(second_value), Times::Never)
-                },
-                format!(
-                    r#"Expected to never receive a call matching:
-	Trait::accept_value((i32): equal to {second_value})
-Actually received 1 matching call:
-	accept_value({second_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{first_value}*)
-	1. v (i32):
-		Expected: {second_value}
-		Actual:   {first_value}"#
-                ),
-            );
-            assert_panics(
-                || {
-                    mock.received()
-                        .accept_value(Arg::eq(second_value), Times::Exactly(3))
-                },
-                format!(
-                    r#"Expected to receive a call 3 times matching:
-	Trait::accept_value((i32): equal to {second_value})
-Actually received 1 matching call:
-	accept_value({second_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{first_value}*)
-	1. v (i32):
-		Expected: {second_value}
-		Actual:   {first_value}"#
-                ),
-            );
+            assert_eq!(Some(expected_error_msg), actual_error_msg);
+            mock.verify_calls();
         }
 
         #[test]
@@ -205,152 +114,89 @@ accept_value(*{first_value}*)
             let mut mock = TraitMock::new();
             let first_value = 10;
             let second_value = 22;
+            mock.setup()
+                .accept_value(Arg::is(move |actual_value| *actual_value == first_value))
+                .expect_once();
 
             // Act
+            let actual_error_msg = record_panic(|| mock.accept_value(second_value));
             mock.accept_value(first_value);
-            mock.accept_value(second_value);
 
             // Assert
-            assert_panics(
-                || {
-                    mock.received().accept_value(
-                        Arg::is(|actual_value| *actual_value == first_value),
-                        Times::Never,
-                    )
-                },
-                format!(
-                    r#"Expected to never receive a call matching:
-	Trait::accept_value((i32): custom predicate)
-Actually received 1 matching call:
-	accept_value({first_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{second_value}*)
-	1. v (i32):
-		Custom predicate did not match passed value, received: {second_value}"#
-                ),
+            let expected_error_msg = format!(
+                "Mock wasn't configured to handle following call:
+	Trait::accept_value({second_value})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_value(*{second_value}*)"
             );
-            assert_panics(
-                || {
-                    mock.received().accept_value(
-                        Arg::is(|actual_value| *actual_value == first_value),
-                        Times::Exactly(3),
-                    )
-                },
-                format!(
-                    r#"Expected to receive a call 3 times matching:
-	Trait::accept_value((i32): custom predicate)
-Actually received 1 matching call:
-	accept_value({first_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{second_value}*)
-	1. v (i32):
-		Custom predicate did not match passed value, received: {second_value}"#
-                ),
-            );
-            assert_panics(
-                || {
-                    mock.received().accept_value(
-                        Arg::is(|actual_value| *actual_value == second_value),
-                        Times::Never,
-                    )
-                },
-                format!(
-                    r#"Expected to never receive a call matching:
-	Trait::accept_value((i32): custom predicate)
-Actually received 1 matching call:
-	accept_value({second_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{first_value}*)
-	1. v (i32):
-		Custom predicate did not match passed value, received: {first_value}"#
-                ),
-            );
-            assert_panics(
-                || {
-                    mock.received().accept_value(
-                        Arg::is(|actual_value| *actual_value == second_value),
-                        Times::Exactly(3),
-                    )
-                },
-                format!(
-                    r#"Expected to receive a call 3 times matching:
-	Trait::accept_value((i32): custom predicate)
-Actually received 1 matching call:
-	accept_value({second_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{first_value}*)
-	1. v (i32):
-		Custom predicate did not match passed value, received: {first_value}"#
-                ),
-            );
+            assert_eq!(Some(expected_error_msg), actual_error_msg);
+            mock.verify_calls();
         }
 
         #[test]
-        fn accept_value_NoOtherCallsWithoutOtherCalls_Ok() {
+        fn accept_value_SingleCall_Ok() {
             // Arrange
             let mut mock = TraitMock::new();
             let value = 10;
+            mock.setup().accept_value(value).expect_once();
 
             // Act
             mock.accept_value(value);
 
             // Assert
-            mock.received()
-                .accept_value(value, Times::Once)
-                .no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
-        fn accept_value_NoOtherCallsWithOneOtherCall_Panics() {
+        fn accept_value_UnexpectedCall_Panics() {
             // Arrange
             let mut mock = TraitMock::new();
             let first_value = 10;
             let second_value = 22;
+            mock.setup().accept_value(first_value).expect_once();
 
             // Act
             mock.accept_value(first_value);
-            mock.accept_value(second_value);
 
             // Assert
             assert_panics(
-                || {
-                    mock.received()
-                        .accept_value(first_value, Times::Once)
-                        .no_other_calls()
-                },
+                || mock.accept_value(second_value),
                 format!(
-                    "Did not expect to receive any other calls. Received 1 unexpected call:
-1. Trait::accept_value({second_value})"
+                    "Mock wasn't configured to handle following call:
+	Trait::accept_value({second_value})"
                 ),
             );
+            mock.verify_calls();
         }
 
         #[test]
-        fn accept_value_NoOtherCallsWithManyOtherCalls_Panics() {
+        fn accept_value_ManyUnexpectedCalls_Panics() {
             // Arrange
             let mut mock = TraitMock::new();
             let first_value = 10;
             let second_value = 22;
             let third_value = 333;
+            mock.setup().accept_value(first_value).expect_once();
 
             // Act
             mock.accept_value(first_value);
-            mock.accept_value(second_value);
-            mock.accept_value(third_value);
 
             // Assert
             assert_panics(
-                || {
-                    mock.received()
-                        .accept_value(first_value, Times::Once)
-                        .no_other_calls()
-                },
+                || mock.accept_value(second_value),
                 format!(
-                    "Did not expect to receive any other calls. Received 2 unexpected calls:
-1. Trait::accept_value({second_value})
-2. Trait::accept_value({third_value})"
+                    "Mock wasn't configured to handle following call:
+	Trait::accept_value({second_value})"
                 ),
             );
+            assert_panics(
+                || mock.accept_value(third_value),
+                format!(
+                    "Mock wasn't configured to handle following call:
+	Trait::accept_value({third_value})"
+                ),
+            );
+            mock.verify_calls();
         }
     }
 
@@ -651,14 +497,13 @@ accept_value(*{first_value}*)
             let mut mock = TraitMock::new();
             let v1 = 10;
             let v2 = 20.2;
+            mock.setup().accept_two_values(v1, v2).expect_once();
 
             // Act
             mock.accept_two_values(v1, v2);
 
             // Assert
-            mock.received()
-                .accept_two_values(v1, v2, Times::Once)
-                .no_other_calls();
+            mock.verify_calls();
         }
     }
 

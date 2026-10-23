@@ -494,11 +494,13 @@ mod tests {
         // Arrange
         let mut mock = create_mock();
 
-        mock.setup().one_arg(42).returns(123);
+        mock.setup().no_args().expect_once();
+
+        mock.setup().one_arg(42).returns_once(123);
 
         mock.setup()
             .many_args(42, "hello".to_owned(), true, Some(vec![1, 2, 3]))
-            .returns((123, "world".to_owned(), false, None));
+            .returns_once((123, "world".to_owned(), false, None));
 
         // Act
         mock.no_args();
@@ -512,17 +514,7 @@ mod tests {
 
         assert_eq!(many, (123, "world".to_owned(), false, None,));
 
-        mock.received().no_args(Times::Once);
-
-        mock.received().one_arg(42, Times::Once);
-
-        mock.received().many_args(
-            42,
-            "hello".to_owned(),
-            true,
-            Some(vec![1, 2, 3]),
-            Times::Once,
-        );
+        mock.verify_calls();
     }
 
     #[test]
@@ -876,15 +868,17 @@ mod tests {
         // Arrange
         let mut mock = create_mock();
 
-        mock.setup().async_method(42).returns(123);
+        mock.setup().async_no_args().expect_once();
+
+        mock.setup().async_method(42).returns_once(123);
 
         mock.setup()
             .async_generic::<String>("hello".to_owned())
-            .returns("world".to_owned());
+            .returns_once("world".to_owned());
 
         mock.setup()
             .async_generic_bounded::<String>("foo".to_owned())
-            .returns("bar".to_owned());
+            .returns_once("bar".to_owned());
 
         // Act
         mock.async_no_args().await;
@@ -902,15 +896,7 @@ mod tests {
 
         assert_eq!(bounded, "bar");
 
-        mock.received().async_no_args(Times::Once);
-
-        mock.received().async_method(42, Times::Once);
-
-        mock.received()
-            .async_generic::<String>("hello".to_owned(), Times::Once);
-
-        mock.received()
-            .async_generic_bounded::<String>("foo".to_owned(), Times::Once);
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -937,18 +923,20 @@ mod tests {
     fn static_methods() {
         // Arrange
         MonsterStruct::<'static, i32, 4>::static_setup()
+            .static_no_args()
+            .expect_once()
             .static_one_arg(42)
-            .returns(123)
+            .returns_once(123)
             .static_many_args(42, "hello".to_owned(), true)
-            .returns((123, "world".to_owned(), false))
+            .returns_once((123, "world".to_owned(), false))
             .static_generic::<String>("hello".to_owned())
-            .returns("world".to_owned())
+            .returns_once("world".to_owned())
             .static_generic_two::<i32, String>(42, "hello".to_owned())
-            .returns((123, "world".to_owned()))
+            .returns_once((123, "world".to_owned()))
             .static_const::<4>([1, 2, 3, 4])
-            .returns([4, 3, 2, 1])
+            .returns_once([4, 3, 2, 1])
             .static_where::<i32>(42)
-            .returns(123);
+            .returns_once(123);
 
         // Act
         MonsterStruct::<'static, i32, 4>::static_no_args();
@@ -982,30 +970,7 @@ mod tests {
 
         assert_eq!(bounded, 123);
 
-        MonsterStruct::<'static, i32, 4>::static_received().static_no_args(Times::Once);
-
-        MonsterStruct::<'static, i32, 4>::static_received().static_one_arg(42, Times::Once);
-
-        MonsterStruct::<'static, i32, 4>::static_received().static_many_args(
-            42,
-            "hello".to_owned(),
-            true,
-            Times::Once,
-        );
-
-        MonsterStruct::<'static, i32, 4>::static_received()
-            .static_generic::<String>("hello".to_owned(), Times::Once);
-
-        MonsterStruct::<'static, i32, 4>::static_received().static_generic_two::<i32, String>(
-            42,
-            "hello".to_owned(),
-            Times::Once,
-        );
-
-        MonsterStruct::<'static, i32, 4>::static_received()
-            .static_const::<4>([1, 2, 3, 4], Times::Once);
-
-        MonsterStruct::<'static, i32, 4>::static_received().static_where::<i32>(42, Times::Once);
+        MonsterStruct::<'static, i32, 4>::verify_static_calls();
     }
 
     #[test]

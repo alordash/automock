@@ -52,6 +52,10 @@ mod tests {
             // Arrange
             let first_value = 10;
             let second_value = 22;
+            accept_value::setup(first_value)
+                .expect_once()
+                .setup(second_value)
+                .expect(2.times());
 
             // Act
             accept_value(first_value);
@@ -59,18 +63,7 @@ mod tests {
             accept_value(second_value);
 
             // Assert
-            accept_value::received(Arg::Any, Times::Exactly(3))
-                .received(first_value, Times::Once)
-                .received(
-                    Arg::is(move |actual_value| *actual_value == first_value),
-                    Times::Once,
-                )
-                .received(Arg::eq(second_value), Times::Exactly(2))
-                .received(
-                    Arg::is(move |actual_value| *actual_value == second_value),
-                    Times::Exactly(2),
-                )
-                .no_other_calls();
+            accept_value::verify_calls();
         }
 
         #[test]
@@ -78,14 +71,14 @@ mod tests {
             // Arrange
             let v = 18;
             BASE_CALLED_FLAG.set(false);
-            accept_value::setup(Arg::Any).call_base();
+            accept_value::setup(v).call_base();
 
             // Act
             accept_value(v);
 
             // Assert
             assert!(BASE_CALLED_FLAG.get());
-            accept_value::received_nothing();
+            accept_value::verify_calls();
         }
 
         #[test]
@@ -93,13 +86,16 @@ mod tests {
             // Arrange
             let callback_flag = Arc::new(RefCell::new(false));
             let callback_flag_clone = callback_flag.clone();
-            accept_value::setup(1).does(move |_| *callback_flag_clone.borrow_mut() = true);
+            accept_value::setup(1)
+                .expect_once()
+                .and_does(move |_| *callback_flag_clone.borrow_mut() = true);
 
             // Act
             accept_value(1);
 
             // Assert
             assert!(*callback_flag.borrow());
+            accept_value::verify_calls();
         }
 
         #[test]
@@ -107,6 +103,7 @@ mod tests {
             // Arrange
             let first_value = 10;
             let second_value = 22;
+            accept_value::setup(Arg::Any).expect(3.times());
 
             // Act
             accept_value(first_value);
@@ -114,37 +111,9 @@ mod tests {
 
             // Assert
             assert_panics(
-                || accept_value::received(Arg::Any, Times::Never),
-                format!(
-                    "Expected to never receive a call matching:
-	accept_value((i32): any)
-Actually received 2 matching calls:
-	accept_value({first_value})
-	accept_value({second_value})
-Received no non-matching calls"
-                ),
-            );
-            assert_panics(
-                || accept_value::received(Arg::Any, Times::Once),
-                format!(
-                    "Expected to receive a call exactly once matching:
-	accept_value((i32): any)
-Actually received 2 matching calls:
-	accept_value({first_value})
-	accept_value({second_value})
-Received no non-matching calls"
-                ),
-            );
-            assert_panics(
-                || accept_value::received(Arg::Any, Times::Exactly(3)),
-                format!(
-                    "Expected to receive a call 3 times matching:
-	accept_value((i32): any)
-Actually received 2 matching calls:
-	accept_value({first_value})
-	accept_value({second_value})
-Received no non-matching calls"
-                ),
+                accept_value::verify_calls,
+                "Expected following calls:
+	accept_value((i32): any) 1 time",
             );
         }
 
@@ -153,68 +122,21 @@ Received no non-matching calls"
             // Arrange
             let first_value = 10;
             let second_value = 22;
+            accept_value::setup(Arg::eq(first_value)).expect_once();
 
             // Act
+            let actual_error_msg = record_panic(|| accept_value(second_value));
             accept_value(first_value);
-            accept_value(second_value);
 
             // Assert
-            assert_panics(
-                || accept_value::received(Arg::eq(first_value), Times::Never),
-                format!(
-                    "Expected to never receive a call matching:
-	accept_value((i32): equal to {first_value})
-Actually received 1 matching call:
-	accept_value({first_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{second_value}*)
-	1. v (i32):
-		Expected: {first_value}
-		Actual:   {second_value}"
-                ),
-            );
-            assert_panics(
-                || accept_value::received(Arg::eq(first_value), Times::Exactly(3)),
-                format!(
-                    "Expected to receive a call 3 times matching:
-	accept_value((i32): equal to {first_value})
-Actually received 1 matching call:
-	accept_value({first_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{second_value}*)
-	1. v (i32):
-		Expected: {first_value}
-		Actual:   {second_value}"
-                ),
-            );
-            assert_panics(
-                || accept_value::received(Arg::eq(second_value), Times::Never),
-                format!(
-                    "Expected to never receive a call matching:
-	accept_value((i32): equal to {second_value})
-Actually received 1 matching call:
+            let expected_error_msg = format!(
+                "Mock wasn't configured to handle following call:
 	accept_value({second_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{first_value}*)
-	1. v (i32):
-		Expected: {second_value}
-		Actual:   {first_value}"
-                ),
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_value(*{second_value}*)"
             );
-            assert_panics(
-                || accept_value::received(Arg::eq(second_value), Times::Exactly(3)),
-                format!(
-                    "Expected to receive a call 3 times matching:
-	accept_value((i32): equal to {second_value})
-Actually received 1 matching call:
-	accept_value({second_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{first_value}*)
-	1. v (i32):
-		Expected: {second_value}
-		Actual:   {first_value}"
-                ),
-            );
+            assert_eq!(Some(expected_error_msg), actual_error_msg);
+            accept_value::verify_calls();
         }
 
         #[test]
@@ -222,84 +144,22 @@ accept_value(*{first_value}*)
             // Arrange
             let first_value = 10;
             let second_value = 22;
+            accept_value::setup(Arg::is(move |actual_value| *actual_value == first_value))
+                .expect_once();
 
             // Act
+            let actual_error_msg = record_panic(|| accept_value(second_value));
             accept_value(first_value);
-            accept_value(second_value);
 
             // Assert
-            assert_panics(
-                || {
-                    accept_value::received(
-                        Arg::is(move |actual_value| *actual_value == first_value),
-                        Times::Never,
-                    )
-                },
-                format!(
-                    "Expected to never receive a call matching:
-	accept_value((i32): custom predicate)
-Actually received 1 matching call:
-	accept_value({first_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{second_value}*)
-	1. v (i32):
-		Custom predicate did not match passed value, received: {second_value}"
-                ),
-            );
-            assert_panics(
-                || {
-                    accept_value::received(
-                        Arg::is(move |actual_value| *actual_value == first_value),
-                        Times::Exactly(3),
-                    )
-                },
-                format!(
-                    "Expected to receive a call 3 times matching:
-	accept_value((i32): custom predicate)
-Actually received 1 matching call:
-	accept_value({first_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{second_value}*)
-	1. v (i32):
-		Custom predicate did not match passed value, received: {second_value}"
-                ),
-            );
-            assert_panics(
-                || {
-                    accept_value::received(
-                        Arg::is(move |actual_value| *actual_value == second_value),
-                        Times::Never,
-                    )
-                },
-                format!(
-                    "Expected to never receive a call matching:
-	accept_value((i32): custom predicate)
-Actually received 1 matching call:
+            let expected_error_msg = format!(
+                "Mock wasn't configured to handle following call:
 	accept_value({second_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{first_value}*)
-	1. v (i32):
-		Custom predicate did not match passed value, received: {first_value}"
-                ),
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_value(*{second_value}*)"
             );
-            assert_panics(
-                || {
-                    accept_value::received(
-                        Arg::is(move |actual_value| *actual_value == second_value),
-                        Times::Exactly(3),
-                    )
-                },
-                format!(
-                    "Expected to receive a call 3 times matching:
-	accept_value((i32): custom predicate)
-Actually received 1 matching call:
-	accept_value({second_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{first_value}*)
-	1. v (i32):
-		Custom predicate did not match passed value, received: {first_value}"
-                ),
-            );
+            assert_eq!(Some(expected_error_msg), actual_error_msg);
+            accept_value::verify_calls();
         }
 
         #[test]
@@ -307,80 +167,84 @@ accept_value(*{first_value}*)
             // Arrange
             let first_value = 10;
             let second_value = 22;
+            accept_value::setup(Arg::not_eq(first_value)).expect_once();
 
             // Act
-            accept_value(first_value);
+            let actual_error_msg = record_panic(|| accept_value(first_value));
             accept_value(second_value);
 
             // Assert
-            assert_panics(
-                || accept_value::received(Arg::not_eq(first_value), Times::Never),
-                format!(
-                    "Expected to never receive a call matching:
-	accept_value((i32): NOT equal to {first_value})
-Actually received 1 matching call:
-	accept_value({second_value})
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_value(*{first_value}*)
-	1. v (i32):
-		Did not expect to be {first_value}"
-                ),
+            let expected_error_msg = format!(
+                "Mock wasn't configured to handle following call:
+	accept_value({first_value})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_value(*{first_value}*)"
             );
+            assert_eq!(Some(expected_error_msg), actual_error_msg);
+            accept_value::verify_calls();
         }
 
         #[test]
-        fn accept_value_NoOtherCallsWithoutOtherCalls_Ok() {
+        fn accept_value_SingleCall_Ok() {
             // Arrange
             let value = 10;
+            accept_value::setup(value).expect_once();
 
             // Act
             accept_value(value);
 
             // Assert
-            accept_value::received(value, Times::Once).no_other_calls();
+            accept_value::verify_calls();
         }
 
         #[test]
-        fn accept_value_NoOtherCallsWithOneOtherCall_Panics() {
+        fn accept_value_UnexpectedCall_Panics() {
             // Arrange
             let first_value = 10;
             let second_value = 22;
+            accept_value::setup(first_value).expect_once();
 
             // Act
             accept_value(first_value);
-            accept_value(second_value);
 
             // Assert
             assert_panics(
-                || accept_value::received(first_value, Times::Once).no_other_calls(),
+                || accept_value(second_value),
                 format!(
-                    "Did not expect to receive any other calls. Received 1 unexpected call:
-1. accept_value({second_value})"
+                    "Mock wasn't configured to handle following call:
+	accept_value({second_value})"
                 ),
             );
+            accept_value::verify_calls();
         }
 
         #[test]
-        fn accept_value_NoOtherCallsWithManyOtherCalls_Panics() {
+        fn accept_value_ManyUnexpectedCalls_Panics() {
             // Arrange
             let first_value = 10;
             let second_value = 22;
             let third_value = 333;
+            accept_value::setup(first_value).expect_once();
 
             // Act
             accept_value(first_value);
-            accept_value(second_value);
-            accept_value(third_value);
 
             // Assert
             assert_panics(
-                || accept_value::received(first_value, Times::Once).no_other_calls(),
+                || accept_value(second_value),
                 format!(
-                    "Did not expect to receive any other calls. Received 2 unexpected calls:
-1. accept_value({second_value})
-2. accept_value({third_value})"
+                    "Mock wasn't configured to handle following call:
+	accept_value({second_value})"
                 ),
             );
+            assert_panics(
+                || accept_value(third_value),
+                format!(
+                    "Mock wasn't configured to handle following call:
+	accept_value({third_value})"
+                ),
+            );
+            accept_value::verify_calls();
         }
     }
 
@@ -413,7 +277,7 @@ accept_value(*{first_value}*)
             // Assert
             assert_eq!(BASE_RETURN_VALUE, actual_value);
             assert!(BASE_CALLED_FLAG.get());
-            return_value::received_nothing();
+            return_value::verify_calls();
         }
 
         #[test]
@@ -538,7 +402,7 @@ accept_value(*{first_value}*)
             // Arrange
             let v = 18;
             BASE_CALLED_FLAG.set(false);
-            accept_value_return_value::setup(Arg::Any).call_base();
+            accept_value_return_value::setup(v).call_base();
 
             // Act
             let actual_value = accept_value_return_value(v);
@@ -546,8 +410,7 @@ accept_value(*{first_value}*)
             // Assert
             assert_eq!(BASE_ACCEPT_VALUE_RETURN_VALUE, actual_value);
             assert!(BASE_CALLED_FLAG.get());
-
-            accept_value_return_value::received_nothing();
+            accept_value_return_value::verify_calls();
         }
 
         #[test]
@@ -678,12 +541,13 @@ accept_value(*{first_value}*)
             // Arrange
             let v1 = 10;
             let v2 = 20.2;
+            accept_two_values::setup(v1, v2).expect_once();
 
             // Act
             accept_two_values(v1, v2);
 
             // Assert
-            accept_two_values::received(v1, v2, Times::Once).no_other_calls();
+            accept_two_values::verify_calls();
         }
 
         #[test]
@@ -692,14 +556,14 @@ accept_value(*{first_value}*)
             let v1 = 1;
             let v2 = 2.2;
             BASE_CALLED_FLAG.set(false);
-            accept_two_values::setup(Arg::Any, Arg::Any).call_base();
+            accept_two_values::setup(v1, v2).call_base();
 
             // Act
             accept_two_values(v1, v2);
 
             // Assert
             assert!(BASE_CALLED_FLAG.get());
-            accept_two_values::received_nothing();
+            accept_two_values::verify_calls();
         }
     }
 
@@ -795,7 +659,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             let v1 = 10;
             let v2 = 20.2;
             BASE_CALLED_FLAG.set(false);
-            accept_two_values_return_value::setup(Arg::Any, Arg::Any).call_base();
+            accept_two_values_return_value::setup(v1, v2).call_base();
 
             // Act
             let actual_returned_value = accept_two_values_return_value(v1, v2);
@@ -803,8 +667,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             // Assert
             assert_eq!(BASE_ACCEPT_TWO_VALUES_RETURN_VALUE, actual_returned_value);
             assert!(BASE_CALLED_FLAG.get());
-
-            accept_two_values_return_value::received_nothing();
+            accept_two_values_return_value::verify_calls();
         }
     }
 }

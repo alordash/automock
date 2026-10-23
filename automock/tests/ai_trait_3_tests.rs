@@ -178,7 +178,9 @@ mod tests {
         // Arrange
         let mut mock = BasicMock::new();
 
-        mock.setup().bar(42).returns(123);
+        mock.setup().foo().expect_once();
+
+        mock.setup().bar(42).returns_once(123);
 
         // Act
         mock.foo();
@@ -187,9 +189,7 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received().foo(1.time());
-
-        mock.received().bar(42, 1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -197,11 +197,13 @@ mod tests {
         // Arrange
         let mut mock = GenericMock::<i32>::new();
 
+        mock.setup().foo(42).expect_once();
+
         // Act
         mock.foo(42);
 
         // Assert
-        mock.received().foo(42, 1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -209,15 +211,18 @@ mod tests {
         // Arrange
         let mut mock = GenericMethodsMock::new();
 
+        mock.setup().foo::<i32>(42).expect_once();
+
+        mock.setup()
+            .bar::<i32, String>(42, "hello".to_owned())
+            .expect_once();
+
         // Act
         mock.foo(42);
         mock.bar(42, "hello".to_owned());
 
         // Assert
-        mock.received().foo::<i32>(42, 1.time());
-
-        mock.received()
-            .bar::<i32, String>(42, "hello".to_owned(), 1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -259,6 +264,14 @@ mod tests {
         // Arrange
         let mut mock = ReceiversMock::new();
 
+        mock.setup().by_ref().expect_once();
+
+        mock.setup().by_mut_ref().expect_once();
+
+        mock.setup().explicit_ref().expect_once();
+
+        mock.setup().explicit_mut_ref().expect_once();
+
         // Act
         mock.by_ref();
         mock.by_mut_ref();
@@ -266,13 +279,7 @@ mod tests {
         mock.explicit_mut_ref();
 
         // Assert
-        mock.received().by_ref(1.time());
-
-        mock.received().by_mut_ref(1.time());
-
-        mock.received().explicit_ref(1.time());
-
-        mock.received().explicit_mut_ref(1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -280,11 +287,13 @@ mod tests {
         // Arrange
         let mut mock = ReceiversMock::new();
 
+        mock.setup().by_value().expect_once();
+
         // Act
         mock.clone().by_value();
 
         // Assert
-        mock.received().by_value(1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -292,14 +301,16 @@ mod tests {
         // Arrange
         let mut mock = GenericMethodBoundsMock::new();
 
+        mock.setup().foo::<i32>(42).expect_once();
+
+        mock.setup().bar::<i32>(42).expect_once();
+
         // Act
         mock.foo(42);
         mock.bar(42);
 
         // Assert
-        mock.received().foo::<i32>(42, 1.time());
-
-        mock.received().bar::<i32>(42, 1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -309,7 +320,11 @@ mod tests {
 
         let value = 42;
 
-        mock.setup().baz(&value).returns(&value);
+        mock.setup().foo("hello").expect_once();
+
+        mock.setup().bar("world").expect_once();
+
+        mock.setup().baz(&value).returns_once(&value);
 
         // Act
         mock.foo("hello");
@@ -319,11 +334,7 @@ mod tests {
         // Assert
         assert_eq!(result, &42);
 
-        mock.received().foo("hello", 1.time());
-
-        mock.received().bar("world", 1.time());
-
-        mock.received().baz(&value, 1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -334,15 +345,22 @@ mod tests {
         let value = 42;
         let mut mutable = 123;
 
+        mock.setup().refs(&42, &mut 123).expect_once();
+
+        mock.setup()
+            .pointers(
+                Arg::is(|pointer: &*const i32| unsafe { **pointer } == 42),
+                Arg::is(|mutable_pointer: &*mut i32| unsafe { **mutable_pointer } == 123),
+            )
+            .expect_once();
+
         // Act
         mock.refs(&value, &mut mutable);
 
         mock.pointers(&value as *const i32, &mut mutable as *mut i32);
 
         // Assert
-        mock.received().refs(Arg::Any, Arg::Any, 1.time());
-
-        mock.received().pointers(Arg::Any, Arg::Any, 1.time());
+        mock.verify_calls();
     }
 
     fn increment(x: i32) -> i32 {
@@ -387,6 +405,12 @@ mod tests {
         // Arrange
         let mut mock = UnsafeMethodsMock::new();
 
+        mock.setup()
+            .foo(Arg::is(|pointer: &*mut i32| unsafe { **pointer } == 42))
+            .expect_once();
+
+        mock.setup().bar::<i32>(42).expect_once();
+
         let mut value = 42;
 
         // Act
@@ -396,9 +420,7 @@ mod tests {
         }
 
         // Assert
-        mock.received().foo(Arg::Any, 1.time());
-
-        mock.received().bar::<i32>(42, 1.time());
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -406,7 +428,9 @@ mod tests {
         // Arrange
         let mut mock = AsyncMethodsMock::new();
 
-        mock.setup().bar(42).returns(123);
+        mock.setup().foo().expect_once();
+
+        mock.setup().bar(42).returns_once(123);
 
         // Act
         mock.foo().await;
@@ -416,15 +440,19 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received().foo(1.time());
-
-        mock.received().bar(42, 1.time());
+        mock.verify_calls();
     }
 
     #[tokio::test]
     async fn async_and_unsafe() {
         // Arrange
         let mut mock = AsyncUnsafeMock::new();
+
+        mock.setup().normal().expect_once();
+
+        mock.setup().unsafe_fn().expect_once();
+
+        mock.setup().both().expect_once();
 
         // Act
         mock.normal().await;
@@ -435,11 +463,7 @@ mod tests {
         }
 
         // Assert
-        mock.received().normal(1.time());
-
-        mock.received().unsafe_fn(1.time());
-
-        mock.received().both(1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -447,7 +471,11 @@ mod tests {
         // Arrange
         let mut mock = AbiMethodsMock::new();
 
-        mock.setup().foo(42).returns(123);
+        mock.setup().foo(42).returns_once(123);
+
+        mock.setup()
+            .bar(Arg::is(|pointer: &*mut i32| unsafe { **pointer } == 42))
+            .expect_once();
 
         let mut value = 42;
 
@@ -461,9 +489,7 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received().foo(42, 1.time());
-
-        mock.received().bar(Arg::Any, 1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -519,11 +545,13 @@ mod tests {
         // Arrange
         let mut mock = ConstGenericMock::<4>::new();
 
+        mock.setup().foo([1, 2, 3, 4]).expect_once();
+
         // Act
         mock.foo([1, 2, 3, 4]);
 
         // Assert
-        mock.received().foo([1, 2, 3, 4], 1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -550,6 +578,18 @@ mod tests {
         // Arrange
         let mut mock = DynArgumentsMock::new();
 
+        mock.setup()
+            .foo(Arg::is(|value: &Box<dyn std::fmt::Display>| {
+                value.to_string() == "42"
+            }))
+            .expect_once();
+
+        mock.setup()
+            .bar(Arg::is(|value: &&dyn std::fmt::Debug| {
+                format!("{value:?}") == "\"hello\""
+            }))
+            .expect_once();
+
         let display: Box<dyn std::fmt::Display> = Box::new(42);
 
         let debug: &dyn std::fmt::Debug = &"hello";
@@ -559,9 +599,7 @@ mod tests {
         mock.bar(debug);
 
         // Assert
-        mock.received().foo(Arg::Any, 1.time());
-
-        mock.received().bar(Arg::Any, 1.time());
+        mock.verify_calls();
     }
 
     #[test]
@@ -569,11 +607,14 @@ mod tests {
         // Arrange
         let mut mock = WhereClausesMock::<i32>::new();
 
+        mock.setup()
+            .foo::<String>(42, "hello".to_owned())
+            .expect_once();
+
         // Act
         mock.foo::<String>(42, "hello".to_owned());
 
         // Assert
-        mock.received()
-            .foo::<String>(42, "hello".to_owned(), 1.time());
+        mock.verify_calls();
     }
 }

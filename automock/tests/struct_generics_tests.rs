@@ -55,6 +55,7 @@ mod tests {
         let actual_t2 = mock.get_t2();
 
         assert_ne!(&t2, actual_t2);
+        Struct::<&str, Vec<i32>>::verify_static_calls();
         mock.verify_calls();
     }
 }

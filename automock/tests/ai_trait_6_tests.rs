@@ -109,6 +109,10 @@ mod tests {
         // Arrange
         let mut mock = dependency::DependencyMock::new();
 
+        mock.setup()
+            .unsafe_call(Arg::is(|pointer: &*mut i32| unsafe { **pointer } == 42))
+            .expect_once();
+
         let mut value = 42;
 
         // Act
@@ -117,7 +121,7 @@ mod tests {
         }
 
         // Assert
-        mock.received().unsafe_call(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]

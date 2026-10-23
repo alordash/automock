@@ -119,12 +119,14 @@ mod tests {
             mock.setup().work().call_base();
 
             // Act
-            let result = mock.work();
+            let mut result = mock.work();
 
             // Assert
             assert_eq!(2, result.len());
             assert_eq!(mock_id, result[0].id);
             assert_eq!(mock_id, result[1].id);
+            result[0].verify_calls();
+            result[1].verify_calls();
         }
     }
 

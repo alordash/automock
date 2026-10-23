@@ -71,9 +71,7 @@ mod trait_tests {
         }
 
         let mocked_value = DEFAULT_VALUE + 1;
-        TraitMock::static_setup()
-            .static_f()
-            .returns_once(mocked_value);
+        TraitMock::static_setup().static_f().returns_once(mocked_value);
 
         // Act
         let static_result = g_static::<TraitMock>();
@@ -123,6 +121,7 @@ mod struct_tests {
 
         // Assert
         assert_eq!(mocked_value, result);
+        Struct::verify_static_calls();
         mock.verify_calls();
     }
 }
