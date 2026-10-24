@@ -1,13 +1,12 @@
 use crate::args::*;
-use crate::fn_parameters::*;
-use crate::infrastructure::call_order_verification::CallOrderEntry;
+use crate::infrastructure::call_order_verification::*;
 use crate::infrastructure::*;
 use crate::times::*;
 
 pub(crate) fn panic_unused_configs_error<TMock>(
-    verify_calls_results: Vec<VerifyCallsResult<TMock>>,
+    calls_vertification_results: Vec<CallsVerificationResult<TMock>>,
 ) {
-    let configs_fmts: Vec<_> = verify_calls_results
+    let configs_fmts: Vec<_> = calls_vertification_results
         .into_iter()
         .flat_map(|x| {
             let config_fmts: Vec<_> = x
@@ -17,10 +16,7 @@ pub(crate) fn panic_unused_configs_error<TMock>(
                     let config = rc_config.borrow();
                     let args_checker_fmt = config.args_checker.fmt_args();
                     let generics_info = config.args_checker.get_generic_parameter_infos();
-                    // TODO - improve formatting
-                    let generics_info_str = fmt_generic_parameter_infos(
-                        GenericParameterInfosFormattingPolicy::Perform(&generics_info),
-                    );
+                    let generics_info_str = fmt_generic_parameter_infos(&generics_info);
                     let times_fmt = format_times(config.return_value_sources.len().times());
                     let fn_fmt = format!(
                         "{}{generics_info_str}({})",
@@ -71,7 +67,7 @@ pub(crate) fn panic_no_suitable_fn_configuration_found(
                 let number = i + 1;
                 let matched_arguments_count = args_check_result.iter().filter(|x| x.is_ok()).count();
                 let total_arguments_count = args_check_result.len();
-                let args_msg = fmt_fn_parameters_msg(fn_name, args_check_result, GenericParameterInfosFormattingPolicy::Skip);
+                let args_msg = fmt_fn_parameters_msg(fn_name, args_check_result);
                 return format!("{number}. Matched {matched_arguments_count}/{total_arguments_count} arguments: {args_msg}");
             })
             .collect();
@@ -102,9 +98,7 @@ pub(crate) fn format_unexpected_call(
         .map(|call_arg| call_arg.clone_arg_debug_string())
         .collect();
     let call_args_msg = call_args_msgs.join(", ");
-    let generic_parameters_msg = fmt_generic_parameter_infos(
-        GenericParameterInfosFormattingPolicy::Perform(&generic_parameter_infos),
-    );
+    let generic_parameters_msg = fmt_generic_parameter_infos(&generic_parameter_infos);
     let error_msg = format!("{formatted_fn_name}{generic_parameters_msg}({call_args_msg})");
     return error_msg;
 }

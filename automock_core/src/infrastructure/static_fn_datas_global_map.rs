@@ -1,4 +1,3 @@
-use crate::fn_parameters::{GenericParameterInfosFormattingPolicy, fmt_generic_parameter_infos};
 use crate::infrastructure::error_printing::panic_unused_configs_error;
 use crate::infrastructure::*;
 use std::any::TypeId;
@@ -98,7 +97,7 @@ impl StaticFnDatasGlobalMap {
         };
         const IRRELEVANT_HAS_RETURN_VALUE: bool = false;
         const IRRELEVANT_SUPPORTS_BASE_CALLING: bool = false;
-        let verify_calls_results: Vec<_> = fn_datas_raw_ptrs
+        let calls_vertification_results: Vec<_> = fn_datas_raw_ptrs
             .values()
             .cloned()
             .map(
@@ -111,13 +110,13 @@ impl StaticFnDatasGlobalMap {
             )
             .map(|x| x.verify_calls())
             .collect();
-        if verify_calls_results
+        if calls_vertification_results
             .iter()
             .all(|x| x.unused_configs.is_empty())
         {
             return;
         }
-        panic_unused_configs_error(verify_calls_results);
+        panic_unused_configs_error(calls_vertification_results);
     }
 }
 
@@ -150,9 +149,7 @@ pub fn get_static_fn_data_for_struct<
     owner_name: &'static str,
     fn_ident: &'static str,
 ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, false> {
-    let generics_info_str = fmt_generic_parameter_infos(
-        GenericParameterInfosFormattingPolicy::Perform(&TMock::get_generic_parameter_infos()),
-    );
+    let generics_info_str = fmt_generic_parameter_infos(&TMock::get_generic_parameter_infos());
     let result = STATIC_FN_DATAS_GLOBAL_MAP.with(|this| {
         this.get_specific_fn_data(Some(owner_name), Some(generics_info_str), fn_ident)
     });

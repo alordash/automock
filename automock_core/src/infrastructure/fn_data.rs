@@ -1,6 +1,7 @@
 use crate::args::*;
 use crate::fn_parameters::*;
-use crate::infrastructure::error_printing::panic_unused_configs_error;
+use crate::infrastructure::call_order_verification::*;
+use crate::infrastructure::error_printing::*;
 use crate::infrastructure::*;
 use crate::*;
 use std::cell::RefCell;
@@ -22,12 +23,6 @@ pub struct FnData<
     pub call_checks: RefCell<HashMap<GenericsHashKey, Vec<CallCheck<'am>>>>,
     #[allow(clippy::type_complexity)]
     pub configs: RefCell<HashMap<GenericsHashKey, Vec<Rc<RefCell<FnConfig<'am, TMock>>>>>>,
-}
-
-// TODO - move to separate file
-pub struct VerifyCallsResult<'am, TMock> {
-    pub formatted_fn_name: String,
-    pub unused_configs: Vec<Rc<RefCell<FnConfig<'am, TMock>>>>,
 }
 
 #[cfg_attr(test, automock::mock)]
@@ -93,7 +88,7 @@ impl<
         return fn_configurator;
     }
 
-    pub fn verify_calls(&self) -> VerifyCallsResult<'am, TMock> {
+    pub fn verify_calls(&self) -> CallsVerificationResult<'am, TMock> {
         let all_configs = self.configs.borrow();
         let unused_configs: Vec<_> = all_configs
             .values()
@@ -101,7 +96,7 @@ impl<
             .filter(|x| x.borrow().return_value_sources.len() > 0)
             .cloned()
             .collect();
-        return VerifyCallsResult {
+        return CallsVerificationResult {
             formatted_fn_name: self.formatted_fn_name.clone(),
             unused_configs,
         };
@@ -109,11 +104,11 @@ impl<
 
     // For static fns
     pub fn validate_calls(&self) {
-        let verify_calls_result = self.verify_calls();
-        if verify_calls_result.unused_configs.is_empty() {
+        let calls_vertification_result = self.verify_calls();
+        if calls_vertification_result.unused_configs.is_empty() {
             return;
         }
-        panic_unused_configs_error(vec![verify_calls_result]);
+        panic_unused_configs_error(vec![calls_vertification_result]);
     }
 }
 
@@ -156,11 +151,7 @@ mod internal {
                 let args_check_result = config_ref.check_call(dyn_call);
                 if args_check_result.iter().all(|x| x.is_ok()) {
                     if let Some(sequence) = &config_ref.maybe_sequence {
-                        let formatted_string = fmt_call(
-                            &self.formatted_fn_name,
-                            args_check_result,
-                            GenericParameterInfosFormattingPolicy::Skip,
-                        );
+                        let formatted_string = fmt_call(&self.formatted_fn_name, args_check_result);
                         sequence.add_call_number(config_ref.number, formatted_string);
                     }
                     return MatchingConfigSearchResult::Ok(config.clone());

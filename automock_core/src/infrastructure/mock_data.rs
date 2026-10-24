@@ -1,5 +1,4 @@
 use crate::args::*;
-use crate::fn_parameters::{GenericParameterInfosFormattingPolicy, fmt_generic_parameter_infos};
 use crate::infrastructure::*;
 use error_printing::panic_unused_configs_error;
 use indexmap::IndexMap;
@@ -51,7 +50,7 @@ impl MockData {
     }
 
     pub fn verify_calls(&self) {
-        let verify_calls_results: Vec<_> = self
+        let calls_vertification_results: Vec<_> = self
             .map
             .read()
             .expect(UNABLE_TO_LOCK_FOR_READING_ERROR)
@@ -68,13 +67,13 @@ impl MockData {
             )
             .map(|x| x.verify_calls())
             .collect();
-        if verify_calls_results
+        if calls_vertification_results
             .iter()
             .all(|x| x.unused_configs.is_empty())
         {
             return;
         }
-        panic_unused_configs_error(verify_calls_results);
+        panic_unused_configs_error(calls_vertification_results);
     }
 
     pub fn get_fn_data<
@@ -89,11 +88,11 @@ impl MockData {
         fn_ident: &'static str,
         generics_hash_key: GenericsHashKey,
     ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, true> {
-        let generics_info_str = fmt_generic_parameter_infos(
-            GenericParameterInfosFormattingPolicy::Perform(&TMock::get_generic_parameter_infos()),
-        );
+        let generics_info_str = fmt_generic_parameter_infos(&TMock::get_generic_parameter_infos());
         let unique_fn_ident = match maybe_trait_name {
-            Some(trait_name) => format!("<{owner_type_name}{generics_info_str} as {trait_name}>_{fn_ident}"),
+            Some(trait_name) => {
+                format!("<{owner_type_name}{generics_info_str} as {trait_name}>_{fn_ident}")
+            }
             None => format!("{owner_type_name}_{fn_ident}"),
         };
         let owner_name = match maybe_trait_name {

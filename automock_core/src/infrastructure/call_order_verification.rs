@@ -1,11 +1,13 @@
 use std::rc::Rc;
 use std::sync::{LazyLock, RwLock};
 
-mod sequence;
 mod call_order_entry;
+mod calls_verification_result;
+mod sequence;
 
-pub(crate) use sequence::Sequence;
 pub(crate) use call_order_entry::CallOrderEntry;
+pub(crate) use calls_verification_result::CallsVerificationResult;
+pub(crate) use sequence::Sequence;
 
 pub fn in_sequence(mut setups: impl FnMut()) -> Rc<Sequence> {
     let sequence = Sequence {
@@ -20,27 +22,29 @@ thread_local! {
     static CURRENT_SEQUENCE: LazyLock<RwLock<Option<Rc<Sequence>>>> = LazyLock::new(Default::default);
 }
 
+const CURRENT_SEQUENCE_READ_ERROR: &'static str =
+    "[ERROR] Can not lock current sequence for `read` (sequence verification error).";
+const CURRENT_SEQUENCE_WRITE_ERROR: &'static str =
+    "[ERROR] Can not lock current sequence for `write` (sequence verification error).";
+const CURRENT_SEQUENCE_IS_EMPTY_ERROR: &'static str =
+    "[ERROR] Current sequence is empty but shouldn't be (sequence verification error).";
+
 pub fn try_get_current_sequence() -> Option<Rc<Sequence>> {
-    CURRENT_SEQUENCE.with(|x| {
-        x.read()
-         .expect("TODO generic message bla-bla can not read")
-         .clone()
-    })
+    CURRENT_SEQUENCE.with(|x| x.read().expect(CURRENT_SEQUENCE_READ_ERROR).clone())
 }
 
 fn set_current_sequence(sequence: Sequence) {
     CURRENT_SEQUENCE.with(|x| {
-        *x.write()
-          .expect("TODO generic message bla-bla can not write") = Some(Rc::new(sequence));
+        *x.write().expect(CURRENT_SEQUENCE_WRITE_ERROR) = Some(Rc::new(sequence));
     });
 }
 
 fn extract_current_sequence() -> Rc<Sequence> {
     CURRENT_SEQUENCE.with(|x| {
         x.write()
-         .expect("TODO generic message bla-bla can not write")
-         .take()
-         .expect("TODO error - sequence should be present")
+            .expect(CURRENT_SEQUENCE_WRITE_ERROR)
+            .take()
+            .expect(CURRENT_SEQUENCE_IS_EMPTY_ERROR)
     })
 }
 
