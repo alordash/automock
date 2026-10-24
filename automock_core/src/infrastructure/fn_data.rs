@@ -20,7 +20,6 @@ pub struct FnData<
 > {
     fn_name: &'static str,
     formatted_fn_name: String,
-    pub call_checks: RefCell<HashMap<GenericsHashKey, Vec<CallCheck<'am>>>>,
     #[allow(clippy::type_complexity)]
     pub configs: RefCell<HashMap<GenericsHashKey, Vec<Rc<RefCell<FnConfig<'am, TMock>>>>>>,
 }
@@ -42,14 +41,12 @@ impl<
         Self {
             fn_name,
             formatted_fn_name,
-            call_checks: RefCell::new(HashMap::new()),
             configs: RefCell::new(HashMap::new()),
         }
     }
 
     #[doc(hidden)]
     pub fn reset(&self) {
-        self.call_checks.borrow_mut().clear();
         self.configs.borrow_mut().clear();
     }
 
@@ -124,16 +121,7 @@ mod internal {
         const PASSES_MOCK_TO_CALLBACK: bool,
     > FnData<'am, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
     {
-        pub(crate) fn register_call(&self, dyn_call: Rc<DynCall<'am>>) {
-            let generics_hash_key = dyn_call.get_generics_hash_key();
-            self.call_checks
-                .borrow_mut()
-                .entry(generics_hash_key)
-                .or_default()
-                .push(CallCheck::new(dyn_call));
-        }
-
-        pub(super) fn try_get_matching_config<TReturnValue>(
+        pub(super) fn try_get_matching_config(
             &self,
             dyn_call: &DynCall<'am>,
         ) -> MatchingConfigSearchResult<'am, TMock> {

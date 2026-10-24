@@ -11,9 +11,9 @@ impl Sequence {
         let is_order_correct = self
             .expected_calls_order
             .borrow()
-            .is_sorted_by(|a, b| a.call_order_number < b.call_order_number);
+            .is_sorted_by(|a, b| a.call_order_number <= b.call_order_number);
         if !is_order_correct {
-            panic_invalid_calls_order(self.expected_calls_order.borrow_mut().as_mut_slice());
+            panic_invalid_calls_order(core::mem::take(self.expected_calls_order.borrow_mut().as_mut()));
         }
     }
 
@@ -26,6 +26,6 @@ impl Sequence {
 }
 
 #[cfg_attr(test, automock::mock)]
-fn panic_invalid_calls_order(expected_calls_order: &mut [CallOrderEntry]) {
+fn panic_invalid_calls_order(expected_calls_order: Vec<CallOrderEntry>) {
     error_printing::panic_invalid_calls_order(expected_calls_order);
 }

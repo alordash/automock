@@ -59,7 +59,7 @@ impl<
         Self {
             _phantom_return_value: PhantomData,
             fn_config: fn_config.clone(),
-            fn_callback_configurator: FnCallbackConfigurator::new(fn_config.clone(), owner),
+            fn_callback_configurator: FnCallbackConfigurator::new(fn_config, owner),
         }
     }
 }

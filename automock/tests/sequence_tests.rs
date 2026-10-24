@@ -9,6 +9,11 @@ fn foo<T>(_: T) {}
 fn bar<T>(_: T) {}
 
 #[mock]
+fn get(_: i32) -> i32 {
+    0
+}
+
+#[mock]
 trait Trait {
     fn traiting(&self, _: i32);
 }
@@ -35,6 +40,115 @@ mod tests {
 
     use super::*;
     use not_enough_asserts::assert_panics;
+
+    #[test]
+    fn OnlyFn_WithVerificationRepeatedExpect_Ok() {
+        // Arrange
+        let sequence = in_sequence(|| {
+            foo::setup(1).expect(2.times()).setup(2).expect_once();
+        });
+
+        // Act
+        foo(1);
+        foo(1);
+        foo(2);
+
+        // Assert
+        foo::verify_calls::<i32>();
+        sequence.verify();
+    }
+
+    #[test]
+    fn OnlyFn_WithVerificationRepeatedReturns_Ok() {
+        // Arrange
+        let sequence = in_sequence(|| {
+            get::setup(1).returns(10, 2.times()).setup(2).returns_once(20);
+        });
+
+        // Act
+        let first = get(1);
+        let second = get(1);
+        let third = get(2);
+
+        // Assert
+        assert_eq!(first, 10);
+        assert_eq!(second, 10);
+        assert_eq!(third, 20);
+        get::verify_calls();
+        sequence.verify();
+    }
+
+    #[test]
+    fn OnlyFn_WithVerificationReturnsMany_Ok() {
+        // Arrange
+        let sequence = in_sequence(|| {
+            get::setup(1).returns_many([10, 20]).setup(2).returns_once(30);
+        });
+
+        // Act
+        let first = get(1);
+        let second = get(1);
+        let third = get(2);
+
+        // Assert
+        assert_eq!(first, 10);
+        assert_eq!(second, 20);
+        assert_eq!(third, 30);
+        get::verify_calls();
+        sequence.verify();
+    }
+
+    #[test]
+    fn OnlyFn_WithVerificationRepeatedReturnsWith_Ok() {
+        // Arrange
+        let sequence = in_sequence(|| {
+            get::setup(1)
+                .returns_with(|(value,)| *value + 10, 2.times())
+                .setup(2)
+                .returns_once(20);
+        });
+
+        // Act
+        let first = get(1);
+        let second = get(1);
+        let third = get(2);
+
+        // Assert
+        assert_eq!(first, 11);
+        assert_eq!(second, 11);
+        assert_eq!(third, 20);
+        get::verify_calls();
+        sequence.verify();
+    }
+
+    #[test]
+    fn OnlyFn_WithVerificationInvalidOrderTwice_Panics() {
+        // Arrange
+        let sequence = in_sequence(|| {
+            get::setup(1).returns_once(10).setup(2).returns_once(20);
+        });
+        let expected_error = r#"Expected to receive these calls in order:
+
+	get(1)
+	get(2)
+
+Actually received matching calls in this order:
+
+	get(2)
+	get(1)
+"#;
+
+        // Act
+        let first = get(2);
+        let second = get(1);
+
+        // Assert
+        assert_eq!(first, 20);
+        assert_eq!(second, 10);
+        get::verify_calls();
+        assert_panics(|| sequence.verify(), expected_error);
+        sequence.verify();
+    }
 
     #[test]
     fn OnlyFn_NoVerificationValidOrder_Ok() {

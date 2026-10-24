@@ -2,12 +2,6 @@
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Times(pub(crate) usize);
 
-impl Times {
-    pub fn matches(&self, count: usize) -> bool {
-        self.0 == count
-    }
-}
-
 /// Allows writing `2.times()`.
 pub trait AsTimes: Sized {
     fn times(self) -> Times;

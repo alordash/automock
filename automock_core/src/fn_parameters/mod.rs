@@ -13,7 +13,6 @@
 // Information about these types is erased during compilation but is kept during code generation.
 // Types that are stored in and loaded from `Dyn*` structs are both controlled by procedure macros.
 // This guarantees that down- and upcasting are performed safely.
-mod call_check;
 pub(crate) mod dyn_arg_refs_tuple;
 mod dyn_args_checker;
 mod dyn_call;
@@ -25,7 +24,6 @@ mod return_value_source;
 
 pub(crate) use i_arg_refs_tuple::*;
 
-pub use call_check::*;
 pub use dyn_arg_refs_tuple::*;
 pub use dyn_args_checker::*;
 pub use dyn_call::*;

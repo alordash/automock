@@ -22,7 +22,6 @@ pub struct FnConfig<'am, TMock> {
     pub number: usize,
     pub args_checker: DynArgsChecker<'am>,
     pub return_value_sources: VecDeque<ReturnValueSource<'am>>,
-    pub calls: Vec<Rc<DynCall<'am>>>,
     #[allow(clippy::type_complexity)]
     pub maybe_callback: Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>) + 'am>>>,
     pub call_base: bool,
@@ -37,7 +36,6 @@ impl<'am, TMock> FnConfig<'am, TMock> {
             number: get_next_fn_config_order_number(),
             args_checker,
             return_value_sources: VecDeque::new(),
-            calls: Vec::new(),
             maybe_callback: None,
             call_base: false,
             maybe_sequence: try_get_current_sequence(),
@@ -87,10 +85,6 @@ impl<'am, TMock> FnConfig<'am, TMock> {
         self.maybe_callback = Some(Rc::new(RefCell::new(dyn_callback)));
     }
 
-    pub(crate) fn register_call(&mut self, call: Rc<DynCall<'am>>) {
-        self.calls.push(call);
-    }
-
     pub(crate) fn check_call(&self, call: &DynCall<'am>) -> Vec<ArgCheckResult> {
         self.args_checker.check(call)
     }
@@ -118,8 +112,8 @@ impl<'am, TMock> FnConfig<'am, TMock> {
     #[allow(clippy::type_complexity)]
     pub(crate) fn get_callback(
         &self,
-    ) -> Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>) + 'am>>> {
-        self.maybe_callback.clone()
+    ) -> Option<&Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>) + 'am>>> {
+        self.maybe_callback.as_ref()
     }
 
     pub(crate) fn set_call_base(&mut self) {

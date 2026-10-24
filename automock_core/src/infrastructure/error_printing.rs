@@ -113,13 +113,13 @@ pub(crate) fn panic_return_values_exhausted(
     panic!("{error_msg}");
 }
 
-pub(crate) fn panic_invalid_calls_order(actual_calls_orders: &mut [CallOrderEntry]) -> ! {
-    let actual_order_string = fmt_call_order_entries(actual_calls_orders);
+pub(crate) fn panic_invalid_calls_order(mut actual_calls_orders: Vec<CallOrderEntry>) -> ! {
+    let actual_order_string = fmt_call_order_entries(&actual_calls_orders);
     let expected_calls_order = {
         actual_calls_orders.sort_by_key(|a| a.call_order_number);
         actual_calls_orders
     };
-    let expected_order_string = fmt_call_order_entries(expected_calls_order);
+    let expected_order_string = fmt_call_order_entries(&expected_calls_order);
     let error_msg = format!(
         "Expected to receive these calls in order:
 
