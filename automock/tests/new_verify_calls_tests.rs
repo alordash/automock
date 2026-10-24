@@ -1,3 +1,4 @@
+#![allow(unused)]
 use automock::*;
 use std::marker::PhantomData;
 

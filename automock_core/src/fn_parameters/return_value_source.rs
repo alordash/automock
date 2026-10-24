@@ -3,8 +3,7 @@ use std::fmt::{Debug, Formatter};
 
 pub enum ReturnValueSource<'am> {
     SingleTime(DynReturnValue<'am>),
-    // TODO - perhaps it should be `FnOnce`?
-    Factory(Box<dyn Fn(DynArgRefsTuple<'am>) -> DynReturnValue<'am> + 'am>),
+    Factory(Box<dyn FnOnce(DynArgRefsTuple<'am>) -> DynReturnValue<'am> + 'am>),
 }
 
 impl<'am> Debug for ReturnValueSource<'am> {
