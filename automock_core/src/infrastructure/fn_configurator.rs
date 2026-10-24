@@ -144,7 +144,7 @@ impl<
     /// [`times`].
     pub fn returns_with(
         &self,
-        f: impl Clone + Fn(TArgRefsTuple) -> TReturnValue + 'am,
+        f: impl Clone + FnOnce(TArgRefsTuple) -> TReturnValue + 'am,
         times: Times,
     ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     {
@@ -165,7 +165,7 @@ impl<
     /// references to source function argument values. Constructed value will be returned only once.
     pub fn returns_once_with(
         &self,
-        f: impl Fn(TArgRefsTuple) -> TReturnValue + 'am,
+        f: impl FnOnce(TArgRefsTuple) -> TReturnValue + 'am,
     ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     {
         let return_value_source = ReturnValueSource::Factory(Box::new(

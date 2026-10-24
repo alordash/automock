@@ -8,7 +8,7 @@ impl Times {
     }
 }
 
-/// Syntactic sugar for writing `1.time()` or `2.times()`.
+/// Allows writing `2.times()`.
 pub trait AsTimes: Sized {
     fn times(self) -> Times;
 }

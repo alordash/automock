@@ -43,14 +43,14 @@ mod tests {
     fn trait_test() {
         // Arrange
         let mut mock = TraitMock::new();
-        mock.setup().work(10).returns(20);
+        mock.setup().work(10).returns_once(20);
 
         // Act
         let result = use_trait(&mock, 10);
 
         // Assert
         assert_eq!(result, 20);
-        mock.received().work(10, 1.time());
+        mock.verify_calls();
     }
 }
 ```
