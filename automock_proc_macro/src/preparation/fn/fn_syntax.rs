@@ -87,7 +87,7 @@ pub(crate) fn prepare(
         merged_generics,
         generics_field,
         maybe_owner_name: maybe_owner.map(IFnOwner::name),
-        maybe_trait_name: maybe_owner.and_then(IFnOwner::maybe_trait_name),
+        maybe_trait_path: maybe_owner.and_then(IFnOwner::maybe_trait_path),
         fn_ident,
         fn_data_name,
         maybe_self_type,

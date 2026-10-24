@@ -84,12 +84,12 @@ impl MockData {
     >(
         &'_ self,
         owner_type_name: &'static str,
-        maybe_trait_name: Option<&'static str>,
+        maybe_trait_name: Option<String>,
         fn_ident: &'static str,
         generics_hash_key: GenericsHashKey,
     ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, true> {
         let generics_info_str = fmt_generic_parameter_infos(&TMock::get_generic_parameter_infos());
-        let unique_fn_ident = match maybe_trait_name {
+        let unique_fn_ident = match &maybe_trait_name {
             Some(trait_name) => {
                 format!("<{owner_type_name}{generics_info_str} as {trait_name}>_{fn_ident}")
             }

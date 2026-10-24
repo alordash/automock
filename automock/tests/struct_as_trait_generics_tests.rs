@@ -2,23 +2,23 @@ use automock::*;
 use std::marker::PhantomData;
 
 #[mock]
-struct Struct<S: ?Sized> {
+struct Struct<S: ?Sized, const CS: usize> {
     s: PhantomData<S>,
 }
 
 #[mock]
-impl<S: ?Sized> Struct<S> {
+impl<S: ?Sized, const CS: usize> Struct<S, CS> {
     pub fn new() -> Self {
         Self { s: PhantomData }
     }
 }
 
-trait Trait<T> {
+trait Trait<T, const CT: usize> {
     fn work(&self, t: T) -> T;
 }
 
 #[mock]
-impl<T, S: ?Sized> Trait<T> for Struct<S> {
+impl<T, S: ?Sized, const CS: usize, const CT: usize> Trait<T, CT> for Struct<S, CS> {
     fn work(&self, t: T) -> T {
         t
     }
@@ -32,27 +32,29 @@ mod tests {
     type S = [u8];
     type T1 = i32;
     type T2<'a> = &'a str;
+    const CS: usize = 3;
+    const CT: usize = 5;
 
     #[test]
     fn Trait_work_DifferentTraitGenerics_Ok() {
-        Struct::<S>::static_setup().new().call_base();
-        let mut mock = Struct::<S>::new();
+        Struct::<S, CS>::static_setup().new().call_base();
+        let mut mock = Struct::<S, CS>::new();
         let t1 = 10;
         let t1_result = 20;
         let t2 = "quo vadis";
         let t2_result = "veridis quo";
         mock.setup()
-            .as_Trait::<T1>()
+            .as_Trait::<T1, CT>()
             .work(t1)
             .returns_once(t1_result);
         mock.setup()
-            .as_Trait::<T2>()
+            .as_Trait::<T2, CT>()
             .work(t2)
             .returns_once(t2_result);
 
         // Act
-        let actual_t1_result = mock.work(t1);
-        let actual_t2_result = mock.work(t2);
+        let actual_t1_result = Trait::<_, CT>::work(&mock, t1);
+        let actual_t2_result = Trait::<_, CT>::work(&mock, t2);
 
         // Assert
         assert_eq!(actual_t1_result, t1_result);
@@ -63,29 +65,29 @@ mod tests {
     #[test]
     fn Trait_work_TooManyCalls_Panics() {
         // Arrange
-        Struct::<S>::static_setup().new().call_base();
-        let mut mock = Struct::<S>::new();
+        Struct::<S, CS>::static_setup().new().call_base();
+        let mut mock = Struct::<S, CS>::new();
         let t1 = 10;
         let t2 = "quo vadis";
         mock.setup()
-            .as_Trait::<T1>()
+            .as_Trait::<T1, CT>()
             .work(t1)
             .returns(20, 2.times());
         mock.setup()
-            .as_Trait::<T2>()
+            .as_Trait::<T2, CT>()
             .work(t2)
             .returns_once("veridis quo");
 
         // Act
-        mock.work(t1);
-        mock.work(t2);
-        mock.work(t1);
+        Trait::<_, CT>::work(&mock, t1);
+        Trait::<_, CT>::work(&mock, t2);
+        Trait::<_, CT>::work(&mock, t1);
 
         // Assert
         assert_panics(
-            || mock.work(t1),
+            || Trait::<_, CT>::work(&mock, t1),
             r#"Mock wasn't configured to handle following call:
-	<Struct<[u8]> as Trait<i32>>::work(?)"#,
+	<Struct<[u8], 3> as Trait<i32, 5>>::work(?)"#,
         );
         mock.verify_calls();
     }
@@ -93,30 +95,30 @@ mod tests {
     #[test]
     fn Trait_work_NotEnoughCalls_Panics() {
         // Arrange
-        Struct::<S>::static_setup().new().call_base();
-        let mut mock = Struct::<S>::new();
+        Struct::<S, CS>::static_setup().new().call_base();
+        let mut mock = Struct::<S, CS>::new();
         let t1 = 10;
         let t2 = "quo vadis";
         mock.setup()
-            .as_Trait::<T1>()
+            .as_Trait::<T1, CT>()
             .work(t1)
             .returns(20, 4.times());
         mock.setup()
-            .as_Trait::<T2>()
+            .as_Trait::<T2, CT>()
             .work(t2)
             .returns_once("veridis quo");
 
         // Act
-        mock.work(t1);
-        mock.work(t2);
-        mock.work(t1);
-        mock.work(t1);
+        Trait::<_, CT>::work(&mock, t1);
+        Trait::<_, CT>::work(&mock, t2);
+        Trait::<_, CT>::work(&mock, t1);
+        Trait::<_, CT>::work(&mock, t1);
 
         // Assert
         assert_panics(
             || mock.verify_calls(),
             r#"Expected following calls:
-	<Struct<[u8]> as Trait<i32>>::work(?) 1 time"#,
+	<Struct<[u8], 3> as Trait<i32, 5>>::work(?) 1 time"#,
         );
     }
 }
