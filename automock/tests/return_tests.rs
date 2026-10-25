@@ -22,8 +22,14 @@ mod tests {
 
         // Assert
         assert_eq!(result, 10);
-        assert_eq!(panic_message, Some(r#"Mock wasn't configured to handle following call:
-	work()"#.to_owned()));
+        assert_eq!(
+            panic_message,
+            Some(
+                r#"Mock wasn't configured to handle following call:
+	work()"#
+                    .to_owned()
+            )
+        );
         work::verify_calls();
     }
 
@@ -42,8 +48,14 @@ mod tests {
         assert_eq!(first, 10);
         assert_eq!(second, 20);
         assert_eq!(third, 30);
-        assert_eq!(panic_message, Some(r#"Mock wasn't configured to handle following call:
-	work()"#.to_owned()));
+        assert_eq!(
+            panic_message,
+            Some(
+                r#"Mock wasn't configured to handle following call:
+	work()"#
+                    .to_owned()
+            )
+        );
         work::verify_calls();
     }
 

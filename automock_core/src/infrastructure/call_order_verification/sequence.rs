@@ -13,7 +13,9 @@ impl Sequence {
             .borrow()
             .is_sorted_by(|a, b| a.call_order_number <= b.call_order_number);
         if !is_order_correct {
-            panic_invalid_calls_order(core::mem::take(self.expected_calls_order.borrow_mut().as_mut()));
+            panic_invalid_calls_order(core::mem::take(
+                self.expected_calls_order.borrow_mut().as_mut(),
+            ));
         }
     }
 

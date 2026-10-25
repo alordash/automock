@@ -110,7 +110,9 @@ mod tests {
             let mut mock = Struct::new();
             let first_value = 10;
             let second_value = 22;
-            mock.setup().accept_value(Arg::eq(first_value)).expect_once();
+            mock.setup()
+                .accept_value(Arg::eq(first_value))
+                .expect_once();
 
             // Act
             let actual_error_msg = record_panic(|| mock.accept_value(second_value));

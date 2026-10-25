@@ -43,7 +43,9 @@ mod tests {
         mock.setup()
             .work::<[u8; 4], 10>(&value)
             .returns_once([1, 2, 3, 4]);
-        mock.setup().work::<[u8; 4], 10>(&2).returns_once([1, 2, 3, 4]);
+        mock.setup()
+            .work::<[u8; 4], 10>(&2)
+            .returns_once([1, 2, 3, 4]);
 
         // Act
         let panic_msg = record_panic(|| mock.work::<f32, 1>(&value));
@@ -65,7 +67,9 @@ List of existing configuration ordered by number of correctly matched arguments 
         let value = 5;
         let returned_value = 3.0f32;
         mock.setup().work::<f32, 1>(&value);
-        mock.setup().work::<f32, 1>(&value).returns_once(returned_value);
+        mock.setup()
+            .work::<f32, 1>(&value)
+            .returns_once(returned_value);
 
         // Act
         let actual_returned_value = mock.work::<f32, 1>(&value);

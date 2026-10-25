@@ -365,9 +365,7 @@ mod tests {
         // Arrange
         let mut mock = MonsterMock::<i32, 4, DefaultOutput, DefaultIterator<i32>>::new();
 
-        mock.setup()
-            .const_generic::<4>([1, 2, 3, 4])
-            .expect_once();
+        mock.setup().const_generic::<4>([1, 2, 3, 4]).expect_once();
 
         // Act
         mock.const_generic::<4>([1, 2, 3, 4]);

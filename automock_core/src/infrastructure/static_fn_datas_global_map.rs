@@ -132,8 +132,7 @@ pub fn get_static_fn_data<
 >(
     fn_ident: &'static str,
 ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, false> {
-    let result =
-        STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.get_specific_fn_data(None, fn_ident));
+    let result = STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.get_specific_fn_data(None, fn_ident));
     return result;
 }
 
@@ -147,9 +146,8 @@ pub fn get_static_fn_data_for_struct<
     fn_ident: &'static str,
 ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, false> {
     let generics_info_str = fmt_generic_parameter_infos(&TMock::get_generic_parameter_infos());
-    let result = STATIC_FN_DATAS_GLOBAL_MAP.with(|this| {
-        this.get_specific_fn_data(Some((owner_name, generics_info_str)), fn_ident)
-    });
+    let result = STATIC_FN_DATAS_GLOBAL_MAP
+        .with(|this| this.get_specific_fn_data(Some((owner_name, generics_info_str)), fn_ident));
     return result;
 }
 

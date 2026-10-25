@@ -58,7 +58,8 @@ pub(crate) fn generate_module(mut item_struct: ItemStruct) -> MockMod {
             static_setup_struct_ident: struct_static_setup_struct.ident.clone(),
         },
     );
-    let generics_mock_generics_info_provider = generics::remove_defaults(item_struct.generics.clone());
+    let generics_mock_generics_info_provider =
+        generics::remove_defaults(item_struct.generics.clone());
     let mock_generics_info_provider_impl = generics_info_provider_impl::generate_mock_impl(
         source_span,
         generics_mock_generics_info_provider.clone(),

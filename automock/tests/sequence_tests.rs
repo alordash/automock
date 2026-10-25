@@ -62,7 +62,10 @@ mod tests {
     fn OnlyFn_WithVerificationRepeatedReturns_Ok() {
         // Arrange
         let sequence = in_sequence(|| {
-            get::setup(1).returns(10, 2.times()).setup(2).returns_once(20);
+            get::setup(1)
+                .returns(10, 2.times())
+                .setup(2)
+                .returns_once(20);
         });
 
         // Act
@@ -82,7 +85,10 @@ mod tests {
     fn OnlyFn_WithVerificationReturnsMany_Ok() {
         // Arrange
         let sequence = in_sequence(|| {
-            get::setup(1).returns_many([10, 20]).setup(2).returns_once(30);
+            get::setup(1)
+                .returns_many([10, 20])
+                .setup(2)
+                .returns_once(30);
         });
 
         // Act

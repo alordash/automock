@@ -47,8 +47,14 @@ mod tests {
         let a_return_value = 10;
         let b_return_value = 20;
 
-        mock.setup().as_a_Trait().work().returns_once(a_return_value);
-        mock.setup().as_b_Trait().work().returns_once(b_return_value);
+        mock.setup()
+            .as_a_Trait()
+            .work()
+            .returns_once(a_return_value);
+        mock.setup()
+            .as_b_Trait()
+            .work()
+            .returns_once(b_return_value);
 
         // Act
         let a_result = a::Trait::work(&mock);

@@ -104,8 +104,10 @@ List of existing configuration ordered by number of correctly matched arguments 
         let actual_error_msg = record_panic(|| notify(unexpected_v));
 
         // Assert
-        let expected_error_msg = format!("Mock wasn't configured to handle following call:
-	notify({unexpected_v})");
+        let expected_error_msg = format!(
+            "Mock wasn't configured to handle following call:
+	notify({unexpected_v})"
+        );
         assert_eq!(Some(expected_error_msg), actual_error_msg);
     }
 }
