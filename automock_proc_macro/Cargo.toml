@@ -1,6 +1,6 @@
 [package]
 name = "automock_proc_macro"
-version = "1.00-rc1"
+version = "1.0.0-rc1"
 edition = "2024"
 rust-version = "1.88.0"
 description = "automock procedural macros."
