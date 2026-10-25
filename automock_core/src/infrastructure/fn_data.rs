@@ -90,7 +90,7 @@ impl<
         let unused_configs: Vec<_> = all_configs
             .values()
             .flatten()
-            .filter(|x| x.borrow().return_value_sources.len() > 0)
+            .filter(|x| !x.borrow().return_value_sources.is_empty())
             .cloned()
             .collect();
         return CallsVerificationResult {

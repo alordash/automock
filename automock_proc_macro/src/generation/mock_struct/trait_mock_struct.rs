@@ -285,8 +285,8 @@ fn generate_inner_impl(
         .filter_map(|fn_info| try_extract_base_fn(span, trait_info, fn_info, mod_ident));
     let items = [id_fn_impl, mock_struct_fn_new]
         .into_iter()
-        .chain(maybe_associated_setup_creation_fn.into_iter())
-        .chain(maybe_static_controls_creation_fns.into_iter())
+        .chain(maybe_associated_setup_creation_fn)
+        .chain(maybe_static_controls_creation_fns)
         .chain([verify_calls_fn, verify_static_calls_fn])
         .chain(base_fns)
         .map(ImplItem::Fn)

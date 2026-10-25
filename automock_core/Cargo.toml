@@ -23,3 +23,4 @@ debug_naming = []
 [lints.clippy]
 needless_return = "allow"
 match_like_matches_macro = "allow"
+let_and_return = "allow"
