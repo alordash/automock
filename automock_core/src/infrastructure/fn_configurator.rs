@@ -95,12 +95,8 @@ impl<
     where
         TReturnValue: Clone + IReturnValue<'a> + 'a,
     {
-        let return_value_sources = core::iter::repeat_n(return_value, times.0)
-            .map(|x| ReturnValueSource::SingleTime(transmute_lifetime!(DynReturnValue::new(x))));
-        self.fn_config
-            .borrow_mut()
-            .add_return_value_sources(return_value_sources);
-        return &self.fn_callback_configurator;
+        let return_values = core::iter::repeat_n(return_value, times.0);
+        return self.returns_many(return_values);
     }
 
     /// Sets return value of this function. This value will be returned only once.
@@ -111,12 +107,7 @@ impl<
     where
         TReturnValue: IReturnValue<'a> + 'a,
     {
-        let dyn_return_value = transmute_lifetime!(DynReturnValue::new(return_value));
-        let return_value_source = ReturnValueSource::SingleTime(dyn_return_value);
-        self.fn_config
-            .borrow_mut()
-            .add_return_value_source(return_value_source);
-        return &self.fn_callback_configurator;
+        return self.returns_many([return_value]);
     }
 
     /// Sets multiple return values of this function. These values will be returned only once in the
@@ -133,10 +124,7 @@ impl<
             .map(|x| transmute_lifetime!(DynReturnValue::new(x)))
             .map(ReturnValueSource::SingleTime)
             .collect();
-        self.fn_config
-            .borrow_mut()
-            .add_return_value_sources(return_value_sources);
-        return &self.fn_callback_configurator;
+        return self.returns_many_core(return_value_sources);
     }
 
     /// Sets return value of this function using factory. Factory constructs new return value using
@@ -147,18 +135,13 @@ impl<
         f: impl Clone + FnOnce(TArgRefsTuple) -> TReturnValue + 'am,
         times: Times,
     ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+    where
+        TArgRefsTuple: 'am,
+        TReturnValue: 'am,
     {
-        let factory = Box::new(move |dyn_arg_refs_tuple: DynArgRefsTuple<'am>| {
-            let arg_refs_tuple: TArgRefsTuple = dyn_arg_refs_tuple.downcast_into::<TArgRefsTuple>();
-            let result = f(arg_refs_tuple);
-            return transmute_lifetime!(DynReturnValue::new(result));
-        });
-        let return_value_sources =
-            core::iter::repeat_n(factory, times.0).map(|x| ReturnValueSource::Factory(x));
-        self.fn_config
-            .borrow_mut()
-            .add_return_value_sources(return_value_sources);
-        return &self.fn_callback_configurator;
+        let fs = core::iter::repeat_n(f, times.0)
+            .map(|x| Box::new(x) as Box<dyn FnOnce(TArgRefsTuple) -> TReturnValue>);
+        return self.returns_with_many(fs);
     }
 
     /// Sets return value of this function using factory. Factory constructs new return value using
@@ -167,18 +150,46 @@ impl<
         &self,
         f: impl FnOnce(TArgRefsTuple) -> TReturnValue + 'am,
     ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+    where
+        TArgRefsTuple: 'am,
+        TReturnValue: 'am,
     {
-        let return_value_source = ReturnValueSource::Factory(Box::new(
-            move |dyn_arg_refs_tuple: DynArgRefsTuple<'am>| {
-                let arg_refs_tuple: TArgRefsTuple =
-                    dyn_arg_refs_tuple.downcast_into::<TArgRefsTuple>();
-                let result = f(arg_refs_tuple);
-                return transmute_lifetime!(DynReturnValue::new(result));
-            },
-        ));
+        return self
+            .returns_with_many([Box::new(f) as Box<dyn FnOnce(TArgRefsTuple) -> TReturnValue>]);
+    }
+
+    fn returns_with_many(
+        &self,
+        fs: impl IntoIterator<Item = Box<dyn FnOnce(TArgRefsTuple) -> TReturnValue + 'am>>,
+    ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+    where
+        TArgRefsTuple: 'am,
+        TReturnValue: 'am,
+    {
+        let return_value_sources: Vec<_> = fs
+            .into_iter()
+            .map(|f| {
+                Box::new(move |dyn_arg_refs_tuple: DynArgRefsTuple<'am>| {
+                    let arg_refs_tuple: TArgRefsTuple =
+                        dyn_arg_refs_tuple.downcast_into::<TArgRefsTuple>();
+                    let result = f(arg_refs_tuple);
+                    return DynReturnValue::new(result);
+                })
+                    as Box<dyn FnOnce(DynArgRefsTuple<'am>) -> DynReturnValue<'am> + 'am>
+            })
+            .map(ReturnValueSource::Factory)
+            .collect();
+        return self.returns_many_core(return_value_sources);
+    }
+
+    fn returns_many_core(
+        &self,
+        return_value_sources: impl IntoIterator<Item = ReturnValueSource<'am>>,
+    ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
+    {
         self.fn_config
             .borrow_mut()
-            .add_return_value_source(return_value_source);
+            .add_return_value_sources(return_value_sources);
         return &self.fn_callback_configurator;
     }
 }
@@ -280,6 +291,7 @@ pub(crate) mod tests {
 
     use super::*;
     use automock::Mockable;
+    use core::assert_matches;
     use fn_callback_configurator::tests::utilities::*;
     use fn_config::tests::utilities::*;
     use fn_parameters::dyn_arg_refs_tuple::tests::utilities::*;
@@ -287,6 +299,7 @@ pub(crate) mod tests {
 
     const IRRELEVANT: bool = false;
 
+    // TODO - rewrite `returns_XXX_YYY` tests
     #[test]
     fn returns_once_Ok() {
         // Arrange
@@ -327,9 +340,12 @@ pub(crate) mod tests {
             .add_return_value_sources(automock::Arg::is(|sources: &Vec<ReturnValueSource>| {
                 let values: Vec<_> = sources
                     .iter()
-                    .map(|source| match source {
-                        ReturnValueSource::SingleTime(value) => *value.downcast_to::<ReturnValue>(),
-                        _ => panic!("Return value source must be SingleTime."),
+                    .map(|source| {
+                        assert_matches!(source, ReturnValueSource::SingleTime(_));
+                        let ReturnValueSource::SingleTime(value) = source else {
+                            unreachable!()
+                        };
+                        *value.downcast_to::<ReturnValue>()
                     })
                     .collect();
                 values == return_values
@@ -372,9 +388,9 @@ pub(crate) mod tests {
             .return_value_sources
             .pop_front()
             .expect("Factory must be stored.");
-        let factory = match source {
-            ReturnValueSource::Factory(factory) => factory,
-            _ => panic!("Return value source must be Factory."),
+        assert_matches!(source, ReturnValueSource::Factory(_));
+        let ReturnValueSource::Factory(factory) = source else {
+            unreachable!()
         };
         let actual_return_value: ReturnValue = factory(dyn_arg_refs_tuple).downcast_into();
 
@@ -415,14 +431,13 @@ pub(crate) mod tests {
         pub struct ReturnValue(pub i32);
 
         pub fn fn_configurator_mock<
-            'a,
             const HAS_RETURN_VALUE: bool,
             const SUPPORTS_BASE_CALLING: bool,
             const PASSES_MOCK_TO_CALLBACK: bool,
         >(
-            owner: &'a Owner,
+            owner: &Owner,
         ) -> FnConfigurator<
-            'a,
+            '_,
             Mock,
             Owner,
             ArgRefsTuple,

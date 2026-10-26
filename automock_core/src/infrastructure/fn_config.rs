@@ -21,6 +21,7 @@ pub struct FnConfig<'am, TMock> {
     _phantom_mock: PhantomData<TMock>,
     pub number: usize,
     pub args_checker: DynArgsChecker<'am>,
+    // TODO - unite `return_value_sources` with `call_base in an enum - they are mutually exclusive
     pub return_value_sources: VecDeque<ReturnValueSource<'am>>,
     #[allow(clippy::type_complexity)]
     pub maybe_callback: Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>) + 'am>>>,
@@ -135,6 +136,7 @@ pub(crate) mod tests {
     use crate::infrastructure::fn_callback_configurator::tests::utilities::*;
     use crate::infrastructure::fn_configurator::tests::utilities::*;
     use automock::Mockable;
+    use core::assert_matches;
     use utilities::*;
 
     #[test]
@@ -411,15 +413,18 @@ pub(crate) mod tests {
             expected_return_value_sources_length
         );
 
-        let actual_existed_dyn_return_value = match fn_config
+        let actual_existed_return_value_source = fn_config
             .return_value_sources
             .pop_front()
-            .expect("Existed return value should exist.")
-        {
-            ReturnValueSource::SingleTime(x) => x,
-            y => panic!(
-                "Existed return value must be `ReturnValueSource::SingleTime`, was instead: {y:?}"
-            ),
+            .expect("Existed return value should exist.");
+        assert_matches!(
+            actual_existed_return_value_source,
+            ReturnValueSource::SingleTime(_)
+        );
+        let ReturnValueSource::SingleTime(actual_existed_dyn_return_value) =
+            actual_existed_return_value_source
+        else {
+            unreachable!()
         };
         let actual_existed_return_value: TExistedReturnValue =
             actual_existed_dyn_return_value.downcast_into();
@@ -498,13 +503,14 @@ pub(crate) mod tests {
         fn_config.setup().get_callback().call_base();
         let ptr = 1234 as *const ();
         let dyn_call = DynCall::new(CallMock::new());
-        inner_callback::setup(ptr, automock::Arg::ref_eq(&dyn_call)).expect_once();
 
         // Act
         let result = fn_config.get_callback();
 
         // Assert
         let callback = result.expect("Callback must be set.");
+        inner_callback::verify_calls();
+        inner_callback::setup(ptr, automock::Arg::ref_eq(&dyn_call)).expect_once();
         callback.borrow_mut()(ptr, &dyn_call);
         inner_callback::verify_calls();
     }

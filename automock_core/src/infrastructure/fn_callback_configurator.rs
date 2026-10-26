@@ -75,8 +75,7 @@ pub(crate) mod tests {
     #![allow(non_snake_case)]
 
     use super::*;
-    use crate::fn_parameters::i_call::tests::utilities::*;
-    use crate::fn_parameters::*;
+    use crate::transmute_lifetime;
     use automock::Mockable;
     use fn_config::tests::utilities::*;
     use fn_configurator::tests::utilities::*;
@@ -85,77 +84,81 @@ pub(crate) mod tests {
     const IRRELEVANT: bool = false;
 
     #[test]
-    fn and_does_WithoutMock_Ok() {
+    fn and_does_WithoutMock_Ok<'am>() {
         // Arrange
         let owner = Owner;
-        let fn_callback_configurator = fn_callback_configurator::<false>(&owner);
-        let arg_refs_tuple = ArgRefsTuple(5);
-        // TODO - recheck
-        mockless_callback::setup(arg_refs_tuple).expect_once();
+        let fn_callback_configurator =
+            fn_callback_configurator::<false>(transmute_lifetime!(&owner));
         fn_callback_configurator
             .fn_config
             .borrow_mut()
             .setup()
-            .set_callback::<ArgRefsTuple, Mock>(automock::Arg::Any)
-            .call_base();
-        let mut call = CallMock::new();
-        call.setup()
-            .as_ICall()
-            .get_ptr_to_boxed_tuple_of_refs()
-            .returns_once(Box::into_raw(Box::new(arg_refs_tuple)) as *mut ());
-        let dyn_call = DynCall::new(call.clone());
+            .set_callback::<ArgRefsTuple, Mock>(automock::Arg::is_mut(
+                |callback: &mut Box<dyn FnMut(&'am Mock, ArgRefsTuple)>| {
+                    // Arrange
+                    let arg_refs_tuple = ArgRefsTuple(5);
+                    mockless_callback::setup(arg_refs_tuple).expect_once();
+
+                    // Act
+                    callback.as_mut()(&Mock, arg_refs_tuple);
+
+                    // Assert
+                    mockless_callback::verify_calls();
+                    return true;
+                },
+            ))
+            .expect_once();
 
         // Act
         let result = fn_callback_configurator.and_does(mockless_callback);
-        let config = fn_callback_configurator.fn_config.borrow();
-        config
-            .maybe_callback
-            .as_ref()
-            .expect("Callback must be set.")
-            .borrow_mut()(&Mock as *const _ as *const (), &dyn_call);
 
         // Assert
         assert_eq!(result as *const Owner, &owner as *const Owner);
 
-        mockless_callback::verify_calls();
-        call.verify_calls();
+        fn_callback_configurator
+            .fn_config
+            .borrow_mut()
+            .verify_calls();
     }
 
     #[test]
-    fn and_does_WithMock_Ok() {
+    #[allow(clippy::extra_unused_lifetimes)]
+    fn and_does_WithMock_Ok<'am>() {
         // Arrange
         let owner = Owner;
-        let fn_callback_configurator = fn_callback_configurator::<true>(&owner);
-        let mock_arg = MockArg(5);
-        let arg_refs_tuple = ArgRefsTuple(10);
-        callback::setup(automock::Arg::ref_eq(&mock_arg), arg_refs_tuple).expect_once();
+        let fn_callback_configurator =
+            fn_callback_configurator::<true>(transmute_lifetime!(&owner));
         fn_callback_configurator
             .fn_config
             .borrow_mut()
             .setup()
-            .set_callback::<ArgRefsTuple, MockArg>(automock::Arg::Any)
-            .call_base();
-        let mut call = CallMock::new();
-        call.setup()
-            .as_ICall()
-            .get_ptr_to_boxed_tuple_of_refs()
-            .returns_once(Box::into_raw(Box::new(arg_refs_tuple)) as *mut ());
-        let dyn_call = DynCall::new(call.clone());
+            .set_callback(automock::Arg::is_mut(
+                |callback: &mut Box<dyn FnMut(&'am MockArg, ArgRefsTuple)>| {
+                    // Arrange
+                    let mock_arg = MockArg(5);
+                    let arg_refs_tuple = ArgRefsTuple(10);
+                    callback::setup(automock::Arg::ref_eq(&mock_arg), arg_refs_tuple).expect_once();
+
+                    // Act
+                    callback.as_mut()(transmute_lifetime!(&mock_arg), arg_refs_tuple);
+
+                    // Assert
+                    callback::verify_calls();
+                    return true;
+                },
+            ))
+            .expect_once();
 
         // Act
         let result = fn_callback_configurator.and_does(callback);
-        let config = fn_callback_configurator.fn_config.borrow();
-        config
-            .maybe_callback
-            .as_ref()
-            .expect("Callback must be set.")
-            .borrow_mut()(&mock_arg as *const _ as *const (), &dyn_call);
 
         // Assert
         assert_eq!(result as *const Owner, &owner as *const Owner);
 
-        callback::verify_calls();
-        call.verify_calls();
+        fn_callback_configurator
+            .fn_config
+            .borrow_mut()
+            .verify_calls();
     }
 
     #[test]
@@ -180,9 +183,9 @@ pub(crate) mod tests {
         #[derive(Clone, Copy, PartialEq)]
         pub struct MockArg(pub i32);
 
-        pub fn fn_callback_configurator<'a, const PASSES_MOCK_TO_CALLBACK: bool>(
-            owner: &'a Owner,
-        ) -> FnCallbackConfigurator<'a, Mock, Owner, ArgRefsTuple, MockArg, PASSES_MOCK_TO_CALLBACK>
+        pub fn fn_callback_configurator<const PASSES_MOCK_TO_CALLBACK: bool>(
+            owner: &Owner,
+        ) -> FnCallbackConfigurator<'_, Mock, Owner, ArgRefsTuple, MockArg, PASSES_MOCK_TO_CALLBACK>
         {
             FnCallbackConfigurator {
                 _phantom_args_tuple: PhantomData,

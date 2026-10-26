@@ -37,7 +37,6 @@ mod tests {
     #![allow(non_snake_case)]
 
     use super::*;
-    use not_enough_asserts::record_panic;
 
     #[test]
     fn add_call_number_Ok() {
@@ -75,35 +74,36 @@ mod tests {
         };
 
         // Act
-        let panic_message = record_panic(|| sequence.verify());
+        sequence.verify();
 
         // Assert
-        assert!(panic_message.is_none());
         assert_eq!(sequence.expected_calls_order.borrow().len(), 2);
+        panic_invalid_calls_order::verify_calls();
     }
 
     #[test]
     fn verify_OrderIsIncorrect_PrintsError() {
         // Arrange
+        let expected_calls_order = vec![
+            CallOrderEntry {
+                call_order_number: 10,
+                formatted_string: "quo vadis".to_owned(),
+            },
+            CallOrderEntry {
+                call_order_number: 5,
+                formatted_string: "veridis quo".to_owned(),
+            },
+        ];
         let sequence = Sequence {
-            expected_calls_order: RefCell::new(vec![
-                CallOrderEntry {
-                    call_order_number: 10,
-                    formatted_string: "quo vadis".to_owned(),
-                },
-                CallOrderEntry {
-                    call_order_number: 5,
-                    formatted_string: "veridis quo".to_owned(),
-                },
-            ]),
+            expected_calls_order: RefCell::new(expected_calls_order.clone()),
         };
-        panic_invalid_calls_order::setup(automock::Arg::Any).call_base();
-        let expected_error = "Expected to receive these calls in order:\n\n\tveridis quo\n\tquo vadis\n\nActually received matching calls in this order:\n\n\tquo vadis\n\tveridis quo\n";
+        panic_invalid_calls_order::setup(expected_calls_order).expect_once();
 
         // Act
-        let panic_message = record_panic(|| sequence.verify());
+        sequence.verify();
 
         // Assert
-        assert_eq!(panic_message, Some(expected_error.to_owned()));
+        assert!(sequence.expected_calls_order.borrow().is_empty());
+        panic_invalid_calls_order::verify_calls();
     }
 }

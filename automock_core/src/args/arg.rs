@@ -196,6 +196,7 @@ pub(crate) mod tests {
     use super::*;
     use arg_cmp::tests::utilities::*;
     use automock::Mockable;
+    use core::assert_matches;
     use std::rc::Rc;
     use utilities::*;
 
@@ -266,9 +267,9 @@ pub(crate) mod tests {
         let arg = Arg::is(predicate);
 
         // Assert
-        let actual_predicate = match arg {
-            Arg::Is(p, _) => p,
-            _ => panic!("`arg` must be `Arg::Is`, instead is: {arg:?}"),
+        assert_matches!(arg, Arg::Is(_, _));
+        let Arg::Is(actual_predicate, _) = arg else {
+            unreachable!()
         };
         let actual_predicate_result = actual_predicate(&CustomType(5) as *const _ as *const ());
         assert!(actual_predicate_result);
@@ -285,9 +286,9 @@ pub(crate) mod tests {
         let arg = Arg::is_mut(predicate_mut);
 
         // Assert
-        let actual_predicate = match arg {
-            Arg::Is(p, _) => p,
-            _ => panic!("`arg` must be `Arg::Is`, instead is: {arg:?}"),
+        assert_matches!(arg, Arg::Is(_, _));
+        let Arg::Is(actual_predicate, _) = arg else {
+            unreachable!()
         };
         let actual_predicate_result = actual_predicate(&CustomType(5) as *const _ as *const ());
         assert!(actual_predicate_result);
@@ -310,10 +311,7 @@ pub(crate) mod tests {
         let arg = Arg::eq(custom_type.clone());
 
         // Assert
-        match arg {
-            Arg::Eq(_, _) => (),
-            _ => panic!("`arg` must be `Arg::Eq`, instead is: {arg:?}"),
-        };
+        assert_matches!(arg, Arg::Eq(_, _));
 
         ArgCmp::<CustomType>::verify_static_calls();
     }
@@ -333,10 +331,7 @@ pub(crate) mod tests {
         let arg = Arg::not_eq(custom_type.clone());
 
         // Assert
-        match arg {
-            Arg::NotEq(_, _) => (),
-            _ => panic!("`arg` must be `Arg::NotEq`, instead is: {arg:?}"),
-        };
+        assert_matches!(arg, Arg::NotEq(_, _));
 
         ArgCmp::<CustomType>::verify_static_calls();
     }
@@ -356,10 +351,7 @@ pub(crate) mod tests {
         let arg = Arg::ref_eq(custom_type.clone());
 
         // Assert
-        match arg {
-            Arg::Eq(_, _) => (),
-            _ => panic!("`arg` must be `Arg::Eq`, instead is: {arg:?}"),
-        };
+        assert_matches!(arg, Arg::Eq(_, _));
 
         ArgCmp::<Rc<CustomType>>::verify_static_calls();
     }
@@ -379,10 +371,7 @@ pub(crate) mod tests {
         let arg = Arg::ref_not_eq(custom_type.clone());
 
         // Assert
-        match arg {
-            Arg::NotEq(_, _) => (),
-            _ => panic!("`arg` must be `Arg::Eq`, instead is: {arg:?}"),
-        };
+        assert_matches!(arg, Arg::NotEq(_, _));
 
         ArgCmp::<Rc<CustomType>>::verify_static_calls();
     }
@@ -399,8 +388,9 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Ok(_));
         let ArgCheckResult::Ok(ArgCheckResultOk { arg_info }) = result else {
-            panic!("`check` result must be ok.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
@@ -426,16 +416,18 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Ok(_));
         let ArgCheckResult::Ok(ArgCheckResultOk { arg_info }) = result else {
-            panic!("`check` result must be ok.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
         assert_eq!(arg_info.arg_type_name(), *CUSTOM_TYPE_NAME);
         assert_eq!(arg_info.clone_arg_debug_string(), actual_value_str);
 
+        assert_matches!(arg, Arg::Eq(_, _));
         let Arg::Eq(mut arg_cmp, _) = arg else {
-            panic!("Should be Arg::Eq")
+            unreachable!()
         };
         arg_cmp.verify_calls();
     }
@@ -468,12 +460,13 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Err(_));
         let ArgCheckResult::Err(ArgCheckResultErr {
             arg_info,
             error_msg,
         }) = result
         else {
-            panic!("`check` result must be error.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
@@ -485,8 +478,9 @@ pub(crate) mod tests {
         );
         assert_eq!(error_msg, expected_error_msg);
 
+        assert_matches!(arg, Arg::Eq(_, _));
         let Arg::Eq(mut arg_cmp, _) = arg else {
-            panic!("Should be Arg::Eq")
+            unreachable!()
         };
         arg_cmp.verify_calls();
     }
@@ -518,12 +512,13 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Err(_));
         let ArgCheckResult::Err(ArgCheckResultErr {
             arg_info,
             error_msg,
         }) = result
         else {
-            panic!("`check` result must be error.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
@@ -534,8 +529,9 @@ pub(crate) mod tests {
             format!("\t\tDid not expect to be {expected_ptr_info_suffix}{not_expected_value_str}");
         assert_eq!(error_msg, expected_error_msg);
 
+        assert_matches!(arg, Arg::NotEq(_, _));
         let Arg::NotEq(mut arg_cmp, _) = arg else {
-            panic!("Should be Arg::NotEq")
+            unreachable!()
         };
         arg_cmp.verify_calls();
     }
@@ -558,16 +554,18 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Ok(_));
         let ArgCheckResult::Ok(ArgCheckResultOk { arg_info }) = result else {
-            panic!("`check` result must be ok.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
         assert_eq!(arg_info.arg_type_name(), *CUSTOM_TYPE_NAME);
         assert_eq!(arg_info.clone_arg_debug_string(), actual_value_str);
 
+        assert_matches!(arg, Arg::NotEq(_, _));
         let Arg::NotEq(mut arg_cmp, _) = arg else {
-            panic!("Should be Arg::NotEq")
+            unreachable!()
         };
         arg_cmp.verify_calls();
     }
@@ -586,8 +584,9 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Ok(_));
         let ArgCheckResult::Ok(ArgCheckResultOk { arg_info }) = result else {
-            panic!("`check` result must be ok.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
@@ -611,12 +610,13 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Err(_));
         let ArgCheckResult::Err(ArgCheckResultErr {
             arg_info,
             error_msg,
         }) = result
         else {
-            panic!("`check` result must be ok.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);

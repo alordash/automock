@@ -35,11 +35,8 @@ pub(crate) mod tests {
 
     #[test]
     fn is_zst_ReturnsTrue() {
-        // Arrange
-        let call = DefaultCall;
-
         // Act
-        let result = call.is_zst();
+        let result = DefaultCall.is_zst();
 
         // Assert
         assert!(result);
@@ -47,11 +44,8 @@ pub(crate) mod tests {
 
     #[test]
     fn get_arg_infos_ReturnsEmptyVec() {
-        // Arrange
-        let call = DefaultCall;
-
         // Act
-        let result = call.get_arg_infos();
+        let result = DefaultCall.get_arg_infos();
 
         // Assert
         assert!(result.is_empty());
@@ -59,11 +53,8 @@ pub(crate) mod tests {
 
     #[test]
     fn get_ptr_to_boxed_tuple_of_refs_ReturnsNullPtr() {
-        // Arrange
-        let call = DefaultCall;
-
         // Act
-        let result = call.get_ptr_to_boxed_tuple_of_refs();
+        let result = DefaultCall.get_ptr_to_boxed_tuple_of_refs();
 
         // Assert
         assert!(result.is_null());

@@ -96,8 +96,7 @@ pub(crate) mod tests {
                     let actual_reference =
                         manually_constructed_fat_ptr.deref() as *const _ as *const ();
                     let expected_reference = value.deref() as *const _ as *const ();
-                    let result = actual_reference == expected_reference;
-                    return result;
+                    return actual_reference == expected_reference;
                 }),
             )
             .returns_once(deref_info_mock)

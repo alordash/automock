@@ -33,6 +33,7 @@ mod tests {
     use crate::args::arg::tests::utilities::*;
     use crate::args::arg_cmp::tests::utilities::*;
     use automock::Mockable;
+    use core::assert_matches;
 
     #[test]
     fn into_arg_RegularValue_Ok() {
@@ -51,9 +52,9 @@ mod tests {
         let result = value.into_arg(format_debug_string);
 
         // Assert
-        let arg_cmp = match result {
-            Arg::Eq(v, _) => v,
-            _ => panic!("Expected result to be Arg::Eq, was instead: {result:?}"),
+        assert_matches!(result, Arg::Eq(_, _));
+        let Arg::Eq(arg_cmp, _) = result else {
+            unreachable!()
         };
         assert_eq!(arg_cmp.id(), arg_cmp_mock_id);
 
@@ -71,10 +72,7 @@ mod tests {
         let result = arg.into_arg(format_debug_string);
 
         // Assert
-        match result {
-            Arg::Any => (),
-            _ => panic!("Expected result to be `Arg::Any`, was instead: {result:?}"),
-        }
+        assert_matches!(result, Arg::Any);
     }
 
     #[test]
@@ -98,9 +96,9 @@ mod tests {
         let result = arg.into_arg(format_debug_string);
 
         // Assert
-        let mut arg_cmp = match result {
-            Arg::Eq(arg_cmp, _) => arg_cmp,
-            _ => panic!("Expected result to be `Arg::Eq`, was instead: {result:?}"),
+        assert_matches!(result, Arg::Eq(_, _));
+        let Arg::Eq(mut arg_cmp, _) = result else {
+            unreachable!()
         };
         arg_cmp.verify_calls();
         format_debug_string::verify_calls::<T>();
@@ -127,9 +125,9 @@ mod tests {
         let result = arg.into_arg(format_debug_string);
 
         // Assert
-        let mut arg_cmp = match result {
-            Arg::NotEq(arg_cmp, _) => arg_cmp,
-            _ => panic!("Expected result to be `Arg::NotEq`, was instead: {result:?}"),
+        assert_matches!(result, Arg::NotEq(_, _));
+        let Arg::NotEq(mut arg_cmp, _) = result else {
+            unreachable!()
         };
         arg_cmp.verify_calls();
         format_debug_string::verify_calls::<T>();
@@ -145,10 +143,7 @@ mod tests {
         let result = arg.into_arg(format_debug_string);
 
         // Assert
-        match result {
-            Arg::Is(_, _) => (),
-            _ => panic!("Expected result to be `Arg::Any`, was instead: {result:?}"),
-        }
+        assert_matches!(result, Arg::Is(_, _));
 
         ptr_predicate::verify_calls();
     }

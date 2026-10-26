@@ -166,6 +166,7 @@ mod tests {
     use super::*;
     use args::i_args_checker::tests::utilities::*;
     use automock::{AsTimes, Mockable};
+    use core::assert_matches;
     use fn_callback_configurator::tests::utilities::*;
     use fn_config::tests::utilities::*;
     use fn_configurator::tests::utilities::*;
@@ -432,11 +433,9 @@ mod tests {
         let result = fn_data_mock.try_get_matching_config(&dyn_call);
 
         // Assert
-        let error = match result {
-            MatchingConfigSearchResult::Err(x) => x,
-            _ => panic!(
-                "Expected result to be `MatchingConfigSearchResult::Err`, actually: {result:?}"
-            ),
+        assert_matches!(result, MatchingConfigSearchResult::Err(_));
+        let MatchingConfigSearchResult::Err(error) = result else {
+            unreachable!()
         };
         assert!(
             error

@@ -173,9 +173,7 @@ pub(crate) mod tests {
                 automock::Arg::is(|comparator| {
                     core::ptr::eq(*comparator as *const (), <T as PartialEq>::eq as *const ())
                 }),
-                automock::Arg::is(|maybe_deref_info: &Option<DerefInfo>| {
-                    maybe_deref_info.is_none()
-                }),
+                automock::Arg::is(Option::<DerefInfo>::is_none),
             )
             .returns_once(arg_cmp_mock)
             .new_eq(automock::Arg::Any, automock::Arg::Any)
@@ -212,9 +210,7 @@ pub(crate) mod tests {
                 automock::Arg::is(|comparator| {
                     core::ptr::eq(*comparator as *const (), ptr_cmp::<U, T> as *const ())
                 }),
-                automock::Arg::is(|maybe_deref_info: &Option<DerefInfo>| {
-                    maybe_deref_info.is_some()
-                }),
+                automock::Arg::is(Option::<DerefInfo>::is_some),
             )
             .returns_once(arg_cmp_mock)
             .new_ref_eq(automock::Arg::Any, automock::Arg::Any)
