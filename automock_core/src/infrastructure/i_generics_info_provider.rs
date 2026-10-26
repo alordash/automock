@@ -74,7 +74,7 @@ mod tests {
         generics_info_provider.hash_generics_type_ids(&mut hasher);
 
         // Assert
-        hasher.received().no_other_calls();
+        hasher.verify_calls();
     }
 
     #[test]
@@ -87,7 +87,7 @@ mod tests {
         generics_info_provider.hash_const_values(&mut hasher);
 
         // Assert
-        hasher.received().no_other_calls();
+        hasher.verify_calls();
     }
 
     #[test]
@@ -100,52 +100,36 @@ mod tests {
             .setup()
             .as_IGenericsInfoProvider()
             .hash_generics_type_ids(automock::Arg::Any)
-            .does(|_, (hasher,)| hasher.write(generics_type_ids_bytes))
+            .expect_once()
+            .and_does(|_, (hasher,)| hasher.write(generics_type_ids_bytes))
             .hash_const_values(automock::Arg::Any)
-            .does(|_, (hasher,)| hasher.write(const_values_bytes));
+            .expect_once()
+            .and_does(|_, (hasher,)| hasher.write(const_values_bytes));
 
         let mut generics_hasher_mock = generics_hasher_mock();
         GenericsHasher::static_setup()
             .as_Default()
             .default()
-            .returns(generics_hasher_mock.clone());
+            .returns_once(generics_hasher_mock.clone());
         let hash = 5;
         generics_hasher_mock
             .setup()
             .as_Hasher()
+            .write(automock::Arg::ref_eq(generics_type_ids_bytes))
+            .expect_once()
+            .write(automock::Arg::ref_eq(const_values_bytes))
+            .expect_once()
             .finish()
-            .returns(hash);
+            .returns_once(hash);
 
         // Act
         let result = generics_info_provider.get_generics_hash_key();
 
         // Assert
         assert_eq!(result.0, hash);
-        generics_info_provider
-            .received()
-            .as_IGenericsInfoProvider()
-            .hash_generics_type_ids(automock::Arg::Any, automock::Times::Once)
-            .hash_const_values(automock::Arg::Any, automock::Times::Once)
-            .no_other_calls();
-
-        GenericsHasher::static_received()
-            .as_Default()
-            .default(automock::Times::Once)
-            .no_other_calls();
-
-        generics_hasher_mock
-            .received()
-            .as_Hasher()
-            .write(
-                automock::Arg::ref_eq(generics_type_ids_bytes),
-                automock::Times::Once,
-            )
-            .write(
-                automock::Arg::ref_eq(const_values_bytes),
-                automock::Times::Once,
-            )
-            .finish(automock::Times::Once)
-            .no_other_calls();
+        generics_info_provider.verify_calls();
+        GenericsHasher::verify_static_calls();
+        generics_hasher_mock.verify_calls();
     }
 
     mod utilities {
