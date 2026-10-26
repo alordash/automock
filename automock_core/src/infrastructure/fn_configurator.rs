@@ -64,6 +64,7 @@ impl<
     }
 }
 
+#[cfg_attr(test, automock::mock)]
 impl<
     'am,
     TMock,
@@ -112,9 +113,9 @@ impl<
 
     /// Sets multiple return values of this function. These values will be returned only once in the
     /// given order.
-    pub fn returns_many<'a>(
+    pub fn returns_many<'a, RV: IntoIterator<Item = TReturnValue>>(
         &self,
-        return_values: impl IntoIterator<Item = TReturnValue>,
+        return_values: RV,
     ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     where
         TReturnValue: IReturnValue<'a> + 'a,
@@ -130,17 +131,18 @@ impl<
     /// Sets return value of this function using factory. Factory constructs new return value using
     /// references to source function argument values. Constructed value will be returned multiple
     /// [`times`].
-    pub fn returns_with(
+    pub fn returns_with<F: Clone + FnOnce(TArgRefsTuple) -> TReturnValue + 'am>(
         &self,
-        f: impl Clone + FnOnce(TArgRefsTuple) -> TReturnValue + 'am,
+        f: F,
         times: Times,
     ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     where
         TArgRefsTuple: 'am,
         TReturnValue: 'am,
     {
-        let fs = core::iter::repeat_n(f, times.0)
-            .map(|x| Box::new(x) as Box<dyn FnOnce(TArgRefsTuple) -> TReturnValue>);
+        let fs: Vec<_> = core::iter::repeat_n(f, times.0)
+            .map(|x| Box::new(x) as Box<dyn FnOnce(TArgRefsTuple) -> TReturnValue>)
+            .collect();
         return self.returns_with_many(fs);
     }
 
@@ -158,9 +160,11 @@ impl<
             .returns_with_many([Box::new(f) as Box<dyn FnOnce(TArgRefsTuple) -> TReturnValue>]);
     }
 
-    fn returns_with_many(
+    fn returns_with_many<
+        FS: IntoIterator<Item = Box<dyn FnOnce(TArgRefsTuple) -> TReturnValue + 'am>>,
+    >(
         &self,
-        fs: impl IntoIterator<Item = Box<dyn FnOnce(TArgRefsTuple) -> TReturnValue + 'am>>,
+        fs: FS,
     ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     where
         TArgRefsTuple: 'am,
@@ -182,9 +186,9 @@ impl<
         return self.returns_many_core(return_value_sources);
     }
 
-    fn returns_many_core(
+    fn returns_many_core<RVS: IntoIterator<Item = ReturnValueSource<'am>>>(
         &self,
-        return_value_sources: impl IntoIterator<Item = ReturnValueSource<'am>>,
+        return_value_sources: RVS,
     ) -> &FnCallbackConfigurator<'am, TMock, TOwner, TArgRefsTuple, TMockArg, PASSES_MOCK_TO_CALLBACK>
     {
         self.fn_config
@@ -294,50 +298,73 @@ pub(crate) mod tests {
     use core::assert_matches;
     use fn_callback_configurator::tests::utilities::*;
     use fn_config::tests::utilities::*;
-    use fn_parameters::dyn_arg_refs_tuple::tests::utilities::*;
     use utilities::*;
 
     const IRRELEVANT: bool = false;
 
-    // TODO - rewrite `returns_XXX_YYY` tests
+    #[test]
+    fn returns_Ok() {
+        // Arrange
+        let owner = Owner;
+        let mut fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let expected_fn_callback_configurator = fn_callback_configurator::<IRRELEVANT>(&owner);
+        let return_value = ReturnValue(5);
+        let return_values = [return_value; 3];
+        fn_configurator_mock
+            .setup()
+            .returns(return_value, 3.times())
+            .call_base()
+            .returns_many(automock::Arg::is(
+                |values: &std::iter::RepeatN<ReturnValue>| {
+                    let actual_return_values: Vec<_> = values.clone().collect();
+                    let result = actual_return_values == return_values;
+                    return result;
+                },
+            ))
+            .returns_once(&expected_fn_callback_configurator);
+
+        // Act
+        let result = fn_configurator_mock.returns(return_value, 3.times());
+
+        // Assert
+        assert!(core::ptr::eq(result, &expected_fn_callback_configurator));
+        fn_configurator_mock.verify_calls();
+    }
+
     #[test]
     fn returns_once_Ok() {
         // Arrange
         let owner = Owner;
-        let fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let mut fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let expected_fn_callback_configurator = fn_callback_configurator::<IRRELEVANT>(&owner);
         let return_value = ReturnValue(5);
         fn_configurator_mock
-            .fn_config
-            .borrow_mut()
             .setup()
-            .add_return_value_source(automock::Arg::is(
-                |source: &ReturnValueSource| match source {
-                    ReturnValueSource::SingleTime(value) => {
-                        *value.downcast_to::<ReturnValue>() == return_value
-                    }
-                    _ => false,
-                },
-            ))
-            .expect_once();
+            .returns_once(return_value)
+            .call_base()
+            .returns_many([return_value])
+            .returns_once(&expected_fn_callback_configurator);
 
         // Act
-        fn_configurator_mock.returns_once(return_value);
+        let result = fn_configurator_mock.returns_once(return_value);
 
         // Assert
-        fn_configurator_mock.fn_config.borrow_mut().verify_calls();
+        assert!(core::ptr::eq(result, &expected_fn_callback_configurator));
+        fn_configurator_mock.verify_calls();
     }
 
     #[test]
     fn returns_many_Ok() {
         // Arrange
         let owner = Owner;
-        let fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let mut fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let expected_fn_callback_configurator = fn_callback_configurator::<IRRELEVANT>(&owner);
         let return_values = [ReturnValue(5), ReturnValue(10)];
         fn_configurator_mock
-            .fn_config
-            .borrow_mut()
             .setup()
-            .add_return_value_sources(automock::Arg::is(|sources: &Vec<ReturnValueSource>| {
+            .returns_many(return_values)
+            .call_base()
+            .returns_many_core(automock::Arg::is(|sources: &Vec<ReturnValueSource>| {
                 let values: Vec<_> = sources
                     .iter()
                     .map(|source| {
@@ -348,55 +375,169 @@ pub(crate) mod tests {
                         *value.downcast_to::<ReturnValue>()
                     })
                     .collect();
-                values == return_values
+                let result = values == return_values;
+                return result;
             }))
-            .expect_once();
+            .returns_once(&expected_fn_callback_configurator);
 
         // Act
-        fn_configurator_mock.returns_many(return_values);
+        let result = fn_configurator_mock.returns_many(return_values);
 
         // Assert
-        fn_configurator_mock.fn_config.borrow_mut().verify_calls();
+        assert!(core::ptr::eq(result, &expected_fn_callback_configurator));
+        fn_configurator_mock.verify_calls();
+    }
+
+    #[test]
+    fn returns_with_Ok() {
+        // Arrange
+        let owner = Owner;
+        let mut fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let expected_fn_callback_configurator = fn_callback_configurator::<IRRELEVANT>(&owner);
+        let arg_refs_tuple = ArgRefsTuple(10);
+        let return_values = [ReturnValue(11); 2];
+        let factory: fn(ArgRefsTuple) -> ReturnValue = |arg_refs_tuple| {
+            let result = ReturnValue(arg_refs_tuple.0 + 1);
+            return result;
+        };
+        fn_configurator_mock
+            .setup()
+            .returns_with(
+                automock::Arg::<fn(ArgRefsTuple) -> ReturnValue>::Any,
+                2.times(),
+            )
+            .call_base()
+            .returns_with_many(automock::Arg::is_mut(
+                |fs: &mut Vec<Box<dyn FnOnce(ArgRefsTuple) -> ReturnValue>>| {
+                    let actual_return_values: Vec<_> = fs
+                        .drain(..)
+                        .map(|f| {
+                            let result = f(arg_refs_tuple);
+                            return result;
+                        })
+                        .collect();
+                    let result = actual_return_values == return_values;
+                    return result;
+                },
+            ))
+            .returns_once(&expected_fn_callback_configurator);
+
+        // Act
+        let result = fn_configurator_mock.returns_with(factory, 2.times());
+
+        // Assert
+        assert!(core::ptr::eq(result, &expected_fn_callback_configurator));
+        fn_configurator_mock.verify_calls();
     }
 
     #[test]
     fn returns_once_with_Ok() {
         // Arrange
         let owner = Owner;
-        let fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let mut fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let expected_fn_callback_configurator = fn_callback_configurator::<IRRELEVANT>(&owner);
         let return_value = ReturnValue(5);
         let arg_refs_tuple = ArgRefsTuple(10);
-        returns_with_factory::setup(arg_refs_tuple).returns_once(return_value);
-        let mut dyn_arg_refs_tuple = dyn_arg_refs_tuple_mock();
-        dyn_arg_refs_tuple
+        fn_configurator_mock
             .setup()
-            .downcast_into::<ArgRefsTuple>()
-            .returns_once(arg_refs_tuple);
+            .returns_once_with(automock::Arg::Any)
+            .call_base()
+            .returns_with_many(automock::Arg::is_mut(
+                |fs: &mut [Box<dyn FnOnce(ArgRefsTuple) -> ReturnValue>; 1]| {
+                    let factory = core::mem::replace(&mut fs[0], Box::new(|_| unreachable!()));
+                    let actual_return_value = factory(arg_refs_tuple);
+                    let result = actual_return_value == return_value;
+                    return result;
+                },
+            ))
+            .returns_once(&expected_fn_callback_configurator);
+
+        // Act
+        let result = fn_configurator_mock.returns_once_with(move |_| return_value);
+
+        // Assert
+        assert!(core::ptr::eq(result, &expected_fn_callback_configurator));
+        fn_configurator_mock.verify_calls();
+    }
+
+    #[test]
+    fn returns_with_many_Ok() {
+        // Arrange
+        let owner = Owner;
+        let mut fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let expected_fn_callback_configurator = fn_callback_configurator::<IRRELEVANT>(&owner);
+        let fs: [Box<dyn FnOnce(ArgRefsTuple) -> ReturnValue>; 2] = [
+            Box::new(|_| unreachable!()),
+            Box::new(|_| unreachable!()),
+        ];
+        fn_configurator_mock
+            .setup()
+            .returns_with_many::<[Box<dyn FnOnce(ArgRefsTuple) -> ReturnValue>; 2]>(
+                automock::Arg::Any,
+            )
+            .call_base()
+            .returns_many_core(automock::Arg::is(|sources: &Vec<ReturnValueSource>| {
+                let result = sources.len() == 2
+                    && sources
+                        .iter()
+                        .all(|source| matches!(source, ReturnValueSource::Factory(_)));
+                return result;
+            }))
+            .returns_once(&expected_fn_callback_configurator);
+
+        // Act
+        let result = fn_configurator_mock.returns_with_many(fs);
+
+        // Assert
+        assert!(core::ptr::eq(result, &expected_fn_callback_configurator));
+        fn_configurator_mock.verify_calls();
+    }
+
+    #[test]
+    fn returns_many_core_Ok() {
+        // Arrange
+        let owner = Owner;
+        let mut fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
+        let return_values = [ReturnValue(5), ReturnValue(10)];
+        let return_value_sources: Vec<_> = return_values
+            .into_iter()
+            .map(DynReturnValue::new)
+            .map(ReturnValueSource::SingleTime)
+            .collect();
+        fn_configurator_mock
+            .setup()
+            .returns_many_core::<Vec<ReturnValueSource>>(automock::Arg::Any)
+            .call_base();
         fn_configurator_mock
             .fn_config
             .borrow_mut()
             .setup()
-            .add_return_value_source(automock::Arg::Any)
-            .call_base();
+            .add_return_value_sources(automock::Arg::is(|sources: &Vec<ReturnValueSource>| {
+                let actual_return_values: Vec<_> = sources
+                    .iter()
+                    .map(|source| {
+                        assert_matches!(source, ReturnValueSource::SingleTime(_));
+                        let ReturnValueSource::SingleTime(value) = source else {
+                            unreachable!()
+                        };
+                        *value.downcast_to::<ReturnValue>()
+                    })
+                    .collect();
+                let result = actual_return_values == return_values;
+                return result;
+            }))
+            .expect_once();
 
         // Act
-        fn_configurator_mock.returns_once_with(returns_with_factory);
-
-        let source = fn_configurator_mock
-            .fn_config
-            .borrow_mut()
-            .return_value_sources
-            .pop_front()
-            .expect("Factory must be stored.");
-        assert_matches!(source, ReturnValueSource::Factory(_));
-        let ReturnValueSource::Factory(factory) = source else {
-            unreachable!()
-        };
-        let actual_return_value: ReturnValue = factory(dyn_arg_refs_tuple).downcast_into();
+        let result = fn_configurator_mock.returns_many_core(return_value_sources);
 
         // Assert
-        assert_eq!(actual_return_value, return_value);
-        returns_with_factory::verify_calls();
+        assert!(core::ptr::eq(
+            result,
+            &fn_configurator_mock.fn_callback_configurator
+        ));
+        fn_configurator_mock.verify_calls();
+        fn_configurator_mock.fn_config.borrow_mut().verify_calls();
     }
 
     #[test]
@@ -453,11 +594,6 @@ pub(crate) mod tests {
                 fn_callback_configurator: fn_callback_configurator(owner),
                 __mock_data: Default::default(),
             }
-        }
-
-        #[automock::mock]
-        pub(super) fn returns_with_factory(_: ArgRefsTuple) -> ReturnValue {
-            unreachable!()
         }
     }
 }
