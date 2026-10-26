@@ -80,7 +80,9 @@ List of existing configuration ordered by number of correctly matched arguments 
             let mut mock = TraitMock::new();
             let r = &11;
             let invalid_r = &22;
-            mock.setup().accept_ref(Arg::ref_eq(invalid_r)).expect_once();
+            mock.setup()
+                .accept_ref(Arg::ref_eq(invalid_r))
+                .expect_once();
 
             // Act
             let actual_error_msg = record_panic(|| mock.accept_ref(r));

@@ -13,8 +13,8 @@
 //! ```
 //!
 //! Automatically generated mock structure has two special methods to control its behavior:
-//! `setup()` and `received()`. `setup()` allows you to configure how mock object behaves when
-//! its methods are called. `received()` is used to check how mock object was used.
+//! `setup()` and `verify_calls()`. `setup()` defines expected calls and their return values.
+//! `verify_calls()` checks that all expected calls happened. Unexpected calls panic immediately.
 //! ```
 //! # use automock::*;
 //!
@@ -27,17 +27,14 @@
 //! // Arrange
 //! let mut mock = TraitMock::new();    // `mock` must be mutable in order to be configured
 //! mock.setup()
-//!     .work(1).returns(10)    // when called as `work(1)` it will return 10
-//!     .work(2).returns(20);   // when called as `work(2)` it will return 20
+//!     .work(1).returns_once(10);
 //!
 //! // Act
 //! let result = mock.work(1);
 //!
 //! // Assert
 //! assert_eq!(result, 10);
-//! mock.received()
-//!     .work(1, 1.time())      // verify that `work(1)` was called once
-//!     .no_other_calls();      // verify that no other calls were performed
+//! mock.verify_calls();
 //! # }
 //! ```
 //!
@@ -60,9 +57,8 @@
 //! * [Function modifiers](#function-modifiers)
 //! * [Call order validation](#call-order-validation)
 //! * [Receiver types](#receiver-types)
-//! * [Cloning mocks](#mocks-cloning)
-//! * [Crate settings](#crate-settings)
-//! * [Crate features](#crate-features)
+//! * [Cloning mocks](#cloning-mocks)
+//! * [Crate features](#feature-flags)
 //! * [Undefined behavior](#undefined-behavior)
 //!
 //! ## Mocking traits
@@ -84,8 +80,8 @@
 //! // Arrange
 //! let mut mock = TraitMock::new();
 //! mock.setup()
-//!     .work(1).returns(10)
-//!     .work(2).returns(20);
+//!     .work(1).returns_once(10)
+//!     .work(2).returns_once(20);
 //!
 //! // Act
 //! let first  = use_trait(&mock, 1);
@@ -94,9 +90,7 @@
 //! // Assert
 //! assert_eq!(first,  10);
 //! assert_eq!(second, 20);
-//! mock.received()
-//!     .work(1, 1.time())
-//!     .work(2, 1.time());
+//! mock.verify_calls();
 //! # }
 //! ```
 //!
@@ -140,14 +134,14 @@
 //! // Arrange
 //! Struct::static_setup().new(Arg::Any).call_base();
 //! let mut mock = Struct::new(10);
-//! mock.setup().get().returns(20);
+//! mock.setup().get().returns_once(20);
 //!
 //! // Act
 //! let result = mock.get();
 //!
 //! // Assert
 //! assert_eq!(result, 20);
-//! mock.received().get(1.time());
+//! mock.verify_calls();
 //! # }
 //! ```
 //!
@@ -206,7 +200,8 @@
 //! ## Mocking trait implementations
 //! To mock implementations of traits on mockable structures (trait itself does not need to be
 //! mockable), add `#[mock]` on `impl` block. Each mocked trait implementation
-//! adds `as_TRAIT_NAME` method both to mock's `setup` and `received` functions:
+//! adds `as_TRAIT_NAME` method to mock's `setup()`. `verify_calls()` also checks calls
+//! configured through these trait implementations:
 //! ```
 //! use automock::*;
 //!
@@ -229,14 +224,14 @@
 //! // Arrange
 //! Struct::static_setup().new().call_base();
 //! let mut mock = Struct::new();
-//! mock.setup().as_Trait().get().returns(20);
+//! mock.setup().as_Trait().get().returns_once(20);
 //!
 //! // Act
 //! let result = mock.get();
 //!
 //! // Assert
 //! assert_eq!(result, 20);
-//! mock.received().as_Trait().get(1.time());
+//! mock.verify_calls();
 //! # }
 //! ```
 //!
@@ -295,7 +290,7 @@
 //! ## Mocking static functions
 //!
 //! To mock a static function, add `#[mock]` attribute. This will generate module with the same name
-//! as mocked function, which exposes standalone `setup()` and `received()` functions:
+//! as mocked function, which exposes standalone `setup()` and `verify_calls()` functions:
 //!
 //! ```
 //! use automock::*;
@@ -305,8 +300,8 @@
 //!
 //! # fn main() {
 //! // Arrange
-//! work::setup(1).returns(10)
-//!      .setup(2).returns(20);
+//! work::setup(1).returns_once(10)
+//!      .setup(2).returns_once(20);
 //!
 //! // Act
 //! let first  = work(1);
@@ -315,8 +310,7 @@
 //! // Assert
 //! assert_eq!(first,  10);
 //! assert_eq!(second, 20);
-//! work::received(1, 1.time())
-//!      .received(2, 1.time());
+//! work::verify_calls();
 //! # }
 //! ```
 //!
@@ -334,24 +328,24 @@
 //!    # use automock::*;
 //!    #[mock] fn work(v: i32) -> i32 { v }
 //!   
-//!    work::setup(1).returns(10);
-//!    work::setup(2).returns(20); // `work::setup(2)` will clear previous configuration
+//!    work::setup(1).returns_once(10);
+//!    work::setup(2).returns_once(20); // `work::setup(2)` will clear previous configuration
 //!    ```
 //!    The correct approach is to call `work::setup()` only once and then chain subsequent `.setup()`
 //!    calls:
 //!    ```no_run
 //!    # use automock::*; #[mock] fn work(v: i32) -> i32 { v }
 //!    # fn main() {
-//!    work::setup(1).returns(10)
-//!         .setup(2).returns(20); // `.setup(2)` does not clear previous configuration
+//!    work::setup(1).returns_once(10)
+//!         .setup(2).returns_once(20); // `.setup(2)` does not clear previous configuration
 //!    }
 //!    ```
 //!
 //! ## Mocking static associated functions
 //!
 //! Static associated functions are mocked almost the same way as regular static functions, except
-//! that instead of `setup()` and `received()` you must use `static_setup()` and
-//! `static_received()`. Here's example of mocking trait with static function:
+//! that instead of `setup()` and `verify_calls()` you must use `static_setup()` and
+//! `verify_static_calls()`. Here's example of mocking trait with static function:
 //! ```
 //! use automock::*;
 //!
@@ -364,14 +358,14 @@
 //!
 //! # fn main() {
 //! // Arrange
-//! TraitMock::static_setup().work(10).returns(20);
+//! TraitMock::static_setup().work(10).returns_once(20);
 //!
 //! // Act
 //! let result = use_trait_impl::<TraitMock>(10);
 //!
 //! // Assert
 //! assert_eq!(result, 20);
-//! TraitMock::static_received().work(10, 1.time());
+//! TraitMock::verify_static_calls();
 //! # }
 //! ```
 //!
@@ -388,14 +382,14 @@
 //!
 //! # fn main() {
 //! // Arrange
-//! Struct::static_setup().work(10).returns(20);
+//! Struct::static_setup().work(10).returns_once(20);
 //!
 //! // Act
 //! let result = Struct::work(10);
 //!
 //! // Assert
 //! assert_eq!(result, 20);
-//! Struct::static_received().work(10, 1.time());
+//! Struct::verify_static_calls();
 //! # }
 //! ```
 //!
@@ -405,18 +399,18 @@
 //!
 //! ## Arguments matching
 //!
-//! `setup()` and `received()` functions accept [`Arg<T>`] as arguments, where `T` is type of
+//! `setup()` functions accept [`Arg<T>`] as arguments, where `T` is type of
 //! argument in source function. `Arg` provides multiple ways to match argument's value:
 //!
 //! 1. [`Arg::eq`] - checks that argument is equal to provided value. Uses [`PartialEq::eq`] of `T`.
-//!    Can be used either manually like `mock.setup(Arg::eq(10))` or implicitly like
-//!    `mock.setup(10)`.
+//!    Can be used either manually like `mock.setup().work(Arg::eq(10))` or implicitly like
+//!    `mock.setup().work(10)`.
 //! 2. [`Arg::is`] - checks that argument passes provided predicate. Usage example:
-//!    `mock.setup(Arg::is(|v: &i32| *v == 10))`. Requires specifying closure's argument type.
+//!    `mock.setup().work(Arg::is(|v: &i32| *v == 10))`. Requires specifying closure's argument type.
 //! 3. [`Arg::is_mut`] - same as `Arg::is`, but receives mutable reference to argument. Can be
 //!    useful for matching `FnMut` arguments.
 //! 4. [`Arg::not_eq`] - checks that argument is NOT equal to provided value. Uses [`PartialEq::eq`]
-//!    of `T`. Opposite of `Arg::eq`. Usage example: `mock.setup(Arg::not_eq(10))`.
+//!    of `T`. Opposite of `Arg::eq`. Usage example: `mock.setup().work(Arg::not_eq(10))`.
 //! 5. [`Arg::ref_eq`] - checks that argument's reference points to the same location as provided
 //!    reference. Compares references returned by [`std::ops::Deref::deref`] of `T`. Usage example:
 //!    ```
@@ -432,7 +426,7 @@
 //!    let mut mock = TraitMock::new();
 //!    let r1 = Rc::new(1);
 //!    let r2 = r1.clone();
-//!    mock.setup().work(Arg::ref_eq(r1.clone())).always_returns(10);
+//!    mock.setup().work(Arg::ref_eq(r1.clone())).returns(10, 2.times());
 //!
 //!    // Act
 //!    let first  = mock.work(r1.clone());
@@ -441,7 +435,7 @@
 //!    // Assert
 //!    assert_eq!(first,  10);
 //!    assert_eq!(second, 10);
-//!    mock.received().work(Arg::ref_eq(r1), 2.times());
+//!    mock.verify_calls();
 //!    # }
 //!    ```
 //! 6. [`Arg::ref_not_eq`] - checks that argument's reference DOES NOT point to the same place as
@@ -489,12 +483,14 @@
 //! Struct::static_setup().new().call_base();
 //! let struct_mock = Struct::new();
 //! let struct_mock_id = struct_mock.id();
+//! work::setup(Arg::is(|struct_mock: &Struct| struct_mock.id() == struct_mock_id))
+//!     .expect_once();
 //!
 //! // Act
 //! work(struct_mock);
 //!
 //! // Assert
-//! work::received(Arg::is(|struct_mock: &Struct| struct_mock.id() == struct_mock_id), 1.time());
+//! work::verify_calls();
 //! # }
 //! ```
 //!
@@ -505,12 +501,18 @@
 //!
 //! ### Setting return values
 //! Mocked functions that have return values can set them in multiple ways:
-//! 1. [`FnConfigurator::returns`] - sets single-use return value.
+//! 1. [`FnConfigurator::returns`] - sets return value for given number of calls, for example
+//!    `.returns(10, 2.times())`. Return value must implement [`Clone`].
 //! 2. [`FnConfigurator::returns_many`] - sets multiple single-use return values in one call.
-//! 3. [`FnConfigurator::always_returns`] - sets return value that can be returned unlimited number
-//!    of times.
+//! 3. [`FnConfigurator::returns_once`] - sets single-use return value.
 //! 4. [`FnConfigurator::returns_with`] - calculates return value on the fly using function's source
-//!    arguments. Receives tuple of argument references. Returns unlimited number of times.
+//!    arguments. Receives tuple of argument references and expected call count, for example
+//!    `.returns_with(|(v,)| *v + 10, 2.times())`.
+//! 5. [`FnConfigurator::returns_once_with`] - like `returns_with` but returns once.
+//!
+//! For functions without return value:
+//! * [`FnConfigurator::expect`] - expects given number of calls, for example `.expect(2.times())`.
+//! * [`FnConfigurator::expect_once`] - expects one call.
 //!
 //! If multiple return values were specified they will be used in the same order:
 //! ```
@@ -520,9 +522,9 @@
 //!
 //! # fn main() {
 //! // Arrange
-//! work::setup(Arg::Any).returns(10)                   // config #1
-//!      .setup(Arg::Any).returns_many([20, 30])        // config #2
-//!      .setup(Arg::Any).returns_with(|(v,)| *v + 10); // config #3
+//! work::setup(Arg::Any).returns_once(10)                         // config #1
+//!      .setup(Arg::Any).returns_many([20, 30])                   // config #2
+//!      .setup(Arg::Any).returns_with(|(v,)| *v + 10, 2.times()); // config #3
 //!
 //! // Act
 //! let first  = work(1);   // uses config #1
@@ -542,12 +544,9 @@
 //!
 //! ### Setting callbacks
 //! Every mocked function can have a callback that is called when it is called with matching
-//! arguments.
-//!
-//! If the function has a return value, its callback can be configured using
-//! [`FnCallbackConfigurator::and_does`] after its return value was specified. If function does not
-//! have return value callback can be set by calling [`FnConfigurator::does`] straightaway. Static
-//! functions receive tuple of argument values in the callback:
+//! arguments. It can be configured using [`FnCallbackConfigurator::and_does`] after its return
+//! value or the number of expected calls was specified. Static functions receive tuple of argument
+//! values in the callback:
 //! ```
 //! use automock::*;
 //!
@@ -556,12 +555,12 @@
 //!
 //! # fn main() {
 //! get::setup(Arg::Any)    // Function with return value
-//!     .returns(10)        // must set return value first
+//!     .returns_once(10)   // must set return value first
 //!     .and_does(|(v,)| assert_eq!(*v, 10));
 //!
-//!                         // Function without return value
-//! set::setup(Arg::Any)    // can set callback immediately
-//!     .does(|(v,)| assert_eq!(*v, 20));
+//! set::setup(Arg::Any)
+//!     .expect_once()
+//!     .and_does(|(v,)| assert_eq!(*v, 20));
 //! get(10);
 //! set(20);
 //! # }
@@ -579,9 +578,10 @@
 //! # fn main() {
 //! let mut mock = TraitMock::new();
 //! mock.setup()
-//!     .get().returns(10)
+//!     .get().returns_once(10)
 //!     .work(Arg::Any)
-//!     .does(|mock_ref, (v,)| {
+//!     .expect_once()
+//!     .and_does(|mock_ref, (v,)| {
 //!         assert_eq!(mock_ref.get(), 10);
 //!         assert_eq!(*v, 20);
 //!     });
@@ -605,13 +605,14 @@
 //!
 //! # fn main() {
 //! // Arrange
+//! dependency::setup().expect_once();
 //! work::setup().call_base();
 //!
 //! // Act
 //! work();
 //!
 //! // Assert
-//! dependency::received(1.time());
+//! dependency::verify_calls();
 //! # }
 //! ```
 //!
@@ -620,10 +621,10 @@
 //!
 //! ```compile_fail
 //! # use automock::*;
-//! # [mock] fn work() -> i32 { 1 }
-//! work::setup().call_base().returns(10);
-//!                        // ^^^^^^^ - error, return value is already
-//!                        //           provided by base implementation
+//! #[mock] fn work() -> i32 { 1 }
+//! work::setup().call_base().returns_once(10);
+//!                        // ^^^^^^^^^^^^ - error, return value is already
+//!                        //                provided by base implementation
 //! ```
 //!
 //! In trait mocks, only functions with default implementation can use `call_base()`:
@@ -644,7 +645,8 @@
 //! let mut mock = TraitMock::new();
 //! mock.setup()
 //!     .work(10).call_base()
-//!     .work(20).returns(30);
+//!     .work(20).returns_once(30)
+//!     .dependency().expect_once();
 //!
 //! // Act
 //! let first  = mock.work(10);
@@ -653,54 +655,40 @@
 //! // Assert
 //! assert_eq!(first,  11);
 //! assert_eq!(second, 30);
-//! mock.received()
-//!     .work(10, Times::Never) // a call that was handled by base implementation
-//!                             // can not be verified
-//!     .work(20, 1.time())
-//!     .dependency(1.time());
-//! # }
-//! ```
-//!
-//! ### Limitations
-//!
-//! There is one limitation - calls that were configured to call base can not be verified later by
-//! `received`. For example, this will panic:
-//!
-//! ```should_panic
-//! # use automock::*;
-//! #[mock]
-//! fn work() {}
-//!
-//! # fn main() {
-//! // Arrange
-//! work::setup().call_base();
-//!
-//! // Act
-//! work();
-//!
-//! // Assert
-//! work::received(1.time());   // panic - work did not receive any catchable calls
+//! mock.verify_calls();
 //! # }
 //! ```
 //!
 //! ## Verifying calls
 //!
-//! You can verify exactly how a mocked function was called. To do it, use `received()` followed by
-//! descriptions of expected calls:
+//! You can verify exactly how a mocked function was called. To do it, just call `verify_calls()`
+//! on mock:
 //! ```
 //! use automock::*;
 //!
 //! #[mock] fn work() {}
 //!
 //! # fn main() {
+//! work::setup().expect_once();
 //! work();
-//! work::received(1.time());   // checks that `work` was called one time
+//! work::verify_calls();
 //! # }
+//! ```
+//!
+//! Missing call is reported when verification runs:
+//!
+//! ```should_panic
+//! use automock::*;
+//!
+//! #[mock] fn work() {}
+//!
+//! work::setup().expect_once();
+//! work::verify_calls();
 //! ```
 //!
 //! You can verify exact values of passed arguments using [`Arg`], for more information see
 //! [Arguments matching](#arguments-matching). Here's simple example that checks that mocked
-//! function was called with specific argument:
+//! function was called with specific arguments:
 //!
 //! ```
 //! use automock::*;
@@ -711,50 +699,20 @@
 //! // Arrange
 //! let number = 10;
 //! let string = "quo vadis";
+//! work::setup(
+//!     Arg::is(|actual_number: &i32| *actual_number == number),
+//!     Arg::not_eq("veridis quo"),
+//! ).expect_once();
 //!
 //! // Act
 //! work(number, string);
 //!
 //! // Assert
-//! work::received(
-//!     Arg::is(|actual_number: &i32| *actual_number == number),
-//!     Arg::not_eq("veridis quo"),
-//!     1.time());
+//! work::verify_calls();
 //! # }
 //! ```
 //!
-//! ### Verify number of calls
-//!
-//! The number of calls is verified using [`Times`] type. It can be defined in several ways:
-//! 1. [`Times::Never`] - expects function to never be called with given arguments.
-//! 2. [`Times::Once`] and [`Times::Exactly`]`(N)` - expects function to be called exactly once or
-//!    `N` times respectively.
-//! 3. [`AsTimes::time`] and [`AsTimes::times`] - syntactic sugar for constructing
-//!    [`Times::Exactly`]`(N)` from `usize` values like `1.time()` or `2.times()`.
-//!
-//! ### Verify no other calls were performed
-//!
-//! You can also check that no calls except the ones you expected were called using
-//! `no_other_calls()`:
-//! ```
-//! use automock::*;
-//!
-//! #[mock] fn set(_: i32) {}
-//!
-//! # fn main() {
-//! // Act
-//! set(10);
-//! set(20);
-//!
-//! // Assert
-//! set::received(10, 1.time())
-//!     .received(20, 1.time())
-//!     .no_other_calls();  // checks that no other calls were performed
-//! # }
-//! ```
-//!
-//! If there were some unvalidated calls when `no_other_calls()` was called, then this function will
-//! panic:
+//! Unexpected argument values also panic at call site:
 //! ```should_panic
 //! # use automock::*;
 //! #[mock]
@@ -763,6 +721,8 @@
 //! # fn main() {
 //! // Arrange
 //! let mut mock = TraitMock::new();
+//! mock.setup().set(10).expect_once()
+//!     .set(20).expect_once();
 //!
 //! // Act
 //! mock.set(10);
@@ -770,26 +730,7 @@
 //! mock.set(30);
 //!
 //! // Assert
-//! mock.received()
-//!     .set(10, 1.time())
-//!     .set(20, 1.time())
-//!     .no_other_calls();  // will panic because `set(30)` was not validated
-//! # }
-//! ```
-//!
-//! ### Verify no calls were performed in static functions
-//!
-//! For trait and structure mocks, you can call `mock.received().no_other_calls()` to verify that
-//! they received no other calls. For static functions you need to use `received_nothing()`
-//! function:
-//! ```
-//! use automock::*;
-//!
-//! #[mock] fn work() {}
-//!
-//! # fn main() {
-//! // Assert
-//! work::received_nothing();
+//! mock.verify_calls();
 //! # }
 //! ```
 //!
@@ -806,14 +747,14 @@
 //! # fn main() {
 //! // Arrange
 //! let mut mock = TraitMock::<i32>::new();
-//! mock.setup().get().returns(10);
+//! mock.setup().get().returns_once(10);
 //!
 //! // Act
 //! let result = mock.get();
 //!
 //! // Assert
 //! assert_eq!(result, 10);
-//! mock.received().get(1.time());
+//! mock.verify_calls();
 //! # }
 //!
 //! ```
@@ -854,14 +795,14 @@
 //!        .new(Arg::<i32>::Any, Arg::<&[i32; 3]>::Any, Arg::<&str>::Any)
 //!        .call_base();
 //! let mut mock = Struct::new::<str>(10i32, &[1, 2, 3], "quo vadis");
-//! mock.setup().get_t1().returns(20);
+//! mock.setup().get_t1().returns_once(20);
 //!
 //! // Act
 //! let result = mock.get_t1();
 //!
 //! // Assert
 //! assert_eq!(result, 20);
-//! mock.received().get_t1(1.time());
+//! mock.verify_calls();
 //! # }
 //! ```
 //!
@@ -874,11 +815,11 @@
 //! # fn main() {
 //! // Arrange
 //! get::setup::<i32, &'static str>(10)
-//!     .returns("quo vadis");
+//!     .returns_once("quo vadis");
 //! get::setup::<[u8; 3], &'static str>([1, 2, 3])
-//!     .returns("veridis quo")
+//!     .returns_once("veridis quo")
 //!     .setup([10, 10, 10])        // generic types are inferred here by `get::setup` function,
-//!     .returns("third call");     // no need to specify them again
+//!     .returns_once("third call"); // no need to specify them again
 //!
 //! // Act
 //! let first:  &str = get(10i32);
@@ -889,9 +830,8 @@
 //! assert_eq!(first,  "quo vadis");
 //! assert_eq!(second, "veridis quo");
 //! assert_eq!(third,  "third call");
-//! get::received::<_, &str>(10i32, 1.time());      // type inference also works with mocks
-//! get::received::<_, &str>([1u8, 2, 3], 1.time())
-//!     .received([10u8, 10, 10], 1.time());
+//! get::verify_calls::<i32, &str>();
+//! get::verify_calls::<[u8; 3], &str>();
 //! # }
 //! ```
 //!
@@ -922,7 +862,7 @@
 //!                          // |     Trait::NUMBER
 //!                          // Trait::Item
 //! mock.setup()
-//!     .get_item().returns(10)
+//!     .get_item().returns_once(10)
 //!     .get_number().call_base();
 //!
 //! // Act
@@ -932,9 +872,7 @@
 //! // Assert
 //! assert_eq!(item, 10);
 //! assert_eq!(number, 20);
-//! mock.received()
-//!     .get_item(1.time())
-//!     .get_number(Times::Never);
+//! mock.verify_calls();
 //! # }
 //! ```
 //!
@@ -997,7 +935,7 @@
 //!
 //! # fn main() {
 //! // Arrange
-//! work::setup(Arg::Any).returns(Box::new(20));
+//! work::setup(Arg::Any).returns_once(Box::new(20));
 //!
 //! // Act
 //! let result = work("whatever");
@@ -1069,45 +1007,49 @@
 //!
 //! ## Call order validation
 //!
-//! To verify that calls were received in the specific order, wrap `received()` assertions in a
-//! [`verify_call_order`] callback. This function checks that all calls inside of it were asserted
-//! sequentially:
+//! To verify that calls were received in the specific, define ordered expectations inside
+//! [`in_sequence`] before running code under test. Then call `.verify()` on returned `sequence`:
 //! ```
 //! use automock::*;
 //!
 //! #[mock] fn set(_: i32) {}
 //!
 //! # fn main() {
+//! let sequence = in_sequence(|| {
+//!     set::setup(1).expect_once()
+//!         .setup(2).expect_once()
+//!         .setup(3).expect_once();
+//! });
+//!
 //! // Act
 //! set(1);
 //! set(2);
 //! set(3);
 //!
 //! // Assert
-//! verify_call_order(|| {
-//!     set::received(1, 1.time())
-//!         .received(2, 1.time())
-//!         .received(3, 1.time());
-//! });
+//! set::verify_calls();
+//! sequence.verify();
 //! # }
 //! ```
 //!
-//! If call order was violated [`verify_call_order`] will panic after performing all `received`
-//! assertions. For example, this panics:
+//! If call order was violated `sequence.verify()` will panic. For example, this panics:
 //! ```should_panic
 //! # use automock::*; #[mock] fn set(_: i32) {}
 //! # fn main() {
+//! let sequence = in_sequence(|| {
+//!     set::setup(1).expect_once()
+//!         .setup(2).expect_once()
+//!         .setup(3).expect_once();
+//! });
+//!
 //! // Act
 //! set(2);
 //! set(1);
 //! set(3);
 //!
 //! // Assert
-//! verify_call_order(|| {
-//!     set::received(1, 1.time())
-//!         .received(2, 1.time())
-//!         .received(3, 1.time());
-//! }); // panic: expected order 1-2-3, actually got 2-1-3
+//! set::verify_calls();
+//! sequence.verify(); // panic: expected order 1-2-3, actually got 2-1-3
 //! # }
 //! ```
 //!
@@ -1135,6 +1077,11 @@
 //! Struct::static_setup().new().call_base();
 //! let mut trait_mock = TraitMock::new();
 //! let mut struct_mock = Struct::new();
+//! let sequence = in_sequence(|| {
+//!     first::setup().expect_once();
+//!     trait_mock.setup().second().expect_once();
+//!     struct_mock.setup().third().expect_once();
+//! });
 //!
 //! // Act
 //! first();
@@ -1142,11 +1089,10 @@
 //! struct_mock.third();
 //!
 //! // Assert
-//! verify_call_order(|| {
-//!     first::received(1.time());
-//!     trait_mock.received().second(1.time());
-//!     struct_mock.received().third(1.time());
-//! });
+//! first::verify_calls();
+//! trait_mock.verify_calls();
+//! struct_mock.verify_calls();
+//! sequence.verify();
 //! # }
 //! ```
 //!
@@ -1183,7 +1129,7 @@
 //! # fn main() {
 //! // Arrange
 //! let mut mock = TraitMock::new();
-//! mock.setup().boxed().returns(10);   // setup() and received() are always called on "&mut self"
+//! mock.setup().boxed().returns_once(10); // setup() and verify_calls() are always called on "&mut self"
 //!
 //! // Act
 //! let result = Box::new(mock.clone()).boxed();    // another feature - mocks cloning, more
@@ -1191,7 +1137,7 @@
 //!
 //! // Assert
 //! assert_eq!(result, 10);
-//! mock.received().boxed(1.time());
+//! mock.verify_calls();
 //! # }
 //! ```
 //!
@@ -1217,42 +1163,13 @@
 //! // Arrange
 //! let mut mock = TraitMock::new();
 //! let mut mock_for_verification = mock.clone();
+//! mock.setup().consume().expect_once();
 //!
 //! // Act
 //! mock.consume();
 //!
 //! // Assert
-//! mock_for_verification.received().consume(1.time());
-//! # }
-//! ```
-//!
-//! ## Crate settings
-//!
-//! You can configure some crate level options using [`read`] and [`write`]
-//! functions (or use [`SETTINGS`] static variable directly). This config contains infrastructure
-//! settings.  
-//! Currently it has only `max_invalid_calls_listed_count` parameter that controls how many invalid
-//! calls will be listed in case of a calls validation error.
-//!
-//! Settings can be used like this:
-//!
-//! ```should_panic
-//! use automock::*;
-//!
-//! #[mock] fn work(_: i32) {}
-//!
-//! # fn main() {
-//! // Arrange
-//! write().max_invalid_calls_listed_count = 3;
-//!
-//! // Act
-//! for i in 0..10 {
-//!     work(i);
-//! }
-//!
-//! // Assert
-//! work::received_nothing(); // will panic and show only first 3 calls,
-//!                           // other calls won't be listed
+//! mock_for_verification.verify_calls();
 //! # }
 //! ```
 //!
@@ -1297,58 +1214,6 @@
 //! ```
 //! This is basically what `automock` does - it automatically creates infrastructure for mocking
 //! that provides ways to check `F_CALLS_COUNT` and other function parameters.
-//!
-//! # Undefined behavior
-//!
-//! `automock` infrastructure stores all call arguments in mock objects so that they can later be
-//! inspected by `received()`. When a mocked function receives a reference, this can cause a
-//! dangling reference access if the referenced value is dropped before `received()` is called.
-//! This can result in undefined behavior.  
-//! Here's an example of UB:
-//! ```should_panic
-//! # use automock::*;
-//! #[mock]
-//! fn work(_: &i32) {}
-//!
-//! fn use_work() {
-//!     let local = 10;
-//!     work(&local);
-//! }
-//!
-//! # fn main() {
-//! // Act
-//! use_work();
-//!
-//! // Assert
-//! work::received(Arg::is(|r: &&i32| **r == 10), 1.time());
-//!                                 // ^^^
-//!                                 // UB - `r` stores reference to `local` dropped in `use_work`
-//! # }
-//! ```
-//!
-//! To fix this you may need to refactor your function. In example above hard-coded reference can be
-//! passed as argument instead:
-//! ```
-//! # use automock::*;
-//! # #[mock] fn work(_: &i32) {}
-//! fn use_work(r: &i32) {
-//!     work(r);
-//! }
-//!
-//! # fn main() {
-//! // Arrange
-//! let test_local = 10;
-//!
-//! // Act
-//! use_work(&test_local);
-//!
-//! // Assert
-//! // receives reference to `test_local` that is still alive in this scope
-//! work::received(Arg::is(|r: &&i32| **r == test_local), 1.time());
-//! # }
-//! ```
-//! Rule of thumb is that if function that accepts references produces flaky results, this is most
-//! likely because it receives dangling reference.
 pub use automock_proc_macro::mock;
 
 #[doc(hidden)]

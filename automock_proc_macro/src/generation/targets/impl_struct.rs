@@ -122,12 +122,8 @@ pub(crate) fn generate_module(mut item_impl: ItemImpl) -> MockMod {
             Item::Impl(args_checker.args_checker_impl),
         ])
     }))
-    .chain(
-        maybe_associated_setup_impls
-            .into_iter()
-            .map(|x| Item::Impl(x)),
-    )
-    .chain(maybe_static_setup_impl.into_iter().map(|x| Item::Impl(x)))
+    .chain(maybe_associated_setup_impls.into_iter().map(Item::Impl))
+    .chain(maybe_static_setup_impl.into_iter().map(Item::Impl))
     .collect();
     let item_mod = ItemMod {
         attrs: vec![

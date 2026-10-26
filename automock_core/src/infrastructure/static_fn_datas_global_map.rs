@@ -51,20 +51,17 @@ impl StaticFnDatasGlobalMap {
         const SUPPORTS_BASE_CALLING: bool,
     >(
         &'_ self,
-        maybe_owner_type_name: Option<&'static str>, // TODO - join
-        maybe_generics_info_str: Option<String>,     // these two args?
+        maybe_owner_info: Option<(&'static str, String)>,
         fn_ident: &'static str,
     ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, false> {
         let type_id = typeid::of::<TMock>();
         let map = self.get_mut_map();
-        let fn_key = maybe_owner_type_name.map_or_else(
+        let fn_key = maybe_owner_info.as_ref().map_or_else(
             || fn_ident.to_owned(),
-            |owner_name| format!("{owner_name}_{fn_ident}"),
+            |(owner_name, _)| format!("{owner_name}_{fn_ident}"),
         );
-        let maybe_owner_name = maybe_owner_type_name.map(|x| {
-            let generics_info_str = maybe_generics_info_str.unwrap_or_default();
-            format!("{x}{generics_info_str}")
-        });
+        let maybe_owner_name = maybe_owner_info
+            .map(|(owner_name, generics_info_str)| format!("{owner_name}{generics_info_str}"));
         let raw_ptr = map
             .entry(type_id)
             .or_default()
@@ -135,8 +132,7 @@ pub fn get_static_fn_data<
 >(
     fn_ident: &'static str,
 ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, false> {
-    let result =
-        STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.get_specific_fn_data(None, None, fn_ident));
+    let result = STATIC_FN_DATAS_GLOBAL_MAP.with(|this| this.get_specific_fn_data(None, fn_ident));
     return result;
 }
 
@@ -150,9 +146,8 @@ pub fn get_static_fn_data_for_struct<
     fn_ident: &'static str,
 ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, false> {
     let generics_info_str = fmt_generic_parameter_infos(&TMock::get_generic_parameter_infos());
-    let result = STATIC_FN_DATAS_GLOBAL_MAP.with(|this| {
-        this.get_specific_fn_data(Some(owner_name), Some(generics_info_str), fn_ident)
-    });
+    let result = STATIC_FN_DATAS_GLOBAL_MAP
+        .with(|this| this.get_specific_fn_data(Some((owner_name, generics_info_str)), fn_ident));
     return result;
 }
 

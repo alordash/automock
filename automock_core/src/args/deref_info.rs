@@ -79,24 +79,11 @@ pub(crate) mod tests {
         type U = i32;
         let deref_info_mock = deref_info_mock();
         let deref_info_mock_id = deref_info_mock.id();
-        DerefInfo::static_setup()
-            .new(automock::Arg::Any, automock::Arg::Any)
-            .returns(deref_info_mock)
-            .from_ref::<T, U>(automock::Arg::Any)
-            .call_base();
-
         let value = T::new(5);
-
-        // Act
-        let result = DerefInfo::from_ref(&value);
-
-        // Assert
-        assert_eq!(result.id(), deref_info_mock_id);
-
-        let expected_expected_value_deref_ptr = value.deref() as *const _ as *const ();
-        DerefInfo::static_received()
+        let expected_value_deref_ptr = value.deref() as *const _ as *const ();
+        DerefInfo::static_setup()
             .new(
-                expected_expected_value_deref_ptr,
+                expected_value_deref_ptr,
                 automock::Arg::is(|deref_vtable_ptr: &*const ()| {
                     let manually_constructed_fat_ptr: &dyn Deref<Target = U> = {
                         let ptr = &value as *const _ as *mut ();
@@ -109,11 +96,21 @@ pub(crate) mod tests {
                     let actual_reference =
                         manually_constructed_fat_ptr.deref() as *const _ as *const ();
                     let expected_reference = value.deref() as *const _ as *const ();
-                    return actual_reference == expected_reference;
+                    let result = actual_reference == expected_reference;
+                    return result;
                 }),
-                automock::Times::Once,
             )
-            .no_other_calls();
+            .returns_once(deref_info_mock)
+            .from_ref::<T, U>(automock::Arg::Any)
+            .call_base();
+
+        // Act
+        let result = DerefInfo::from_ref(&value);
+
+        // Assert
+        assert_eq!(result.id(), deref_info_mock_id);
+
+        DerefInfo::verify_static_calls();
     }
 
     #[test]

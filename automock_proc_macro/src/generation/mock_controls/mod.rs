@@ -15,7 +15,7 @@ mod common {
 use common::*;
 
 pub mod fn_static_setup;
+pub mod fn_static_verify_calls;
 pub mod setup;
 pub mod setup_impl;
 pub mod static_setup;
-pub mod fn_static_verify_calls;
