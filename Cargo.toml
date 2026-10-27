@@ -12,7 +12,7 @@ proc-macro2 = { version = "1.0.95", features = ["span-locations"] }
 quote = "1.0.40"
 syn = { version = "3.0.3", features = ["full", "visit", "visit-mut"] }
 not_enough_syntax = "0.1.0"
-not_enough_asserts = "1.4.2"
+not_enough_asserts = "1.5.0"
 indexmap = "2.14.0"
 cfg-if = "1.0.4"
 
