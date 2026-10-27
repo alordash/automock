@@ -5,7 +5,8 @@
 //!
 //! ```
 //! use automock::*;
-//! #[mock] trait Trait {}
+//! #[mock]
+//! trait Trait {}
 //!
 //! # fn main() {
 //! let mock = TraitMock::new();
@@ -17,7 +18,6 @@
 //! `verify_calls()` checks that all expected calls happened. Unexpected calls panic immediately.
 //! ```
 //! # use automock::*;
-//!
 //! #[mock]
 //! trait Trait {
 //!     fn work(&self, v: i32) -> i32;
@@ -46,10 +46,9 @@
 //! * [Mocking static functions](#mocking-static-functions)
 //! * [Mocking static associated functions](#mocking-static-associated-functions)
 //! * [Arguments matching](#arguments-matching)
-//! * [Comparing mocks](#comparing-mocks)
 //! * [Controlling function behavior](#controlling-function-behavior)
-//! * [Base implementation](#base-implementation)
-//! * [Verifying calls](#verifying-calls)
+//! * [Base implementation usage](#base-implementation-usage)
+//! * [Calls verification](#calls-verification)
 //! * [Generics](#generics)
 //! * [Associated constants and types](#associated-constants-and-types)
 //! * [`impl Trait` types](#impl-trait-types)
@@ -59,7 +58,7 @@
 //! * [Receiver types](#receiver-types)
 //! * [Cloning mocks](#cloning-mocks)
 //! * [Crate features](#feature-flags)
-//! * [Undefined behavior](#undefined-behavior)
+//! * [How it works](#how-it-works)
 //!
 //! ## Mocking traits
 //!
@@ -442,7 +441,7 @@
 //!    provided reference. Compares references returned by [`std::ops::Deref::deref`] of `T`.
 //!    Opposite of `Arg::ref_eq`.
 //!
-//! ## Comparing mocks
+//! ### Mocks comparison
 //!
 //! All mock objects implement [`Mockable`]. This interface provides [`Mockable::id`] method that
 //! returns mock object's id - unique number that represents concrete mock object. This number is
@@ -589,7 +588,7 @@
 //! # }
 //! ```
 //!
-//! ## Base implementation
+//! ## Base implementation usage
 //!
 //! Mocked functions can use their base implementation in tests. To tell mock object to use base
 //! implementation call `call_base()` on function setup:
@@ -659,7 +658,7 @@
 //! # }
 //! ```
 //!
-//! ## Verifying calls
+//! ## Calls verification
 //!
 //! You can verify exactly how a mocked function was called. To do it, just call `verify_calls()`
 //! on mock:
@@ -1149,7 +1148,7 @@
 //!    would not work).
 //!
 //! Cloned mocks share the same configuration (it is stored behind reference-counted pointer
-//! internally). This lets you share mocks between parts of your code. This can be useful, for
+//! internally). This lets you share mocks between parts of your code. It can be useful, for
 //! example, if you want to verify that mock received some consuming function:
 //! ```
 //! use automock::*;
