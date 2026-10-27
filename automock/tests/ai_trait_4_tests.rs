@@ -806,7 +806,7 @@ mod tests {
     fn boxed_receiver() {
         // Arrange
         let mut mock = MonsterMock::<i32, 4, DefaultOutput, DefaultIterator<i32>>::new();
-        
+
         mock.setup().boxed().expect_once();
         let mock_data = mock.mock_data();
 

@@ -1127,7 +1127,7 @@
 //! let mut mock = TraitMock::new();
 //! mock.setup().boxed().returns_once(10); // setup() and verify_calls()
 //! let mock_data = mock.mock_data();      // are always called on &mut self
-//! 
+//!
 //! // Act
 //! let result = Box::new(mock).boxed();
 //!
