@@ -1,6 +1,6 @@
 [package]
 name = "automock_core"
-version = "1.0.0-rc1"
+version = "1.0.0"
 edition = "2024"
 rust-version = "1.88.0"
 description = "Core of automock that handles mocking logic."
