@@ -552,7 +552,7 @@
 //! Every mocked function can have a callback that is called upon function invocation with matching
 //! arguments. It can be configured using [`FnCallbackConfigurator::and_does`] after its return
 //! value or the number of expected calls were specified.
-//! 
+//!
 //! Static functions receive tuple of argument values in the callback:
 //! ```
 //! # use automock::*;
