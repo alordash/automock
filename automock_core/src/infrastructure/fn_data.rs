@@ -267,11 +267,10 @@ mod tests {
             )
             .returns_once(configurator);
 
+        let mock_data = args_checker_mock.mock_data();
         // Act
-        let result = fn_data_mock.add_config::<_, _, ArgRefsTuple, ReturnValue, MockArg>(
-            args_checker_mock.clone(),
-            &owner,
-        );
+        let result = fn_data_mock
+            .add_config::<_, _, ArgRefsTuple, ReturnValue, MockArg>(args_checker_mock, &owner);
 
         // Assert
         assert_eq!(
@@ -281,7 +280,7 @@ mod tests {
             config_id
         );
         assert_eq!(result.id(), configurator_id);
-        args_checker_mock.verify_calls();
+        mock_data.verify_calls();
         FnConfig::<Mock>::verify_static_calls();
         FnConfigurator::<
             Mock,
@@ -337,11 +336,10 @@ mod tests {
             )
             .returns_once(configurator);
 
+        let mock_data = args_checker_mock.mock_data();
         // Act
-        let result = fn_data_mock.add_config::<_, _, ArgRefsTuple, ReturnValue, MockArg>(
-            args_checker_mock.clone(),
-            &owner,
-        );
+        let result = fn_data_mock
+            .add_config::<_, _, ArgRefsTuple, ReturnValue, MockArg>(args_checker_mock, &owner);
 
         // Assert
         let configs = fn_data_mock.configs.borrow();
@@ -352,7 +350,7 @@ mod tests {
         ));
         assert_eq!(configs[&generics_hash_key][1].borrow().id(), config_id);
         assert_eq!(result.id(), configurator_id);
-        args_checker_mock.verify_calls();
+        mock_data.verify_calls();
         FnConfig::<Mock>::verify_static_calls();
         FnConfigurator::<
             Mock,
@@ -422,7 +420,8 @@ mod tests {
             .as_IGenericsInfoProvider()
             .get_generics_hash_key()
             .returns_once(GenericsHashKey(5));
-        let dyn_call = DynCall::new(call_mock.clone());
+        let mock_data = call_mock.mock_data();
+        let dyn_call = DynCall::new(call_mock);
         let mut fn_data_mock = fn_data_mock::<IRRELEVANT, IRRELEVANT, IRRELEVANT>();
         fn_data_mock
             .setup()
@@ -443,7 +442,7 @@ mod tests {
                 .calls_args_check_results
                 .is_empty()
         );
-        call_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     mod utilities {

@@ -98,26 +98,28 @@ mod tests {
     fn downcast_to_Ok() {
         // Arrange
         let call_mock = CallMock::new();
-        let dyn_call = DynCall::new(call_mock.clone());
+        let mock_data = call_mock.mock_data();
+        let dyn_call = DynCall::new(call_mock);
 
         // Act
         let result: &CallMock = dyn_call.downcast_to();
 
         // Assert
-        assert_eq!(result.id(), call_mock.id());
+        assert_eq!(result.id(), mock_data.id());
     }
 
     #[test]
     fn downcast_into_Ok() {
         // Arrange
         let call_mock = CallMock::new();
-        let dyn_call = DynCall::new(call_mock.clone());
+        let mock_data = call_mock.mock_data();
+        let dyn_call = DynCall::new(call_mock);
 
         // Act
         let result: CallMock = dyn_call.downcast_into();
 
         // Assert
-        assert_eq!(result.id(), call_mock.id());
+        assert_eq!(result.id(), mock_data.id());
     }
 
     #[test]
@@ -134,14 +136,15 @@ mod tests {
             .get_arg_infos()
             .returns_once(arg_infos.clone());
 
-        let dyn_call = DynCall::new(call_mock.clone());
+        let mock_data = call_mock.mock_data();
+        let dyn_call = DynCall::new(call_mock);
 
         // Act
         let result = dyn_call.get_arg_infos();
 
         // Assert
         assert_eq!(result, arg_infos);
-        call_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
@@ -155,14 +158,15 @@ mod tests {
             .get_ptr_to_boxed_tuple_of_refs()
             .returns_once(ptr);
 
-        let dyn_call = DynCall::new(call_mock.clone());
+        let mock_data = call_mock.mock_data();
+        let dyn_call = DynCall::new(call_mock);
 
         // Act
         let result = dyn_call.get_ptr_to_boxed_tuple_of_refs();
 
         // Assert
         assert_eq!(result, ptr);
-        call_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
@@ -177,14 +181,15 @@ mod tests {
             .get_dyn_tuple_of_refs()
             .returns_once(dyn_arg_refs_tuple);
 
-        let dyn_call = DynCall::new(call_mock.clone());
+        let mock_data = call_mock.mock_data();
+        let dyn_call = DynCall::new(call_mock);
 
         // Act
         let result = dyn_call.get_dyn_tuple_of_refs();
 
         // Assert
         assert_eq!(result.id(), dyn_arg_refs_tuple_id);
-        call_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
@@ -200,7 +205,8 @@ mod tests {
             .as_IGenericsInfoProvider()
             .get_generic_parameter_infos()
             .returns_once(generic_parameter_infos.clone());
-        let dyn_call = DynCall::new(call_mock.clone());
+        let mock_data = call_mock.mock_data();
+        let dyn_call = DynCall::new(call_mock);
 
         // Act
         let result = dyn_call.get_generic_parameter_infos();
@@ -208,7 +214,7 @@ mod tests {
         // Assert
         assert_eq!(result, generic_parameter_infos);
 
-        call_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
@@ -225,13 +231,14 @@ mod tests {
             .as_IGenericsInfoProvider()
             .hash_generics_type_ids(automock::Arg::ref_eq(&mut generics_hasher))
             .expect_once();
-        let dyn_call = DynCall::new(call_mock.clone());
+        let mock_data = call_mock.mock_data();
+        let dyn_call = DynCall::new(call_mock);
 
         // Act
         dyn_call.hash_generics_type_ids(&mut generics_hasher);
 
         // Assert
-        call_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
@@ -248,13 +255,14 @@ mod tests {
             .as_IGenericsInfoProvider()
             .hash_const_values(automock::Arg::ref_eq(&mut generics_hasher))
             .expect_once();
-        let dyn_call = DynCall::new(call_mock.clone());
+        let mock_data = call_mock.mock_data();
+        let dyn_call = DynCall::new(call_mock);
 
         // Act
         dyn_call.hash_const_values(&mut generics_hasher);
 
         // Assert
-        call_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
@@ -267,7 +275,8 @@ mod tests {
             .as_IGenericsInfoProvider()
             .get_generics_hash_key()
             .returns_once(generics_hash_key);
-        let dyn_call = DynCall::new(call_mock.clone());
+        let mock_data = call_mock.mock_data();
+        let dyn_call = DynCall::new(call_mock);
 
         // Act
         let result = dyn_call.get_generics_hash_key();
@@ -275,6 +284,6 @@ mod tests {
         // Assert
         assert_eq!(result, generics_hash_key);
 
-        call_mock.verify_calls();
+        mock_data.verify_calls();
     }
 }

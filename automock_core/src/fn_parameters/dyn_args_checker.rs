@@ -63,7 +63,8 @@ mod tests {
             .as_IGenericsInfoProvider()
             .get_generic_parameter_infos()
             .returns_once(generic_parameter_infos.clone());
-        let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
+        let mock_data = args_checker_mock.mock_data();
+        let dyn_args_checker = DynArgsChecker::new(args_checker_mock);
 
         // Act
         let result = dyn_args_checker.get_generic_parameter_infos();
@@ -71,7 +72,7 @@ mod tests {
         // Assert
         assert_eq!(result, generic_parameter_infos);
 
-        args_checker_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
@@ -88,13 +89,14 @@ mod tests {
             .as_IGenericsInfoProvider()
             .hash_generics_type_ids(automock::Arg::ref_eq(&mut generics_hasher))
             .expect_once();
-        let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
+        let mock_data = args_checker_mock.mock_data();
+        let dyn_args_checker = DynArgsChecker::new(args_checker_mock);
 
         // Act
         dyn_args_checker.hash_generics_type_ids(&mut generics_hasher);
 
         // Assert
-        args_checker_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
@@ -111,13 +113,14 @@ mod tests {
             .as_IGenericsInfoProvider()
             .hash_const_values(automock::Arg::ref_eq(&mut generics_hasher))
             .expect_once();
-        let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
+        let mock_data = args_checker_mock.mock_data();
+        let dyn_args_checker = DynArgsChecker::new(args_checker_mock);
 
         // Act
         dyn_args_checker.hash_const_values(&mut generics_hasher);
 
         // Assert
-        args_checker_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
@@ -130,7 +133,8 @@ mod tests {
             .as_IGenericsInfoProvider()
             .get_generics_hash_key()
             .returns_once(generics_hash_key);
-        let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
+        let mock_data = args_checker_mock.mock_data();
+        let dyn_args_checker = DynArgsChecker::new(args_checker_mock);
 
         // Act
         let result = dyn_args_checker.get_generics_hash_key();
@@ -138,7 +142,7 @@ mod tests {
         // Assert
         assert_eq!(result, generics_hash_key);
 
-        args_checker_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
@@ -161,14 +165,15 @@ mod tests {
             .check(automock::Arg::ref_eq(&dyn_call))
             .returns_once(arg_check_results.clone());
 
-        let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
+        let mock_data = args_checker_mock.mock_data();
+        let dyn_args_checker = DynArgsChecker::new(args_checker_mock);
 
         // Act
         let result = dyn_args_checker.check(&dyn_call);
 
         // Assert
         assert_eq!(result, arg_check_results);
-        args_checker_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
@@ -182,13 +187,14 @@ mod tests {
             .fmt_args()
             .returns_once(fmt_args_string.clone());
 
-        let dyn_args_checker = DynArgsChecker::new(args_checker_mock.clone());
+        let mock_data = args_checker_mock.mock_data();
+        let dyn_args_checker = DynArgsChecker::new(args_checker_mock);
 
         // Act
         let result = dyn_args_checker.fmt_args();
 
         // Assert
         assert_eq!(result, fmt_args_string);
-        args_checker_mock.verify_calls();
+        mock_data.verify_calls();
     }
 }

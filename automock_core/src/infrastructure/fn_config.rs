@@ -252,7 +252,8 @@ pub(crate) mod tests {
             .as_ICall()
             .get_ptr_to_boxed_tuple_of_refs()
             .returns_once(raw_arg_refs_tuple_ptr);
-        let dyn_call = DynCall::new(call_mock.clone());
+        let mock_data = call_mock.mock_data();
+        let dyn_call = DynCall::new(call_mock);
         callback::setup::<ArgRefsTuple>(automock::Arg::ref_eq(&mock_arg), arg_refs_tuple)
             .expect_once();
 
@@ -263,7 +264,7 @@ pub(crate) mod tests {
         let actual_callback = fn_config.maybe_callback.expect("Callback must be set.");
 
         actual_callback.borrow_mut()(raw_mock_arg_ptr, &dyn_call);
-        call_mock.verify_calls();
+        mock_data.verify_calls();
         callback::verify_calls::<ArgRefsTuple>();
     }
 
@@ -272,7 +273,6 @@ pub(crate) mod tests {
         // Arrange
         let mut args_checker_mock = ArgsCheckerMock::new();
         let mut fn_config = fn_config_mock();
-        fn_config.args_checker = DynArgsChecker::new(args_checker_mock.clone());
         fn_config.setup().check_call(automock::Arg::Any).call_base();
         let dyn_call = DynCall::new(CallMock::new());
         let arg_check_results = vec![
@@ -288,6 +288,8 @@ pub(crate) mod tests {
             .as_IArgsChecker()
             .check(automock::Arg::ref_eq(&dyn_call))
             .returns_once(arg_check_results.clone());
+        let mock_data = args_checker_mock.mock_data();
+        fn_config.args_checker = DynArgsChecker::new(args_checker_mock);
 
         // Act
         let result = fn_config.check_call(&dyn_call);
@@ -295,7 +297,7 @@ pub(crate) mod tests {
         // Assert
         assert_eq!(result, arg_check_results);
 
-        args_checker_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
@@ -457,7 +459,8 @@ pub(crate) mod tests {
             .as_ICall()
             .get_dyn_tuple_of_refs()
             .returns_once(dyn_arg_refs_tuple);
-        let dyn_call = DynCall::new(call_mock.clone());
+        let mock_data = call_mock.mock_data();
+        let dyn_call = DynCall::new(call_mock);
 
         // Act
         let result = fn_config.select_next_return_value(&dyn_call);
@@ -472,7 +475,7 @@ pub(crate) mod tests {
             initial_return_value_sources_length - 1
         );
 
-        call_mock.verify_calls();
+        mock_data.verify_calls();
         return_value_source_factory::verify_calls();
     }
 
