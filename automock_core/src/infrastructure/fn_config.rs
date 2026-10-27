@@ -21,7 +21,6 @@ pub struct FnConfig<'am, TMock> {
     _phantom_mock: PhantomData<TMock>,
     pub number: usize,
     pub args_checker: DynArgsChecker<'am>,
-    // TODO - unite `return_value_sources` with `call_base in an enum - they are mutually exclusive
     pub return_value_sources: VecDeque<ReturnValueSource<'am>>,
     #[allow(clippy::type_complexity)]
     pub maybe_callback: Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>) + 'am>>>,
