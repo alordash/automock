@@ -57,7 +57,7 @@
 //! * [Function modifiers](#function-modifiers)
 //! * [Call order validation](#call-order-validation)
 //! * [Receiver types](#receiver-types)
-//! * [Cloning mocks](#cloning-mocks)
+//! * [Mocking consuming functions](#mocking-consuming-functions)
 //! * [Crate features](#feature-flags)
 //! * [How it works](#how-it-works)
 //!
@@ -95,19 +95,8 @@
 //!
 //! ### Limitations
 //!
-//! There is one limitation: `automock` cannot mock traits that have super traits (other than
-//! `Clone`). For example, this won't compile:
-//! ```compile_fail
-//! #[mock]
-//! trait Trait: SuperTrait {}
-//! ```
-//! But this will:
-//! ```
-//! # use automock::*;
-//! #[mock]
-//! trait Trait: Clone {}
-//! # fn main() {}
-//! ```
+//! There is one limitation: `automock` cannot mock traits that have supertraits. For example, this
+//! cannot be mocked: `trait Trait: Clone { }`.
 //!
 //! ## Mocking structures
 //!
@@ -1137,45 +1126,41 @@
 //! // Arrange
 //! let mut mock = TraitMock::new();
 //! mock.setup().boxed().returns_once(10); // setup() and verify_calls()
-//!                                        // are always called on &mut self
+//! let mock_data = mock.mock_data();      // are always called on &mut self
+//! 
 //! // Act
-//! let result = Box::new(mock.clone()).boxed();    // another feature - mocks cloning, more
-//!                                                 // information in "Cloning mocks" section
+//! let result = Box::new(mock).boxed();
 //!
 //! // Assert
 //! assert_eq!(result, 10);
-//! mock.verify_calls();
+//! mock_data.verify_calls();
 //! # }
 //! ```
 //!
-//! ## Cloning mocks
+//! ## Mocking consuming functions
 //!
-//! Mock can be cloned either if:
-//! 1. it is mock of a trait,
-//! 2. it is mock of a struct that has `#[derive(Clone)]` attribute (manually implementing [`Clone`]
-//!    would not work).
+//! If a functions consumes mock object, but you still want to verify its calls, you can extract its
+//! mock data before consumption using `.mock_data()` and then call `.verify_calls()` on it:
 //!
-//! Cloned mocks share the same configuration (it is stored behind reference-counted pointer
-//! internally). This lets you share mocks between parts of your code. It can be useful, for
-//! example, if you want to verify that mock received some consuming function:
 //! ```
 //! # use automock::*;
 //! #[mock]
 //! trait Trait {
-//!     fn consume(self);
+//!     fn consume(self) -> i32;
 //! }
 //!
 //! # fn main() {
 //! // Arrange
 //! let mut mock = TraitMock::new();
-//! let mut mock_for_verification = mock.clone();
-//! mock.setup().consume().expect_once();
+//! mock.setup().consume().returns_once(10);
+//! let mock_data = mock.mock_data();
 //!
 //! // Act
-//! mock.consume();
+//! let result = mock.consume();
 //!
 //! // Assert
-//! mock_for_verification.verify_calls();
+//! assert_eq!(result, 10);
+//! mock_data.verify_calls();   // checks that `mock.consume()` was called
 //! # }
 //! ```
 //!
