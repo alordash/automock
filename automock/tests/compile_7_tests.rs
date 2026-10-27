@@ -22,16 +22,16 @@ mod tests {
         global::setup(Arg::eq(2))
             .call_base()
             .setup(Arg::eq(143))
-            .returns("MOCK: 143".to_string());
+            .returns_once("MOCK: 143".to_string());
 
         // Act
         let result1 = global(2);
         let result2_1 = global(143);
 
         // Assert
-        global::received(Arg::eq(143), Times::Exactly(1)).no_other_calls();
         assert_eq!("actual number: 2", result1);
         assert_eq!("MOCK: 143", result2_1);
+        global::verify_calls();
     }
 
     #[test]
@@ -40,15 +40,15 @@ mod tests {
         global::setup(Arg::eq(11))
             .call_base()
             .setup(Arg::eq(33))
-            .returns("MOCK: 33".to_string());
+            .returns_once("MOCK: 33".to_string());
 
         // Act
         let result1 = global(11);
         let result2_1 = global(33);
 
         // Assert
-        global::received(Arg::eq(33), Times::Exactly(1)).no_other_calls();
         assert_eq!("actual number: 11", result1);
         assert_eq!("MOCK: 33", result2_1);
+        global::verify_calls();
     }
 }

@@ -8,9 +8,8 @@ pub mod infrastructure;
 
 mod fat_pointer;
 mod lifetimes_transmutation;
-pub mod settings;
 pub mod times;
 
-pub use infrastructure::verify_call_order;
+pub use infrastructure::in_sequence;
 
 use fat_pointer::*;

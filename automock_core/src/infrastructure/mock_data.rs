@@ -1,5 +1,6 @@
 use crate::args::*;
 use crate::infrastructure::*;
+use error_printing::panic_unused_configs_error;
 use indexmap::IndexMap;
 use std::fmt::Formatter;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -48,20 +49,56 @@ impl MockData {
         self.id
     }
 
+    pub fn verify_calls(&self) {
+        let calls_vertification_results: Vec<_> = self
+            .map
+            .read()
+            .expect(UNABLE_TO_LOCK_FOR_READING_ERROR)
+            .values()
+            .flat_map(|y| y.values())
+            .cloned()
+            .map(
+                Self::cast_ptr_to_ref::<
+                    'static,
+                    (),
+                    IRRELEVANT_HAS_RETURN_VALUE,
+                    IRRELEVANT_SUPPORTS_BASE_CALLING,
+                >,
+            )
+            .map(|x| x.verify_calls())
+            .collect();
+        if calls_vertification_results
+            .iter()
+            .all(|x| x.unused_configs.is_empty())
+        {
+            return;
+        }
+        panic_unused_configs_error(calls_vertification_results);
+    }
+
     pub fn get_fn_data<
         'a,
-        TMock,
+        TMock: IMockGenericsInfoProvider,
         const HAS_RETURN_VALUE: bool,
         const SUPPORTS_BASE_CALLING: bool,
-        const PASSES_MOCK_TO_CALLBACK: bool,
     >(
         &'_ self,
-        owner_name: &'static str,
+        owner_type_name: &'static str,
+        maybe_trait_name: Option<String>,
         fn_ident: &'static str,
         generics_hash_key: GenericsHashKey,
-    ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
-    {
-        let unique_fn_ident = format!("{owner_name}_{fn_ident}");
+    ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, true> {
+        let generics_info_str = fmt_generic_parameter_infos(&TMock::get_generic_parameter_infos());
+        let unique_fn_ident = match &maybe_trait_name {
+            Some(trait_name) => {
+                format!("<{owner_type_name}{generics_info_str} as {trait_name}>_{fn_ident}")
+            }
+            None => format!("{owner_type_name}_{fn_ident}"),
+        };
+        let owner_name = match maybe_trait_name {
+            Some(trait_name) => format!("<{owner_type_name}{generics_info_str} as {trait_name}>"),
+            None => format!("{owner_type_name}{generics_info_str}"),
+        };
         let fn_data_ptr = {
             let mut map_write = self.map.write().expect(UNABLE_TO_LOCK_FOR_WRITING_ERROR);
             let fn_data_ptr_ref = map_write
@@ -74,7 +111,7 @@ impl MockData {
                         TMock,
                         HAS_RETURN_VALUE,
                         SUPPORTS_BASE_CALLING,
-                        PASSES_MOCK_TO_CALLBACK,
+                        true,
                     >::new(
                         Some(owner_name), fn_ident
                     ))) as *const _ as *const ()
@@ -91,11 +128,9 @@ impl MockData {
         TMock,
         const HAS_RETURN_VALUE: bool,
         const SUPPORTS_BASE_CALLING: bool,
-        const PASSES_MOCK_TO_CALLBACK: bool,
     >(
         fn_data_ptr: *const (),
-    ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, PASSES_MOCK_TO_CALLBACK>
-    {
+    ) -> &'a FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, true> {
         // SAFETY:
         // `as_ref` - ptr is aligned since it was cast from reference returned from `Box::leak`.
         // Pointed value is a newly created valid `FnData`.
@@ -104,13 +139,7 @@ impl MockData {
         // `unwrap_unchecked` - pointer was obtained from reference returned from `Box::leak`.
         let fn_data_ref = unsafe {
             (fn_data_ptr as *const _
-                as *const FnData<
-                    'static,
-                    TMock,
-                    HAS_RETURN_VALUE,
-                    SUPPORTS_BASE_CALLING,
-                    PASSES_MOCK_TO_CALLBACK,
-                >)
+                as *const FnData<'static, TMock, HAS_RETURN_VALUE, SUPPORTS_BASE_CALLING, true>)
                 .as_ref()
                 .unwrap_unchecked()
         };
@@ -122,36 +151,6 @@ impl MockData {
 const IRRELEVANT_HAS_RETURN_VALUE: bool = false;
 const IRRELEVANT_SUPPORTS_BASE_CALLING: bool = false;
 const IRRELEVANT_PASSES_MOCK_TO_CALLBACK: bool = false;
-
-impl IMockData for MockData {
-    fn get_received_nothing_else_error_msgs(&self) -> Vec<Vec<String>> {
-        let result = self
-            .map
-            .read()
-            .expect(UNABLE_TO_LOCK_FOR_READING_ERROR)
-            .values()
-            .flat_map(|y| y.values())
-            .cloned()
-            .map(
-                Self::cast_ptr_to_ref::<
-                    'static,
-                    (),
-                    IRRELEVANT_HAS_RETURN_VALUE,
-                    IRRELEVANT_SUPPORTS_BASE_CALLING,
-                    IRRELEVANT_PASSES_MOCK_TO_CALLBACK,
-                >,
-            )
-            .map(FnData::get_unexpected_calls_error_msgs)
-            .collect();
-        return result;
-    }
-}
-
-impl IMockData for SharedMockData {
-    fn get_received_nothing_else_error_msgs(&self) -> Vec<Vec<String>> {
-        <MockData as IMockData>::get_received_nothing_else_error_msgs(self)
-    }
-}
 
 impl Drop for MockData {
     fn drop(&mut self) {

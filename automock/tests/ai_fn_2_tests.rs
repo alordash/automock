@@ -27,46 +27,46 @@ mod tests {
     #[test]
     fn should_mock_direct_generic_function_call() {
         // Arrange
-        target::setup::<i32>(Arg::Any).returns_with(|(x,)| *x + 100);
+        target::setup::<i32>(Arg::Any).returns_once_with(|(x,)| *x + 100);
 
         // Act
         let result = call_direct(5);
 
         // Assert
         assert_eq!(result, 105);
-        target::received(5, 1.time());
+        target::verify_calls::<i32>();
     }
 
     #[test]
     fn should_mock_generic_function_through_function_pointer() {
         // Arrange
-        target::setup::<i32>(Arg::Any).returns_with(|(x,)| *x + 100);
+        target::setup::<i32>(Arg::Any).returns_once_with(|(x,)| *x + 100);
 
         // Act
         let result = call_through_pointer(5);
 
         // Assert
         assert_eq!(result, 105);
-        target::received(5, 1.time());
+        target::verify_calls::<i32>();
     }
 
     #[test]
     fn should_mock_generic_function_through_generic_fn() {
         // Arrange
-        target::setup::<i32>(Arg::Any).returns_with(|(x,)| *x + 100);
+        target::setup::<i32>(Arg::Any).returns_once_with(|(x,)| *x + 100);
 
         // Act
         let result = call_through_generic(target::<i32>, 5);
 
         // Assert
         assert_eq!(result, 105);
-        target::received(5, 1.time());
+        target::verify_calls::<i32>();
     }
 
     #[test]
     fn should_mock_generic_function_through_all_call_paths() {
         // Arrange
-        target::setup::<i32>(Arg::Any).returns_with(|(x,)| *x + 100);
+        target::setup::<i32>(Arg::Any).returns_with(|(x,)| *x + 100, 3.times());
 
         // Act
         let direct = call_direct(5);
@@ -78,6 +78,6 @@ mod tests {
         assert_eq!(pointer, 105);
         assert_eq!(generic, 105);
 
-        target::received(5, 3.times()).no_other_calls();
+        target::verify_calls::<i32>();
     }
 }

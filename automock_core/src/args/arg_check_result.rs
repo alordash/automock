@@ -40,6 +40,7 @@ impl ArgCheckResult {
 mod tests {
     #![allow(non_snake_case)]
     use super::*;
+    use core::assert_matches;
 
     #[test]
     fn Ok_is_ok_ReturnsTrue() {
@@ -97,9 +98,9 @@ mod tests {
 
         // Assert
         let arg_check_result_err = err.expect("Must be `Some(ArgCheckResultErr)`");
-        let expected_arg_check_result_err = match &arg_check_result {
-            ArgCheckResult::Err(e) => e,
-            _ => panic!("Must be `ArgCheckResult::Err`"),
+        assert_matches!(&arg_check_result, ArgCheckResult::Err(_));
+        let ArgCheckResult::Err(expected_arg_check_result_err) = &arg_check_result else {
+            unreachable!()
         };
         assert!(core::ptr::eq(
             arg_check_result_err,

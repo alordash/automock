@@ -11,6 +11,7 @@ pub(crate) struct FnSyntax {
     pub merged_generics: Generics,
     pub generics_field: Field,
     pub maybe_owner_name: Option<String>,
+    pub maybe_trait_path: Option<Path>,
     pub fn_ident: Ident,
     pub fn_data_name: String,
     pub maybe_self_type: Option<Receiver>,

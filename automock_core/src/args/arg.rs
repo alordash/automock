@@ -20,7 +20,7 @@ pub enum Arg<T: ?Sized> {
     #[doc(hidden)]
     NotEq(ArgCmp<T>, Internal),
     #[doc(hidden)]
-    Is(Box<dyn Fn(*const ()) -> bool>, Internal),
+    Is(Box<dyn Fn(*const T) -> bool>, Internal),
 }
 
 impl<T: Debug> Debug for Arg<T> {
@@ -31,56 +31,63 @@ impl<T: Debug> Debug for Arg<T> {
         match self {
             Arg::Any => write!(f, "({arg_type_name}): any"),
             Arg::Eq(arg_cmp, _) => {
-                write!(f, "({}): equal to {:?}", arg_type_name, arg_cmp.value())
+                if is_primitive_type::<T>() {
+                    write!(f, "{:?}", arg_cmp.value())
+                } else {
+                    write!(f, "{} == {:?}", arg_type_name, arg_cmp.value())
+                }
             }
             Arg::NotEq(arg_cmp, _) => {
-                write!(f, "({}): NOT equal to {:?}", arg_type_name, arg_cmp.value())
+                if is_primitive_type::<T>() {
+                    write!(f, "!{:?}", arg_cmp.value())
+                } else {
+                    write!(f, "{} != {:?}", arg_type_name, arg_cmp.value())
+                }
             }
-            Arg::Is(_, _) => write!(f, "({arg_type_name}): custom predicate"),
+            Arg::Is(_, _) => write!(f, "fn({arg_type_name})"),
         }
     }
 }
 
 const UNINITIALIZED_ARG_PRINT_STRING: &str = "[CRITICAL ERROR]: This string should represent arguments value, but if you see this it means that `ArgCmp.print_arg` was not initialized!";
 
-impl<T> Arg<T> {
+impl<T: ?Sized> Arg<T> {
     /// Checks that argument value matches some predicate.
     pub fn is<'a, TFn: Fn(&T) -> bool + 'a>(predicate: TFn) -> Self {
-        let anonymous_predicate = move |ptr: *const ()| {
+        let anonymous_predicate = move |ptr: *const T| {
             // SAFETY: anonymous predicate is called only internally and passed pointer is always
             // created by casting &T.
             let t_ref = unsafe {
-                let t_ptr = ptr as *const T;
-                t_ptr
-                    .as_ref()
+                ptr.as_ref()
                     .expect("Pointer to argument in Arg::is must not be null.")
             };
             return predicate(t_ref);
         };
         let boxed_anonymous_predicate =
-            Box::new(anonymous_predicate) as Box<dyn Fn(*const ()) -> bool + 'a>;
+            Box::new(anonymous_predicate) as Box<dyn Fn(*const T) -> bool + 'a>;
         return Self::Is(transmute_lifetime!(boxed_anonymous_predicate), Internal);
     }
 
     /// Checks that argument value matches some predicate. Receives mutable reference to argument.
     /// Can be useful for matching [`FnMut`] arguments.
     pub fn is_mut<'a, TFn: Fn(&mut T) -> bool + 'a>(predicate: TFn) -> Self {
-        let anonymous_predicate = move |ptr: *const ()| {
+        let anonymous_predicate = move |ptr: *const T| {
             // SAFETY: anonymous predicate is called only internally and passed pointer is always
             // created by casting &mut T.
             let t_ref = unsafe {
-                let t_ptr = ptr as *mut T;
-                t_ptr
+                (ptr as *mut T)
                     .as_mut()
                     .expect("Pointer to argument in Arg::is must not be null.")
             };
             return predicate(t_ref);
         };
         let boxed_anonymous_predicate =
-            Box::new(anonymous_predicate) as Box<dyn Fn(*const ()) -> bool + 'a>;
+            Box::new(anonymous_predicate) as Box<dyn Fn(*const T) -> bool + 'a>;
         return Self::Is(transmute_lifetime!(boxed_anonymous_predicate), Internal);
     }
+}
 
+impl<T> Arg<T> {
     /// Checks that argument value is equal to given value.
     pub fn eq(value: T) -> Self
     where
@@ -167,7 +174,7 @@ impl<T: ?Sized> Arg<T> {
                 }
             }
             Arg::Is(predicate, _) => {
-                if !predicate(actual_value as *const _ as *const ()) {
+                if !predicate(actual_value as *const _) {
                     return ArgCheckResult::Err(ArgCheckResultErr {
                         arg_info,
                         error_msg: format!(
@@ -188,6 +195,7 @@ pub(crate) mod tests {
     use super::*;
     use arg_cmp::tests::utilities::*;
     use automock::Mockable;
+    use core::assert_matches;
     use std::rc::Rc;
     use utilities::*;
 
@@ -209,14 +217,14 @@ pub(crate) mod tests {
         // Arrange
         let mut arg_cmp_mock = arg_cmp_mock();
         let custom_type = CustomType(5);
-        arg_cmp_mock.setup().value().returns(&custom_type);
+        arg_cmp_mock.setup().value().returns_once(&custom_type);
         let arg = Arg::Eq(arg_cmp_mock, Internal);
 
         // Act
         let result = format!("{arg:?}");
 
         // Assert
-        let expected = format!("({}): equal to {:?}", *CUSTOM_TYPE_NAME, custom_type);
+        let expected = format!("{} == {:?}", *CUSTOM_TYPE_NAME, custom_type);
         assert_eq!(result, expected);
     }
 
@@ -225,14 +233,14 @@ pub(crate) mod tests {
         // Arrange
         let mut arg_cmp_mock = arg_cmp_mock();
         let custom_type = CustomType(5);
-        arg_cmp_mock.setup().value().returns(&custom_type);
+        arg_cmp_mock.setup().value().returns_once(&custom_type);
         let arg = Arg::NotEq(arg_cmp_mock, Internal);
 
         // Act
         let result = format!("{arg:?}");
 
         // Assert
-        let expected = format!("({}): NOT equal to {:?}", *CUSTOM_TYPE_NAME, custom_type);
+        let expected = format!("{} != {:?}", *CUSTOM_TYPE_NAME, custom_type);
         assert_eq!(result, expected);
     }
 
@@ -245,150 +253,126 @@ pub(crate) mod tests {
         let result = format!("{arg:?}");
 
         // Assert
-        let expected = format!("({}): custom predicate", *CUSTOM_TYPE_NAME);
+        let expected = format!("fn({})", *CUSTOM_TYPE_NAME);
         assert_eq!(result, expected);
     }
 
     #[test]
     fn is_Ok() {
         // Arrange
-        predicate::setup(automock::Arg::Any).returns(true);
+        predicate::setup(automock::Arg::Any).returns_once(true);
 
         // Act
         let arg = Arg::is(predicate);
 
         // Assert
-        let actual_predicate = match arg {
-            Arg::Is(p, _) => p,
-            _ => panic!("`arg` must be `Arg::Is`, instead is: {arg:?}"),
+        assert_matches!(arg, Arg::Is(_, _));
+        let Arg::Is(actual_predicate, _) = arg else {
+            unreachable!()
         };
-        let actual_predicate_result = actual_predicate(&CustomType(5) as *const _ as *const ());
+        let actual_predicate_result = actual_predicate(&CustomType(5) as *const _);
         assert!(actual_predicate_result);
 
-        predicate::received(automock::Arg::Any, automock::Times::Once);
+        predicate::verify_calls();
     }
 
     #[test]
     fn is_mut_Ok() {
         // Arrange
-        predicate_mut::setup(automock::Arg::Any).returns(true);
+        predicate_mut::setup(automock::Arg::Any).returns_once(true);
 
         // Act
         let arg = Arg::is_mut(predicate_mut);
 
         // Assert
-        let actual_predicate = match arg {
-            Arg::Is(p, _) => p,
-            _ => panic!("`arg` must be `Arg::Is`, instead is: {arg:?}"),
+        assert_matches!(arg, Arg::Is(_, _));
+        let Arg::Is(actual_predicate, _) = arg else {
+            unreachable!()
         };
-        let actual_predicate_result = actual_predicate(&CustomType(5) as *const _ as *const ());
+        let actual_predicate_result = actual_predicate(&CustomType(5) as *const _);
         assert!(actual_predicate_result);
 
-        predicate_mut::received(automock::Arg::Any, automock::Times::Once);
+        predicate_mut::verify_calls();
     }
 
     #[test]
     fn eq_Ok() {
         // Arrange
-        ArgCmp::<CustomType>::static_setup()
-            .new_eq(automock::Arg::Any, automock::Arg::Any)
-            .returns(arg_cmp_mock());
         let custom_type = CustomType(5);
+        ArgCmp::<CustomType>::static_setup()
+            .new_eq(
+                UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
+                custom_type.clone(),
+            )
+            .returns_once(arg_cmp_mock());
 
         // Act
         let arg = Arg::eq(custom_type.clone());
 
         // Assert
-        match arg {
-            Arg::Eq(_, _) => (),
-            _ => panic!("`arg` must be `Arg::Eq`, instead is: {arg:?}"),
-        };
+        assert_matches!(arg, Arg::Eq(_, _));
 
-        ArgCmp::static_received()
-            .new_eq(
-                UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
-                custom_type,
-                automock::Times::Once,
-            )
-            .no_other_calls();
+        ArgCmp::<CustomType>::verify_static_calls();
     }
 
     #[test]
     fn not_eq_Ok() {
         // Arrange
-        ArgCmp::<CustomType>::static_setup()
-            .new_eq(automock::Arg::Any, automock::Arg::Any)
-            .returns(arg_cmp_mock());
         let custom_type = CustomType(5);
+        ArgCmp::<CustomType>::static_setup()
+            .new_eq(
+                UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
+                custom_type.clone(),
+            )
+            .returns_once(arg_cmp_mock());
 
         // Act
         let arg = Arg::not_eq(custom_type.clone());
 
         // Assert
-        match arg {
-            Arg::NotEq(_, _) => (),
-            _ => panic!("`arg` must be `Arg::NotEq`, instead is: {arg:?}"),
-        };
+        assert_matches!(arg, Arg::NotEq(_, _));
 
-        ArgCmp::static_received()
-            .new_eq(
-                UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
-                custom_type,
-                automock::Times::Once,
-            )
-            .no_other_calls();
+        ArgCmp::<CustomType>::verify_static_calls();
     }
 
     #[test]
     fn ref_eq_Ok() {
         // Arrange
-        ArgCmp::<Rc<CustomType>>::static_setup()
-            .new_ref_eq(automock::Arg::Any, automock::Arg::Any)
-            .returns(arg_cmp_mock());
         let custom_type = Rc::new(CustomType(5));
+        ArgCmp::<Rc<CustomType>>::static_setup()
+            .new_ref_eq(
+                UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
+                automock::Arg::ref_eq(custom_type.clone()),
+            )
+            .returns_once(arg_cmp_mock());
 
         // Act
         let arg = Arg::ref_eq(custom_type.clone());
 
         // Assert
-        match arg {
-            Arg::Eq(_, _) => (),
-            _ => panic!("`arg` must be `Arg::Eq`, instead is: {arg:?}"),
-        };
+        assert_matches!(arg, Arg::Eq(_, _));
 
-        ArgCmp::<Rc<CustomType>>::static_received()
-            .new_ref_eq(
-                UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
-                custom_type,
-                automock::Times::Once,
-            )
-            .no_other_calls();
+        ArgCmp::<Rc<CustomType>>::verify_static_calls();
     }
 
     #[test]
     fn ref_not_eq_Ok() {
         // Arrange
-        ArgCmp::<Rc<CustomType>>::static_setup()
-            .new_ref_eq(automock::Arg::Any, automock::Arg::Any)
-            .returns(arg_cmp_mock());
         let custom_type = Rc::new(CustomType(5));
+        ArgCmp::<Rc<CustomType>>::static_setup()
+            .new_ref_eq(
+                UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
+                automock::Arg::ref_eq(custom_type.clone()),
+            )
+            .returns_once(arg_cmp_mock());
 
         // Act
         let arg = Arg::ref_not_eq(custom_type.clone());
 
         // Assert
-        match arg {
-            Arg::NotEq(_, _) => (),
-            _ => panic!("`arg` must be `Arg::Eq`, instead is: {arg:?}"),
-        };
+        assert_matches!(arg, Arg::NotEq(_, _));
 
-        ArgCmp::<Rc<CustomType>>::static_received()
-            .new_ref_eq(
-                UNINITIALIZED_ARG_PRINT_STRING.to_owned(),
-                custom_type,
-                automock::Times::Once,
-            )
-            .no_other_calls();
+        ArgCmp::<Rc<CustomType>>::verify_static_calls();
     }
 
     #[test]
@@ -403,8 +387,9 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Ok(_));
         let ArgCheckResult::Ok(ArgCheckResultOk { arg_info }) = result else {
-            panic!("`check` result must be ok.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
@@ -415,14 +400,14 @@ pub(crate) mod tests {
     #[test]
     fn check_Eq_IsEqual_ReturnsOk() {
         // Arrange
+        let actual_value = &CustomType(1);
         let mut arg_cmp = arg_cmp_mock::<CustomType>();
         arg_cmp
             .setup()
-            .is_arg_equal_to(automock::Arg::Any)
-            .returns(true);
+            .is_arg_equal_to(automock::Arg::ref_eq(actual_value))
+            .returns_once(true);
 
         let arg_name = "quo vadis";
-        let actual_value = &CustomType(1);
         let actual_value_str = "veridis quo";
         let arg = Arg::Eq(arg_cmp, Internal);
 
@@ -430,44 +415,43 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Ok(_));
         let ArgCheckResult::Ok(ArgCheckResultOk { arg_info }) = result else {
-            panic!("`check` result must be ok.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
         assert_eq!(arg_info.arg_type_name(), *CUSTOM_TYPE_NAME);
         assert_eq!(arg_info.clone_arg_debug_string(), actual_value_str);
 
+        assert_matches!(arg, Arg::Eq(_, _));
         let Arg::Eq(mut arg_cmp, _) = arg else {
-            panic!("Should be Arg::Eq")
+            unreachable!()
         };
-        arg_cmp
-            .received()
-            .is_arg_equal_to(actual_value, automock::Times::Once)
-            .no_other_calls();
+        arg_cmp.verify_calls();
     }
 
     #[test]
     fn check_Eq_IsNotEqual_ReturnsError() {
         // Arrange
+        let actual_value = &CustomType(1);
         let mut arg_cmp = arg_cmp_mock::<CustomType>();
         let expected_value_str = "whatever";
         let expected_ptr_info_suffix = "expected ptr suffix";
         let actual_ptr_info_suffix = "actual ptr suffix";
         arg_cmp
             .setup()
-            .is_arg_equal_to(automock::Arg::Any)
-            .returns(false)
+            .is_arg_equal_to(automock::Arg::ref_eq(actual_value))
+            .returns_once(false)
             .print_arg()
-            .returns(expected_value_str)
-            .get_ptrs_info_suffix(automock::Arg::Any)
-            .returns(PtrInfo {
+            .returns_once(expected_value_str)
+            .get_ptrs_info_suffix(automock::Arg::ref_eq(actual_value))
+            .returns_once(PtrInfo {
                 expected_ptr_info_suffix: expected_ptr_info_suffix.to_owned(),
                 actual_ptr_info_suffix: actual_ptr_info_suffix.to_owned(),
             });
 
         let arg_name = "quo vadis";
-        let actual_value = &CustomType(1);
         let actual_value_str = "veridis quo";
         let arg = Arg::Eq(arg_cmp, Internal);
 
@@ -475,12 +459,13 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Err(_));
         let ArgCheckResult::Err(ArgCheckResultErr {
             arg_info,
             error_msg,
         }) = result
         else {
-            panic!("`check` result must be error.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
@@ -492,37 +477,33 @@ pub(crate) mod tests {
         );
         assert_eq!(error_msg, expected_error_msg);
 
+        assert_matches!(arg, Arg::Eq(_, _));
         let Arg::Eq(mut arg_cmp, _) = arg else {
-            panic!("Should be Arg::Eq")
+            unreachable!()
         };
-        arg_cmp
-            .received()
-            .is_arg_equal_to(actual_value, automock::Times::Once)
-            .print_arg(automock::Times::Once)
-            .get_ptrs_info_suffix(actual_value, automock::Times::Once)
-            .no_other_calls();
+        arg_cmp.verify_calls();
     }
 
     #[test]
     fn check_NotEq_IsEqual_ReturnsError() {
         // Arrange
+        let actual_value = &CustomType(1);
         let mut arg_cmp = arg_cmp_mock::<CustomType>();
         let not_expected_value_str = "whatever";
         let expected_ptr_info_suffix = "expected ptr suffix";
         arg_cmp
             .setup()
-            .is_arg_equal_to(automock::Arg::Any)
-            .returns(true)
+            .is_arg_equal_to(automock::Arg::ref_eq(actual_value))
+            .returns_once(true)
             .print_arg()
-            .returns(not_expected_value_str)
-            .get_ptrs_info_suffix(automock::Arg::Any)
-            .returns(PtrInfo {
+            .returns_once(not_expected_value_str)
+            .get_ptrs_info_suffix(automock::Arg::ref_eq(actual_value))
+            .returns_once(PtrInfo {
                 expected_ptr_info_suffix: expected_ptr_info_suffix.to_owned(),
                 actual_ptr_info_suffix: "actual ptr suffix".to_owned(),
             });
 
         let arg_name = "quo vadis";
-        let actual_value = &CustomType(1);
         let actual_value_str = "veridis quo";
         let arg = Arg::NotEq(arg_cmp, Internal);
 
@@ -530,12 +511,13 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Err(_));
         let ArgCheckResult::Err(ArgCheckResultErr {
             arg_info,
             error_msg,
         }) = result
         else {
-            panic!("`check` result must be error.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
@@ -546,28 +528,24 @@ pub(crate) mod tests {
             format!("\t\tDid not expect to be {expected_ptr_info_suffix}{not_expected_value_str}");
         assert_eq!(error_msg, expected_error_msg);
 
+        assert_matches!(arg, Arg::NotEq(_, _));
         let Arg::NotEq(mut arg_cmp, _) = arg else {
-            panic!("Should be Arg::NotEq")
+            unreachable!()
         };
-        arg_cmp
-            .received()
-            .is_arg_equal_to(actual_value, automock::Times::Once)
-            .print_arg(automock::Times::Once)
-            .get_ptrs_info_suffix(actual_value, automock::Times::Once)
-            .no_other_calls();
+        arg_cmp.verify_calls();
     }
 
     #[test]
     fn check_NotEq_IsNotEqual_ReturnsOk() {
         // Arrange
+        let actual_value = &CustomType(1);
         let mut arg_cmp = arg_cmp_mock::<CustomType>();
         arg_cmp
             .setup()
-            .is_arg_equal_to(automock::Arg::Any)
-            .returns(false);
+            .is_arg_equal_to(automock::Arg::ref_eq(actual_value))
+            .returns_once(false);
 
         let arg_name = "quo vadis";
-        let actual_value = &CustomType(1);
         let actual_value_str = "veridis quo";
         let arg = Arg::NotEq(arg_cmp, Internal);
 
@@ -575,30 +553,29 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Ok(_));
         let ArgCheckResult::Ok(ArgCheckResultOk { arg_info }) = result else {
-            panic!("`check` result must be ok.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
         assert_eq!(arg_info.arg_type_name(), *CUSTOM_TYPE_NAME);
         assert_eq!(arg_info.clone_arg_debug_string(), actual_value_str);
 
+        assert_matches!(arg, Arg::NotEq(_, _));
         let Arg::NotEq(mut arg_cmp, _) = arg else {
-            panic!("Should be Arg::NotEq")
+            unreachable!()
         };
-        arg_cmp
-            .received()
-            .is_arg_equal_to(actual_value, automock::Times::Once)
-            .no_other_calls();
+        arg_cmp.verify_calls();
     }
 
     #[test]
     fn check_Is_IsEqual_ReturnsOk() {
         // Arrange
-        ptr_predicate::setup(automock::Arg::Any).returns(true);
+        let actual_value = &CustomType(1);
+        ptr_predicate::setup(actual_value as *const _).returns_once(true);
 
         let arg_name = "quo vadis";
-        let actual_value = &CustomType(1);
         let actual_value_str = "veridis quo";
         let arg = Arg::Is(Box::new(ptr_predicate), Internal);
 
@@ -606,25 +583,25 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Ok(_));
         let ArgCheckResult::Ok(ArgCheckResultOk { arg_info }) = result else {
-            panic!("`check` result must be ok.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
         assert_eq!(arg_info.arg_type_name(), *CUSTOM_TYPE_NAME);
         assert_eq!(arg_info.clone_arg_debug_string(), actual_value_str);
 
-        ptr_predicate::received(actual_value as *const _ as *const (), automock::Times::Once)
-            .no_other_calls();
+        ptr_predicate::verify_calls::<CustomType>();
     }
 
     #[test]
     fn check_Is_IsNotEqual_ReturnsErr() {
         // Arrange
-        ptr_predicate::setup(automock::Arg::Any).returns(false);
+        let actual_value = &CustomType(1);
+        ptr_predicate::setup(actual_value as *const _).returns_once(false);
 
         let arg_name = "quo vadis";
-        let actual_value = &CustomType(1);
         let actual_value_str = "veridis quo";
         let arg = Arg::Is(Box::new(ptr_predicate), Internal);
 
@@ -632,12 +609,13 @@ pub(crate) mod tests {
         let result = arg.check(arg_name, actual_value, actual_value_str.to_owned());
 
         // Assert
+        assert_matches!(result, ArgCheckResult::Err(_));
         let ArgCheckResult::Err(ArgCheckResultErr {
             arg_info,
             error_msg,
         }) = result
         else {
-            panic!("`check` result must be ok.")
+            unreachable!()
         };
 
         assert_eq!(arg_info.arg_name(), arg_name);
@@ -649,8 +627,7 @@ pub(crate) mod tests {
         );
         assert_eq!(error_msg, expected_error_msg);
 
-        ptr_predicate::received(actual_value as *const _ as *const (), automock::Times::Once)
-            .no_other_calls();
+        ptr_predicate::verify_calls::<CustomType>();
     }
 
     pub mod utilities {
@@ -672,7 +649,7 @@ pub(crate) mod tests {
         }
 
         #[automock::mock]
-        pub fn ptr_predicate(_: *const ()) -> bool {
+        pub fn ptr_predicate<T>(_: *const T) -> bool {
             unreachable!()
         }
     }

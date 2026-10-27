@@ -50,37 +50,40 @@ mod tests {
     #[tokio::test]
     async fn nothing_Ok() {
         // Arrange
+        nothing::setup().expect_once();
+
         // Act
         nothing().await;
 
         // Assert
-        nothing::received(Times::Once).no_other_calls();
+        nothing::verify_calls();
     }
 
     #[tokio::test]
     async fn input_Ok() {
         // Arrange
         let value = 1;
+        input::setup(value).expect_once();
 
         // Act
         input(value).await;
 
         // Assert
-        input::received(value, Times::Once).no_other_calls();
+        input::verify_calls();
     }
 
     #[tokio::test]
     async fn output_Ok() {
         // Arrange
         let result = 2;
-        output::setup().returns(result);
+        output::setup().returns_once(result);
 
         // Act
         let actual_result = output().await;
 
         // Assert
         assert_eq!(result, actual_result);
-        output::received(Times::Once).no_other_calls();
+        output::verify_calls();
     }
 
     #[tokio::test]
@@ -88,69 +91,73 @@ mod tests {
         // Arrange
         let value = 1;
         let result = 2;
-        input_output::setup(Arg::Any).returns(result);
+        input_output::setup(value).returns_once(result);
 
         // Act
         let actual_result = input_output(value).await;
 
         // Assert
         assert_eq!(result, actual_result);
-        input_output::received(value, Times::Once).no_other_calls();
+        input_output::verify_calls();
     }
 
     #[tokio::test]
     async fn nothing_base_Ok() {
         // Arrange
         nothing_base::setup().call_base();
+        dependency::setup().expect_once();
 
         // Act
         nothing_base().await;
 
         // Assert
-        nothing_base::received_nothing();
-        dependency::received(Times::Once).no_other_calls();
+        nothing_base::verify_calls();
+        dependency::verify_calls();
     }
 
     #[tokio::test]
     async fn input_base_Ok() {
         // Arrange
         let value = 1;
-        input_base::setup(Arg::Any).call_base();
+        input_base::setup(value).call_base();
+        dependency::setup().expect_once();
 
         // Act
         input_base(value).await;
 
         // Assert
-        input_base::received_nothing();
-        dependency::received(Times::Once).no_other_calls();
+        input_base::verify_calls();
+        dependency::verify_calls();
     }
 
     #[tokio::test]
     async fn output_base_Ok() {
         // Arrange
         output_base::setup().call_base();
+        dependency::setup().expect_once();
 
         // Act
         let actual_result = output_base().await;
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        output_base::received_nothing();
-        dependency::received(Times::Once).no_other_calls();
+        output_base::verify_calls();
+        dependency::verify_calls();
     }
 
     #[tokio::test]
     async fn input_output_base_Ok() {
         // Arrange
         let value = 1;
-        input_output_base::setup(Arg::Any).call_base();
+        input_output_base::setup(value).call_base();
+        dependency::setup().expect_once();
 
         // Act
         let actual_result = input_output_base(value).await;
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        input_output_base::received_nothing();
-        dependency::received(Times::Once).no_other_calls();
+        input_output_base::verify_calls();
+        dependency::verify_calls();
     }
 }

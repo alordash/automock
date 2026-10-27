@@ -113,9 +113,9 @@ mod tests {
 
         mock.setup().process(10).call_base();
 
-        mock.setup().transform(10).always_returns(100);
+        mock.setup().transform(10).returns(100, 2.times());
 
-        mock.setup().adjust().always_returns(5);
+        mock.setup().adjust().returns_once(5);
 
         // Act
         let result = mock.calculate(10);
@@ -132,10 +132,7 @@ mod tests {
         // result = 100 + (100 + 5)
         //
         assert_eq!(result, 205);
-
-        mock.received().transform(10, 2.times());
-
-        mock.received().adjust(1.time()).no_other_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -145,13 +142,13 @@ mod tests {
 
         mock.setup().calculate(10).call_base();
 
-        mock.setup().prepare(10).returns(50);
+        mock.setup().prepare(10).returns_once(50);
 
         mock.setup().process(10).call_base();
 
-        mock.setup().transform(10).returns(100);
+        mock.setup().transform(10).returns_once(100);
 
-        mock.setup().adjust().returns(5);
+        mock.setup().adjust().returns_once(5);
 
         // Act
         let result = mock.calculate(10);
@@ -168,12 +165,7 @@ mod tests {
         // result = 50 + 105
         //
         assert_eq!(result, 155);
-
-        mock.received().prepare(10, 1.time());
-
-        mock.received().transform(10, 1.time());
-
-        mock.received().adjust(1.time()).no_other_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -189,9 +181,9 @@ mod tests {
 
         mock.setup().process(10).call_base();
 
-        mock.setup().transform(10).always_returns(7);
+        mock.setup().transform(10).returns(7, 3.times());
 
-        mock.setup().adjust().always_returns(3);
+        mock.setup().adjust().returns_once(3);
 
         // Act
         let result = mock.run(10);
@@ -213,10 +205,7 @@ mod tests {
         // = 24
         //
         assert_eq!(result, 24);
-
-        mock.received().transform(10, 3.times());
-
-        mock.received().adjust(1.time()).no_other_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -226,9 +215,9 @@ mod tests {
 
         mock.setup().run(10).call_base();
 
-        mock.setup().calculate(10).returns(1000);
+        mock.setup().calculate(10).returns_once(1000);
 
-        mock.setup().prepare(10).returns(2000);
+        mock.setup().prepare(10).returns_once(2000);
 
         // Act
         let result = mock.run(10);
@@ -242,16 +231,7 @@ mod tests {
         // Neither base calculate nor base prepare executes.
         //
         assert_eq!(result, 3000);
-
-        mock.received().calculate(10, 1.time());
-
-        mock.received().prepare(10, 1.time());
-
-        mock.received().process(10, Times::Never);
-
-        mock.received().transform(10, Times::Never);
-
-        mock.received().adjust(Times::Never).no_other_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -265,23 +245,16 @@ mod tests {
 
         mock.setup().recursive(1).call_base();
 
-        mock.setup().recursive(0).always_returns(100);
+        mock.setup().recursive(0).returns_once(100);
 
-        mock.setup().transform(0).always_returns(10);
-
-        mock.setup().transform(1).always_returns(20);
-
-        mock.setup().transform(2).always_returns(30);
+        mock.setup().transform(0).returns(10, 3.times());
 
         // Act
         let result = mock.recursive(3);
 
         // Assert
         assert_eq!(result, 130);
-
-        mock.received().recursive(0, 1.time());
-
-        mock.received().transform(0, 3.times()).no_other_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -291,15 +264,14 @@ mod tests {
 
         mock.setup().reset().call_base();
 
-        mock.setup().adjust().always_returns(50);
+        mock.setup().adjust().returns_once(50);
 
         // Act
         let result = mock.reset();
 
         // Assert
         assert_eq!(result, 50);
-
-        mock.received().adjust(1.time()).no_other_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -312,9 +284,9 @@ mod tests {
 
         mock.setup().mixed(10).call_base();
 
-        mock.setup().calculate(10).returns(200);
+        mock.setup().calculate(10).returns_once(200);
 
-        mock.setup().prepare(10).returns(300);
+        mock.setup().prepare(10).returns_once(300);
 
         // Act
         let result = mock.mixed(10);
@@ -327,14 +299,7 @@ mod tests {
         //   prepare -> MOCK -> 300
         //
         assert_eq!(result, 600);
-
-        mock.received().calculate(10, 1.time());
-
-        mock.received().prepare(10, 1.time());
-
-        mock.received().transform(10, Times::Never);
-
-        mock.received().process(10, Times::Never).no_other_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -348,9 +313,9 @@ mod tests {
 
         mock.setup().prepare(10).call_base();
 
-        mock.setup().process(10).always_returns(500);
+        mock.setup().process(10).returns_once(500);
 
-        mock.setup().transform(10).always_returns(7);
+        mock.setup().transform(10).returns(7, 2.times());
 
         // Act
         let result = mock.run(10);
@@ -369,11 +334,6 @@ mod tests {
         // = 514
         //
         assert_eq!(result, 514);
-
-        mock.received().process(10, 1.time());
-
-        mock.received().transform(10, 2.times());
-
-        mock.received().adjust(Times::Never).no_other_calls();
+        mock.verify_calls();
     }
 }

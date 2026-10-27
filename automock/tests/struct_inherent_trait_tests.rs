@@ -43,14 +43,15 @@ mod tests {
         // Arrange
         C::static_setup().new().call_base();
         let mut mock = C::new();
-        mock.setup().as_A().foo().returns(42);
+        mock.setup().as_A().foo().returns_once(42);
 
         // Act
         let result = mock.foo();
 
         // Assert
         assert_eq!(42, result);
-        mock.received().as_A().foo(1.time());
+        C::verify_static_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -65,7 +66,8 @@ mod tests {
 
         // Assert
         assert_eq!(A_DEFAULT, result);
-        mock.received().no_other_calls();
+        C::verify_static_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -73,14 +75,15 @@ mod tests {
         // Arrange
         C::static_setup().new().call_base();
         let mut mock = C::new();
-        mock.setup().as_B().bar().returns(42);
+        mock.setup().as_B().bar().returns_once(42);
 
         // Act
         let result = mock.bar();
 
         // Assert
         assert_eq!(42, result);
-        mock.received().as_B().bar(1.time());
+        C::verify_static_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -95,6 +98,7 @@ mod tests {
 
         // Assert
         assert_eq!(B_DEFAULT, result);
-        mock.received().no_other_calls();
+        C::verify_static_calls();
+        mock.verify_calls();
     }
 }

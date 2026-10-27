@@ -1,3 +1,4 @@
+use crate::common::*;
 use not_enough_syntax::*;
 use proc_macro2::{Ident, Span};
 use syn::*;
@@ -8,10 +9,7 @@ pub(crate) struct Params {
 pub(crate) fn new(span: Span, Params { public }: Params) -> ImplItemFn {
     let id_stmt = expr::method_call::new(
         span,
-        Expr::Field(expr::field::new(
-            Expr::Path(self_expr_path(span)),
-            Ident::new("__mock_data", span),
-        )),
+        Expr::Field(data_field::new_expr(span)),
         Ident::new("id", span),
         [],
     );

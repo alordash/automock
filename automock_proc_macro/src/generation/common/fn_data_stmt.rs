@@ -1,8 +1,10 @@
-use crate::common::for_generated;
+use crate::common::*;
 use crate::generation::common::*;
 use crate::generation::fn_info::models::*;
 use not_enough_syntax::*;
 use proc_macro2::Span;
+use quote::ToTokens;
+use syn::punctuated::Punctuated;
 use syn::*;
 
 pub(crate) struct AssociatedParams<'a> {
@@ -23,6 +25,14 @@ pub(crate) fn new_associated(
         .maybe_owner_name
         .as_ref()
         .expect("Associated function must have owner name.");
+    let maybe_trait_name = match &fn_info.maybe_trait_path {
+        Some(trait_path) => Expr::Call(expr::call::new(
+            span,
+            Expr::Path(expr::path::new(span, ["Some"])),
+            [trait_name_expr(span, trait_path, fn_info)],
+        )),
+        None => Expr::Path(expr::path::new(span, ["None"])),
+    };
     let fn_data_stmt = Local {
         attrs: Vec::new(),
         let_token: Token![let](span),
@@ -32,10 +42,11 @@ pub(crate) fn new_associated(
             eq_token: Token![=](span),
             expr: Box::new(Expr::MethodCall(expr::method_call::new(
                 span,
-                Expr::Field(expr::field::new_self(Ident::new("__mock_data", span))),
+                Expr::Field(data_field::new_expr(span)),
                 Ident::new("get_fn_data", span),
                 [
                     expr::lit::string(span, owner_name),
+                    maybe_trait_name,
                     expr::lit::string(span, &fn_info.fn_data_name),
                     Expr::Call(expr::call::new(
                         span,
@@ -74,10 +85,19 @@ pub(crate) fn new_static(
     let fn_name = expr::lit::string(span, &fn_info.fn_data_name);
     let (fn_data_fn_name, args) = match &fn_info.maybe_owner_name {
         None => ("get_static_fn_data", punctuated([fn_name])),
-        Some(owner_name) => (
-            "get_static_fn_data_for_struct",
-            punctuated([expr::lit::string(span, owner_name), fn_name]),
-        ),
+        Some(owner_name) => {
+            let owner_type_name = match &fn_info.maybe_trait_path {
+                Some(trait_path) => {
+                    let trait_name = ident::combine_path_segments(trait_path);
+                    format!("<{owner_name} as {trait_name}>")
+                }
+                None => owner_name.clone(),
+            };
+            (
+                "get_static_fn_data_for_struct",
+                punctuated([expr::lit::string(span, &owner_type_name), fn_name]),
+            )
+        }
     };
     let fn_data_stmt = Local {
         attrs: Vec::new(),
@@ -101,6 +121,71 @@ pub(crate) fn new_static(
         semi_token: Token![;](span),
     };
     return (fn_data_var_path, fn_data_stmt);
+}
+
+fn trait_name_expr(span: Span, trait_path: &Path, fn_info: &FnInfo) -> Expr {
+    let trait_name = ident::combine_path_segments(trait_path).to_string();
+    let arguments = match &trait_path
+        .segments
+        .last()
+        .expect("Trait path must contain at least one segment.")
+        .arguments
+    {
+        PathArguments::AngleBracketed(arguments) => arguments
+            .args
+            .iter()
+            .filter_map(|argument| match argument {
+                GenericArgument::Type(ty) => {
+                    if let Type::Path(type_path) = ty
+                        && fn_info.merged_generics.const_params().any(|param| {
+                            type_path.qself.is_none() && type_path.path.is_ident(&param.ident)
+                        })
+                    {
+                        return Some(Expr::Path(ExprPath {
+                            attrs: Vec::new(),
+                            qself: None,
+                            path: type_path.path.clone(),
+                        }));
+                    }
+                    Some(Expr::Call(expr::call::new(
+                        span,
+                        Expr::Path(expr::path::new_generics(
+                            span,
+                            ["core", "any", "type_name"],
+                            GenericArgument::Type(ty.clone()),
+                        )),
+                        [],
+                    )))
+                }
+                GenericArgument::Const(value) => Some(value.clone()),
+                _ => None,
+            })
+            .collect::<Vec<_>>(),
+        _ => Vec::new(),
+    };
+    if arguments.is_empty() {
+        return Expr::MethodCall(expr::method_call::new(
+            span,
+            expr::lit::string(span, &trait_name),
+            Ident::new("to_owned", span),
+            [],
+        ));
+    }
+    let format_string = format!("{trait_name}<{}>", vec!["{}"; arguments.len()].join(", "));
+    let format_arguments: Punctuated<_, Token![,]> =
+        std::iter::once(expr::lit::string(span, &format_string))
+            .chain(arguments)
+            .collect();
+    let result = Expr::Macro(ExprMacro {
+        attrs: Vec::new(),
+        mac: Macro {
+            path: path::new(span, ["format"]),
+            bang_token: Token![!](span),
+            delimiter: MacroDelimiter::Paren(token::Paren(span)),
+            tokens: format_arguments.to_token_stream(),
+        },
+    });
+    return result;
 }
 
 fn fn_data_pat(

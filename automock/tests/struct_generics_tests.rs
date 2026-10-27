@@ -45,15 +45,17 @@ mod tests {
         let t2 = vec![3, 4, 5];
         let number = 4534;
         Struct::<&str, Vec<i32>>::static_setup()
-            .new(Arg::Any, Arg::Any, Arg::Any)
+            .new(t1, &t2, number)
             .call_base();
         let mut mock = Struct::new(t1, &t2, number);
 
         let another_t2 = vec![11, 2];
-        mock.setup().get_t2().returns(&another_t2);
+        mock.setup().get_t2().returns_once(&another_t2);
 
         let actual_t2 = mock.get_t2();
 
         assert_ne!(&t2, actual_t2);
+        Struct::<&str, Vec<i32>>::verify_static_calls();
+        mock.verify_calls();
     }
 }

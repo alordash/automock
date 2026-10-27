@@ -1,5 +1,4 @@
 use crate::common::*;
-use crate::generation::mock_controls::models::*;
 use not_enough_syntax::*;
 use proc_macro2::Span;
 use quote::format_ident;
@@ -8,7 +7,6 @@ use syn::*;
 pub(crate) struct Params<'a> {
     pub struct_ident: &'a Ident,
     pub generics: Generics,
-    pub control_type: ControlType,
     pub is_static: bool,
 }
 pub(crate) fn generate(
@@ -16,16 +14,10 @@ pub(crate) fn generate(
     Params {
         struct_ident,
         mut generics,
-        control_type,
         is_static,
     }: Params,
 ) -> ItemStruct {
-    let control_name = match (is_static, control_type) {
-        (false, ControlType::Setup) => "Setup",
-        (false, ControlType::Received) => "Received",
-        (true, ControlType::Setup) => "StaticSetup",
-        (true, ControlType::Received) => "StaticReceived",
-    };
+    let control_name = if is_static { "StaticSetup" } else { "Setup" };
     generics.where_clause = None;
     let generics_field = generics_field::new_field(span, &generics, None);
     let result = ItemStruct {

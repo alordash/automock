@@ -27,12 +27,13 @@ mod tests {
             // Arrange
             let mut mock = TraitMock::new();
             let r = Rc::new(1);
+            mock.setup().accept_rc(r.clone()).expect_once();
 
             // Act
             mock.accept_rc(r.clone());
 
             // Assert
-            mock.received().accept_rc(r, Times::Once).no_other_calls();
+            mock.verify_calls();
         }
 
         #[test]
@@ -40,53 +41,30 @@ mod tests {
             // Arrange
             let mut mock = TraitMock::new();
             let r = Rc::new(11);
-            let r_ptr = Rc::as_ptr(&r);
+            let invalid_r = Rc::new(22);
+            mock.setup()
+                .accept_rc(Arg::ref_eq(invalid_r.clone()))
+                .expect_once();
 
             // Act
-            mock.accept_rc(r.clone());
+            let actual_error_msg = record_panic(|| mock.accept_rc(r.clone()));
 
             // Assert
+            let expected_error_msg = format!(
+                "Mock wasn't configured to handle following call:
+	Trait::accept_rc({r})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_rc(*{r}*)"
+            );
+            assert_eq!(Some(expected_error_msg), actual_error_msg);
             let rc_type_name = std::any::type_name::<Rc<i32>>();
             assert_panics(
-                || mock.received().accept_rc(Arg::Any, Times::Never),
+                || mock.verify_calls(),
                 format!(
-                    "Expected to never receive a call matching:
-	Trait::accept_rc(({rc_type_name}): any)
-Actually received 1 matching call:
-	accept_rc({r})
-Received no non-matching calls"
+                    "Expected following calls:
+	Trait::accept_rc({rc_type_name} == {invalid_r}) 1 time"
                 ),
             );
-
-            assert_panics(
-                || mock.received().accept_rc(Arg::Any, Times::Exactly(3)),
-                format!(
-                    "Expected to receive a call 3 times matching:
-	Trait::accept_rc(({rc_type_name}): any)
-Actually received 1 matching call:
-	accept_rc({r})
-Received no non-matching calls"
-                ),
-            );
-
-            let invalid_r = Rc::new(11);
-            let invalid_r_ptr = Rc::as_ptr(&invalid_r);
-            assert_panics(
-                || {
-                    mock.received()
-                        .accept_rc(Arg::ref_eq(invalid_r.clone()), Times::Once)
-                },
-                format!(
-                    "Expected to receive a call exactly once matching:
-	Trait::accept_rc(({rc_type_name}): equal to {invalid_r})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_rc(*{r}*)
-	1. r ({rc_type_name}):
-		Expected (ptr: {invalid_r_ptr:?}): {invalid_r}
-		Actual   (ptr: {r_ptr:?}): {r}"
-                ),
-            )
         }
     }
 
@@ -98,13 +76,14 @@ accept_rc(*{r}*)
             // Arrange
             let mut mock = TraitMock::new();
             let r = Rc::new(10);
-            mock.setup().return_rc().returns(r.clone());
+            mock.setup().return_rc().returns_once(r.clone());
 
             // Act
             let actual_r = mock.return_rc();
 
             // Assert
             assert_eq!(r, actual_r);
+            mock.verify_calls();
         }
     }
 
@@ -119,18 +98,14 @@ accept_rc(*{r}*)
             let returned_r = Rc::new(20);
             mock.setup()
                 .accept_rc_return_rc(accepted_r.clone())
-                .returns(returned_r.clone());
+                .returns_once(returned_r.clone());
 
             // Act
             let actual_returned_r = mock.accept_rc_return_rc(accepted_r.clone());
 
             // Assert
             assert_eq!(returned_r, actual_returned_r);
-
-            mock.received()
-                .accept_rc_return_rc(accepted_r.clone(), Times::Once)
-                .accept_rc_return_rc(Arg::not_eq(accepted_r), Times::Never)
-                .no_other_calls();
+            mock.verify_calls();
         }
     }
 
@@ -143,15 +118,15 @@ accept_rc(*{r}*)
             let mut mock = TraitMock::new();
             let r1 = Rc::new(10);
             let r2 = Rc::new(20.2);
+            mock.setup()
+                .accept_two_rcs(r1.clone(), r2.clone())
+                .expect_once();
 
             // Act
             mock.accept_two_rcs(r1.clone(), r2.clone());
 
             // Assert
-            mock.received()
-                .accept_two_rcs(r1.clone(), r2.clone(), Times::Once)
-                .accept_two_rcs(Arg::not_eq(r1), Arg::not_eq(r2), Times::Never)
-                .no_other_calls();
+            mock.verify_calls();
         }
     }
 
@@ -167,17 +142,14 @@ accept_rc(*{r}*)
             let returned_r = Rc::new(String::from("veridis quo"));
             mock.setup()
                 .accept_two_rcs_return_rc(r1.clone(), r2.clone())
-                .returns(returned_r.clone());
+                .returns_once(returned_r.clone());
 
             // Act
             let actual_returned_r = mock.accept_two_rcs_return_rc(r1.clone(), r2.clone());
 
             // Assert
             assert_eq!(returned_r, actual_returned_r);
-
-            mock.received()
-                .accept_two_rcs_return_rc(r1, r2, Times::Once)
-                .no_other_calls();
+            mock.verify_calls();
         }
     }
 }

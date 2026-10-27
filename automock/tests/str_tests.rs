@@ -12,26 +12,25 @@ mod tests {
         // Arrange
         let actual = "foo".to_owned();
         let expected = "foo".to_owned();
+        accept::setup(expected.as_str()).expect_once();
 
         // Act
         accept(&actual);
 
         // Assert
-        accept::received(expected.as_str(), 1.time()).no_other_calls();
+        accept::verify_calls();
     }
 
     #[test]
     fn accept_RefEq_ComparesByValue() {
         // Arrange
         let actual = "foo".to_owned();
-        let unexpected = "foo".to_owned();
+        accept::setup(Arg::ref_eq(actual.as_str())).expect_once();
 
         // Act
         accept(&actual);
 
         // Assert
-        accept::received(Arg::ref_eq(unexpected.as_str()), Times::Never)
-            .received(Arg::ref_eq(actual.as_str()), 1.time())
-            .no_other_calls();
+        accept::verify_calls();
     }
 }

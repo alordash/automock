@@ -1,5 +1,6 @@
 use crate::args::*;
 use crate::fn_parameters::*;
+use crate::infrastructure::*;
 use crate::*;
 
 pub struct DynCall<'am> {
@@ -73,7 +74,7 @@ mod tests {
     use super::*;
     use crate::fn_parameters::dyn_arg_refs_tuple::tests::utilities::*;
     use crate::fn_parameters::i_call::tests::utilities::*;
-    use automock::{AsTimes, Mockable};
+    use automock::Mockable;
 
     #[test]
     fn new_Ok() {
@@ -83,7 +84,7 @@ mod tests {
             .setup()
             .as_ICall()
             .get_arg_infos()
-            .returns(Vec::new());
+            .returns_once(Vec::new());
 
         // Act
         let result = DynCall::new(call_mock);
@@ -131,7 +132,7 @@ mod tests {
             .setup()
             .as_ICall()
             .get_arg_infos()
-            .returns(arg_infos.clone());
+            .returns_once(arg_infos.clone());
 
         let dyn_call = DynCall::new(call_mock.clone());
 
@@ -140,11 +141,7 @@ mod tests {
 
         // Assert
         assert_eq!(result, arg_infos);
-        call_mock
-            .received()
-            .as_ICall()
-            .get_arg_infos(1.time())
-            .no_other_calls();
+        call_mock.verify_calls();
     }
 
     #[test]
@@ -156,7 +153,7 @@ mod tests {
             .setup()
             .as_ICall()
             .get_ptr_to_boxed_tuple_of_refs()
-            .returns(ptr);
+            .returns_once(ptr);
 
         let dyn_call = DynCall::new(call_mock.clone());
 
@@ -165,11 +162,7 @@ mod tests {
 
         // Assert
         assert_eq!(result, ptr);
-        call_mock
-            .received()
-            .as_ICall()
-            .get_ptr_to_boxed_tuple_of_refs(1.time())
-            .no_other_calls();
+        call_mock.verify_calls();
     }
 
     #[test]
@@ -182,7 +175,7 @@ mod tests {
             .setup()
             .as_ICall()
             .get_dyn_tuple_of_refs()
-            .returns(dyn_arg_refs_tuple);
+            .returns_once(dyn_arg_refs_tuple);
 
         let dyn_call = DynCall::new(call_mock.clone());
 
@@ -191,11 +184,7 @@ mod tests {
 
         // Assert
         assert_eq!(result.id(), dyn_arg_refs_tuple_id);
-        call_mock
-            .received()
-            .as_ICall()
-            .get_dyn_tuple_of_refs(1.time())
-            .no_other_calls();
+        call_mock.verify_calls();
     }
 
     #[test]
@@ -210,7 +199,7 @@ mod tests {
             .setup()
             .as_IGenericsInfoProvider()
             .get_generic_parameter_infos()
-            .returns(generic_parameter_infos.clone());
+            .returns_once(generic_parameter_infos.clone());
         let dyn_call = DynCall::new(call_mock.clone());
 
         // Act
@@ -219,11 +208,7 @@ mod tests {
         // Assert
         assert_eq!(result, generic_parameter_infos);
 
-        call_mock
-            .received()
-            .as_IGenericsInfoProvider()
-            .get_generic_parameter_infos(1.time())
-            .no_other_calls();
+        call_mock.verify_calls();
     }
 
     #[test]
@@ -235,17 +220,18 @@ mod tests {
             .call_base();
         let mut generics_hasher = GenericsHasher::default();
         let mut call_mock = CallMock::new();
+        call_mock
+            .setup()
+            .as_IGenericsInfoProvider()
+            .hash_generics_type_ids(automock::Arg::ref_eq(&mut generics_hasher))
+            .expect_once();
         let dyn_call = DynCall::new(call_mock.clone());
 
         // Act
         dyn_call.hash_generics_type_ids(&mut generics_hasher);
 
         // Assert
-        call_mock
-            .received()
-            .as_IGenericsInfoProvider()
-            .hash_generics_type_ids(automock::Arg::ref_eq(&mut generics_hasher), 1.time())
-            .no_other_calls();
+        call_mock.verify_calls();
     }
 
     #[test]
@@ -257,17 +243,18 @@ mod tests {
             .call_base();
         let mut generics_hasher = GenericsHasher::default();
         let mut call_mock = CallMock::new();
+        call_mock
+            .setup()
+            .as_IGenericsInfoProvider()
+            .hash_const_values(automock::Arg::ref_eq(&mut generics_hasher))
+            .expect_once();
         let dyn_call = DynCall::new(call_mock.clone());
 
         // Act
         dyn_call.hash_const_values(&mut generics_hasher);
 
         // Assert
-        call_mock
-            .received()
-            .as_IGenericsInfoProvider()
-            .hash_const_values(automock::Arg::ref_eq(&mut generics_hasher), 1.time())
-            .no_other_calls();
+        call_mock.verify_calls();
     }
 
     #[test]
@@ -279,7 +266,7 @@ mod tests {
             .setup()
             .as_IGenericsInfoProvider()
             .get_generics_hash_key()
-            .returns(generics_hash_key);
+            .returns_once(generics_hash_key);
         let dyn_call = DynCall::new(call_mock.clone());
 
         // Act
@@ -288,10 +275,6 @@ mod tests {
         // Assert
         assert_eq!(result, generics_hash_key);
 
-        call_mock
-            .received()
-            .as_IGenericsInfoProvider()
-            .get_generics_hash_key(automock::Times::Once)
-            .no_other_calls();
+        call_mock.verify_calls();
     }
 }

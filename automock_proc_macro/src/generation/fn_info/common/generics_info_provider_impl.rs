@@ -11,8 +11,13 @@ pub(crate) fn generate(impl_generics: Generics, generics: Generics, target_type:
     let items = if generics.params.is_empty() {
         Vec::new()
     } else {
-        let fn_get_generic_parameter_infos =
-            generate_fn_get_generic_parameter_infos(span, generics.params.iter());
+        let fn_get_generic_parameter_infos = generate_fn_get_generic_parameter_infos(
+            span,
+            Params {
+                generics: &generics,
+                is_static: false,
+            },
+        );
         let fn_hash_generics_type_ids =
             generate_fn_hash_generics_type_ids(span, generics.type_params());
         let fn_hash_const_values = generate_fn_hash_const_values(span, generics.const_params());
@@ -40,9 +45,42 @@ pub(crate) fn generate(impl_generics: Generics, generics: Generics, target_type:
     return result;
 }
 
-fn generate_fn_get_generic_parameter_infos<'a>(
+pub(crate) fn generate_mock_impl(span: Span, generics: Generics, target_type: Type) -> ItemImpl {
+    let fn_get_generic_parameter_infos = generate_fn_get_generic_parameter_infos(
+        span,
+        Params {
+            generics: &generics,
+            is_static: true,
+        },
+    );
+    let result = ItemImpl {
+        attrs: Vec::new(),
+        modifiers: ImplModifiers::default(),
+        unsafety: None,
+        impl_token: Token![impl](span),
+        generics,
+        trait_: Some((
+            path::new_global(span, for_generated::new("IMockGenericsInfoProvider")),
+            Token![for](span),
+        )),
+        self_ty: Box::new(target_type),
+        brace_token: token::Brace(span),
+        items: vec![ImplItem::Fn(fn_get_generic_parameter_infos)],
+    };
+    return result;
+}
+
+struct Params<'a> {
+    generics: &'a Generics,
+    is_static: bool,
+}
+
+fn generate_fn_get_generic_parameter_infos(
     span: Span,
-    generic_params: impl Iterator<Item = &'a GenericParam>,
+    Params {
+        generics,
+        is_static,
+    }: Params,
 ) -> ImplItemFn {
     let sig = Signature {
         constness: None,
@@ -53,7 +91,11 @@ fn generate_fn_get_generic_parameter_infos<'a>(
         ident: Ident::new("get_generic_parameter_infos", span),
         generics: Generics::default(),
         paren_token: token::Paren(span),
-        inputs: punctuated([ref_self_fn_arg(span)]),
+        inputs: if is_static {
+            Punctuated::new()
+        } else {
+            punctuated([ref_self_fn_arg(span)])
+        },
         variadic: None,
         output: ReturnType::Type(
             Token![->](span),
@@ -67,7 +109,9 @@ fn generate_fn_get_generic_parameter_infos<'a>(
         ),
     };
 
-    let generic_parameter_infos: Punctuated<Expr, Token![,]> = generic_params
+    let generic_parameter_infos: Punctuated<Expr, Token![,]> = generics
+        .params
+        .iter()
         .filter_map(|generic_param| match generic_param {
             GenericParam::Type(type_param) => Some(Expr::Call(expr::call::new(
                 span,

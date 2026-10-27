@@ -68,7 +68,11 @@ mod tests {
             {
                 let v2 = 24;
                 let r2 = &v2;
-                accept_ref::setup(r2).does(|(ref _unused,)| {});
+                accept_ref::setup(r2)
+                    .expect_once()
+                    .and_does(|(ref _unused,)| {})
+                    .setup(r)
+                    .expect_once();
                 accept_ref(r2);
             }
 
@@ -79,65 +83,44 @@ mod tests {
             accept_ref(r);
 
             // Assert
-            accept_ref::received(r, Times::Once)
-                .received(
-                    #[allow(clippy::needless_borrow)]
-                    #[allow(clippy::needless_return)]
-                    Arg::is(|ref _unused| {
-                        return true;
-                    }),
-                    Times::Exactly(2),
-                )
-                .no_other_calls();
+            accept_ref::verify_calls();
         }
 
         #[test]
-        fn accept_value_Panics() {
+        fn accept_ref_NotEnoughCalls_Panics() {
             // Arrange
             let r = &11;
-            let r_ptr = core::ptr::from_ref(r);
+            accept_ref::setup(Arg::Any).expect(3.times());
 
             // Act
             accept_ref(r);
 
             // Assert
             assert_panics(
-                || accept_ref::received(Arg::Any, Times::Never),
-                format!(
-                    "Expected to never receive a call matching:
-	accept_ref((&i32): any)
-Actually received 1 matching call:
-	accept_ref({r})
-Received no non-matching calls"
-                ),
+                accept_ref::verify_calls,
+                "Expected following calls:
+	accept_ref((&i32): any) 2 times",
             );
+        }
 
-            assert_panics(
-                || accept_ref::received(Arg::Any, Times::Exactly(3)),
-                format!(
-                    "Expected to receive a call 3 times matching:
-	accept_ref((&i32): any)
-Actually received 1 matching call:
-	accept_ref({r})
-Received no non-matching calls"
-                ),
-            );
-
+        #[test]
+        fn accept_ref_NotMatchingRef_Panics() {
+            // Arrange
+            let r = &11;
             let invalid_r = &22;
-            let invalid_r_ptr = core::ptr::from_ref(invalid_r);
-            assert_panics(
-                || accept_ref::received(Arg::ref_eq(invalid_r), Times::Once),
-                format!(
-                    "Expected to receive a call exactly once matching:
-	accept_ref((&i32): equal to {invalid_r})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_ref(*{r}*)
-	1. __arg0 (&i32):
-		Expected (ptr: {invalid_r_ptr:?}): {invalid_r}
-		Actual   (ptr: {r_ptr:?}): {r}"
-                ),
-            )
+            accept_ref::setup(Arg::ref_eq(invalid_r)).expect_once();
+
+            // Act
+            let actual_error_msg = record_panic(|| accept_ref(r));
+
+            // Assert
+            let expected_error_msg = format!(
+                "Mock wasn't configured to handle following call:
+	accept_ref({r})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_ref(*{r}*)"
+            );
+            assert_eq!(Some(expected_error_msg), actual_error_msg);
         }
     }
 
@@ -148,13 +131,14 @@ accept_ref(*{r}*)
         fn return_ref_Ok() {
             // Arrange
             let r = Box::leak(Box::new(11));
-            return_ref::setup().returns(r);
+            return_ref::setup().returns_once(r);
 
             // Act
             let actual_r = return_ref();
 
             // Assert
             assert_eq!(r, actual_r);
+            return_ref::verify_calls();
         }
 
         #[test]
@@ -167,6 +151,7 @@ accept_ref(*{r}*)
 
             // Assert
             assert_eq!(BASE_RETURN_REF, actual_r);
+            return_ref::verify_calls();
         }
     }
 
@@ -178,17 +163,14 @@ accept_ref(*{r}*)
             // Arrange
             let accepted_r = &10;
             let returned_r = &20;
-            accept_ref_return_ref::setup(accepted_r).returns(returned_r);
+            accept_ref_return_ref::setup(accepted_r).returns_once(returned_r);
 
             // Act
             let actual_returned_r = accept_ref_return_ref(accepted_r);
 
             // Assert
             assert_eq!(returned_r, actual_returned_r);
-
-            accept_ref_return_ref::received(accepted_r, Times::Once)
-                .received(Arg::not_eq(accepted_r), Times::Never)
-                .no_other_calls();
+            accept_ref_return_ref::verify_calls();
         }
 
         #[test]
@@ -202,7 +184,7 @@ accept_ref(*{r}*)
 
             // Assert
             assert_eq!(BASE_ACCEPT_REF_RETURN_REF, actual_returned_r);
-            accept_ref_return_ref::received_nothing();
+            accept_ref_return_ref::verify_calls();
         }
     }
 
@@ -215,13 +197,13 @@ accept_ref(*{r}*)
             let r1 = &10;
             let r2 = &20.2;
 
+            accept_two_refs::setup(r1, r2).expect_once();
+
             // Act
             accept_two_refs(r1, r2);
 
             // Assert
-            accept_two_refs::received(r1, r2, Times::Once)
-                .received(Arg::not_eq(r1), Arg::not_eq(r2), Times::Never)
-                .no_other_calls();
+            accept_two_refs::verify_calls();
         }
     }
 
@@ -234,15 +216,14 @@ accept_ref(*{r}*)
             let r1 = &10;
             let r2 = &20.2;
             let returned_r = "veridis quo";
-            accept_two_refs_return_ref::setup(r1, r2).returns(returned_r);
+            accept_two_refs_return_ref::setup(r1, r2).returns_once(returned_r);
 
             // Act
             let actual_returned_r = accept_two_refs_return_ref(r1, r2);
 
             // Assert
             assert_eq!(returned_r, actual_returned_r);
-
-            accept_two_refs_return_ref::received(r1, r2, Times::Once).no_other_calls();
+            accept_two_refs_return_ref::verify_calls();
         }
 
         #[test]
@@ -257,8 +238,7 @@ accept_ref(*{r}*)
 
             // Assert
             assert_eq!(ACCEPT_TWO_REFS_RETURN_REF, actual_returned_r);
-
-            accept_two_refs_return_ref::received_nothing();
+            accept_two_refs_return_ref::verify_calls();
         }
     }
 }

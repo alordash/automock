@@ -21,7 +21,7 @@ mod tests {
     fn evil_static_mock() {
         // Arrange
         // Act
-        target::setup(Arg::Any).returns_with(|(x,)| *x + 100);
+        target::setup(Arg::Any).returns_with(|(x,)| *x + 100, 2.times());
 
         // Assert
         assert_eq!(caller(5), 210);

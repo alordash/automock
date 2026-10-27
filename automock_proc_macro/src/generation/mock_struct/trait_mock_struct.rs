@@ -2,6 +2,7 @@ use crate::common::*;
 use crate::generation::base_fn;
 use crate::generation::common::*;
 use crate::generation::fn_info::models::*;
+use crate::generation::fn_info::*;
 use crate::generation::mock_controls::models::*;
 use crate::generation::mock_struct::common::*;
 use crate::generation::mock_struct::models::*;
@@ -19,8 +20,8 @@ pub(crate) struct Params<'a> {
     pub trait_info: &'a TraitInfo,
     pub generics_for_impl: Generics,
     pub mod_ident: &'a Ident,
-    pub maybe_associated_controls: Option<AssociatedControls>,
-    pub maybe_static_controls: Option<StaticControls>,
+    pub maybe_associated_setup: Option<SetupStruct>,
+    pub maybe_static_setup: Option<StaticSetupStruct>,
 }
 
 pub(crate) fn generate(
@@ -30,8 +31,8 @@ pub(crate) fn generate(
         trait_info,
         generics_for_impl,
         mod_ident,
-        maybe_associated_controls,
-        maybe_static_controls,
+        maybe_associated_setup,
+        maybe_static_setup,
     }: Params,
 ) -> TraitMockStruct {
     let path =
@@ -64,14 +65,23 @@ pub(crate) fn generate(
         path.clone(),
         mod_ident,
     );
+    let mock_generics_info_provider_impl = generics_info_provider_impl::generate_mock_impl(
+        span,
+        generics_for_impl.clone(),
+        Type::Path(TypePath {
+            attrs: Vec::new(),
+            qself: None,
+            path: path.clone(),
+        }),
+    );
     let inner_impl = generate_inner_impl(
         span,
         trait_info,
         generics_for_impl,
         path,
         mod_ident,
-        &maybe_associated_controls,
-        &maybe_static_controls,
+        &maybe_associated_setup,
+        &maybe_static_setup,
     );
 
     let result = TraitMockStruct {
@@ -79,8 +89,9 @@ pub(crate) fn generate(
         clone_impl,
         trait_impl,
         inner_impl,
-        maybe_associated_controls,
-        maybe_static_controls,
+        mock_generics_info_provider_impl,
+        maybe_associated_setup,
+        maybe_static_setup,
     };
     return result;
 }
@@ -234,48 +245,39 @@ fn generate_inner_impl(
     generics_for_impl: Generics,
     mock_struct_path: Path,
     mod_ident: &Ident,
-    maybe_associated_controls: &Option<AssociatedControls>,
-    maybe_static_controls: &Option<StaticControls>,
+    maybe_associated_setup: &Option<SetupStruct>,
+    maybe_static_setup: &Option<StaticSetupStruct>,
 ) -> ItemImpl {
     let id_fn_impl = id_fn_impl::new(span, id_fn_impl::Params { public: true });
     let mock_struct_fn_new = mock_struct_fn_new::new(span);
-    let associated_controls_creation_fns =
-        maybe_associated_controls
-            .as_ref()
-            .map(|associated_controls| {
-                [
-                    control_creation_fn::generate_associated(
-                        span,
-                        associated_controls.setup_struct.path.clone(),
-                        ControlType::Setup,
-                    ),
-                    control_creation_fn::generate_associated(
-                        span,
-                        associated_controls.received_struct.path.clone(),
-                        ControlType::Received,
-                    ),
-                ]
-            });
-    let static_controls_creation_fns = maybe_static_controls.as_ref().map(|static_controls| {
-        [
-            control_creation_fn::generate_static(
-                span,
-                static_controls.static_setup_struct.path.clone(),
-                StaticControlType::Setup {
-                    mock_generic_argument: Box::new(GenericArgument::Type(Type::Path(TypePath {
-                        attrs: Vec::new(),
-                        qself: None,
-                        path: mock_struct_path.clone(),
-                    }))),
-                },
-            ),
-            control_creation_fn::generate_static(
-                span,
-                static_controls.static_received_struct.path.clone(),
-                StaticControlType::Received,
-            ),
-        ]
+    let maybe_associated_setup_creation_fn =
+        maybe_associated_setup.as_ref().map(|associated_controls| {
+            setup_creation_fn::generate_associated(span, associated_controls.path.clone())
+        });
+    let maybe_static_controls_creation_fns = maybe_static_setup.as_ref().map(|static_controls| {
+        setup_creation_fn::generate_static(
+            span,
+            static_controls.path.clone(),
+            GenericArgument::Type(Type::Path(TypePath {
+                attrs: Vec::new(),
+                qself: None,
+                path: mock_struct_path.clone(),
+            })),
+        )
     });
+    let verify_calls_fn = verify_calls_fn::generate(
+        span,
+        verify_calls_fn::Params {
+            for_mockable_trait: false,
+        },
+    );
+    let verify_static_calls_fn = verify_calls_fn::generate_static(
+        span,
+        verify_calls_fn::StaticParams {
+            mock_struct_path: mock_struct_path.clone(),
+            for_mockable_trait: false,
+        },
+    );
     let base_fns = trait_info
         .associated_fns
         .iter()
@@ -283,8 +285,9 @@ fn generate_inner_impl(
         .filter_map(|fn_info| try_extract_base_fn(span, trait_info, fn_info, mod_ident));
     let items = [id_fn_impl, mock_struct_fn_new]
         .into_iter()
-        .chain(associated_controls_creation_fns.into_iter().flatten())
-        .chain(static_controls_creation_fns.into_iter().flatten())
+        .chain(maybe_associated_setup_creation_fn)
+        .chain(maybe_static_controls_creation_fns)
+        .chain([verify_calls_fn, verify_static_calls_fn])
         .chain(base_fns)
         .map(ImplItem::Fn)
         .collect();

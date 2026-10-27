@@ -149,14 +149,14 @@ mod tests {
         #[tokio::test]
         async fn work_full_Ok() {
             // Arrange
-            work_full::setup().returns(Box::pin(async move { MOCKED }));
+            work_full::setup().returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = work_full().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            work_full::received(1.time()).no_other_calls();
+            work_full::verify_calls();
         }
 
         #[tokio::test]
@@ -169,20 +169,20 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            work_full::received_nothing();
+            work_full::verify_calls();
         }
 
         #[tokio::test]
         async fn work_part_Ok() {
             // Arrange
-            work_part::setup().returns(Box::pin(async move { MOCKED }));
+            work_part::setup().returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = work_part().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            work_part::received(1.time()).no_other_calls();
+            work_part::verify_calls();
         }
 
         #[tokio::test]
@@ -195,20 +195,20 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            work_part::received_nothing()
+            work_part::verify_calls();
         }
 
         #[tokio::test]
         async fn work_name_Ok() {
             // Arrange
-            work_name::setup().returns(Box::pin(async move { MOCKED }));
+            work_name::setup().returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = work_name().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            work_name::received(1.time()).no_other_calls();
+            work_name::verify_calls();
         }
 
         #[tokio::test]
@@ -221,7 +221,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            work_name::received_nothing()
+            work_name::verify_calls();
         }
     }
 
@@ -234,14 +234,14 @@ mod tests {
             let mut mock = TraitFullMock::new();
             mock.setup()
                 .work_full()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = mock.work_full().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            mock.received().work_full(1.time()).no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -255,7 +255,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -263,16 +263,14 @@ mod tests {
             // Arrange
             TraitFullMock::static_setup()
                 .static_work_full()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = TraitFullMock::static_work_full().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            TraitFullMock::static_received()
-                .static_work_full(1.time())
-                .no_other_calls();
+            TraitFullMock::verify_static_calls();
         }
 
         #[tokio::test]
@@ -285,7 +283,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            TraitFullMock::static_received().no_other_calls();
+            TraitFullMock::verify_static_calls();
         }
 
         #[tokio::test]
@@ -294,14 +292,14 @@ mod tests {
             let mut mock = TraitPartMock::new();
             mock.setup()
                 .work_part()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = mock.work_part().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            mock.received().work_part(1.time()).no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -315,7 +313,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -323,16 +321,14 @@ mod tests {
             // Arrange
             TraitPartMock::static_setup()
                 .static_work_part()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = TraitPartMock::static_work_part().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            TraitPartMock::static_received()
-                .static_work_part(1.time())
-                .no_other_calls();
+            TraitPartMock::verify_static_calls();
         }
 
         #[tokio::test]
@@ -345,7 +341,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            TraitPartMock::static_received().no_other_calls();
+            TraitPartMock::verify_static_calls();
         }
 
         #[tokio::test]
@@ -354,14 +350,14 @@ mod tests {
             let mut mock = TraitNameMock::new();
             mock.setup()
                 .work_name()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = mock.work_name().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            mock.received().work_name(1.time()).no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -375,7 +371,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -383,16 +379,14 @@ mod tests {
             // Arrange
             TraitNameMock::static_setup()
                 .static_work_name()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = TraitNameMock::static_work_name().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            TraitNameMock::static_received()
-                .static_work_name(1.time())
-                .no_other_calls();
+            TraitNameMock::verify_static_calls();
         }
 
         #[tokio::test]
@@ -405,7 +399,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            TraitNameMock::static_received().no_other_calls();
+            TraitNameMock::verify_static_calls();
         }
     }
 
@@ -419,14 +413,14 @@ mod tests {
             let mut mock = Struct::new();
             mock.setup()
                 .work_full()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = mock.work_full().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            mock.received().work_full(1.time()).no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -441,7 +435,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -449,16 +443,14 @@ mod tests {
             // Arrange
             Struct::static_setup()
                 .static_work_full()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = Struct::static_work_full().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            Struct::static_received()
-                .static_work_full(1.time())
-                .no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[tokio::test]
@@ -471,7 +463,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            Struct::static_received().no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[tokio::test]
@@ -481,14 +473,14 @@ mod tests {
             let mut mock = Struct::new();
             mock.setup()
                 .work_part()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = mock.work_part().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            mock.received().work_part(1.time()).no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -503,7 +495,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -511,16 +503,14 @@ mod tests {
             // Arrange
             Struct::static_setup()
                 .static_work_part()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = Struct::static_work_part().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            Struct::static_received()
-                .static_work_part(1.time())
-                .no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[tokio::test]
@@ -533,7 +523,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            Struct::static_received().no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[tokio::test]
@@ -543,14 +533,14 @@ mod tests {
             let mut mock = Struct::new();
             mock.setup()
                 .work_name()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = mock.work_name().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            mock.received().work_name(1.time()).no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -565,7 +555,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -573,16 +563,14 @@ mod tests {
             // Arrange
             Struct::static_setup()
                 .static_work_name()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = Struct::static_work_name().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            Struct::static_received()
-                .static_work_name(1.time())
-                .no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[tokio::test]
@@ -595,7 +583,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            Struct::static_received().no_other_calls();
+            Struct::verify_static_calls();
         }
     }
 
@@ -610,17 +598,14 @@ mod tests {
             mock.setup()
                 .as_TraitFull()
                 .work_full()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = TraitFull::work_full(&mock).await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            mock.received()
-                .as_TraitFull()
-                .work_full(1.time())
-                .no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -635,7 +620,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().as_TraitFull().no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -644,17 +629,14 @@ mod tests {
             Struct::static_setup()
                 .as_TraitFull()
                 .static_work_full()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = <Struct as TraitFull>::static_work_full().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            Struct::static_received()
-                .as_TraitFull()
-                .static_work_full(1.time())
-                .no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[tokio::test]
@@ -670,7 +652,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            Struct::static_received().as_TraitFull().no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[tokio::test]
@@ -681,17 +663,14 @@ mod tests {
             mock.setup()
                 .as_TraitPart()
                 .work_part()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = TraitPart::work_part(&mock).await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            mock.received()
-                .as_TraitPart()
-                .work_part(1.time())
-                .no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -706,7 +685,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().as_TraitPart().no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -715,17 +694,14 @@ mod tests {
             Struct::static_setup()
                 .as_TraitPart()
                 .static_work_part()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = <Struct as TraitPart>::static_work_part().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            Struct::static_received()
-                .as_TraitPart()
-                .static_work_part(1.time())
-                .no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[tokio::test]
@@ -741,7 +717,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            Struct::static_received().as_TraitPart().no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[tokio::test]
@@ -752,17 +728,14 @@ mod tests {
             mock.setup()
                 .as_TraitName()
                 .work_name()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = TraitName::work_name(&mock).await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            mock.received()
-                .as_TraitName()
-                .work_name(1.time())
-                .no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -777,7 +750,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            mock.received().as_TraitName().no_other_calls();
+            mock.verify_calls();
         }
 
         #[tokio::test]
@@ -786,17 +759,14 @@ mod tests {
             Struct::static_setup()
                 .as_TraitName()
                 .static_work_name()
-                .returns(Box::pin(async move { MOCKED }));
+                .returns_once(Box::pin(async move { MOCKED }));
 
             // Act
             let result = <Struct as TraitName>::static_work_name().await;
 
             // Assert
             assert_eq!(MOCKED, result);
-            Struct::static_received()
-                .as_TraitName()
-                .static_work_name(1.time())
-                .no_other_calls();
+            Struct::verify_static_calls();
         }
 
         #[tokio::test]
@@ -812,7 +782,7 @@ mod tests {
 
             // Assert
             assert_eq!(DEFAULT, result);
-            Struct::static_received().as_TraitName().no_other_calls();
+            Struct::verify_static_calls();
         }
     }
 }

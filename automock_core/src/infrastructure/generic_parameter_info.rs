@@ -53,6 +53,7 @@ impl Display for GenericParameterInfo {
 mod tests {
     #![allow(non_snake_case)]
     use super::*;
+    use core::assert_matches;
 
     #[test]
     fn generic_type_info_Ok() {
@@ -64,9 +65,9 @@ mod tests {
         let result = generic_type_info(name, type_name);
 
         // Assert
-        let generic_type_info = match result {
-            GenericParameterInfo::Type(x) => x,
-            y => panic!("Should be GenericParameterInfo::Type, is instead: '{y:?}'"),
+        assert_matches!(result, GenericParameterInfo::Type(_));
+        let GenericParameterInfo::Type(generic_type_info) = result else {
+            unreachable!()
         };
 
         assert_eq!(generic_type_info.name, name);
@@ -83,9 +84,9 @@ mod tests {
         let result = generic_const_info(name, value.clone());
 
         // Assert
-        let generic_const_info = match result {
-            GenericParameterInfo::Const(x) => x,
-            y => panic!("Should be GenericParameterInfo::Const, is instead: '{y:?}'"),
+        assert_matches!(result, GenericParameterInfo::Const(_));
+        let GenericParameterInfo::Const(generic_const_info) = result else {
+            unreachable!()
         };
 
         assert_eq!(generic_const_info.name, name);

@@ -40,7 +40,7 @@ mod tests {
         // Arrange
         let mut mock = TraitMock::new();
         let return_value = 10;
-        mock.setup().work().returns(return_value);
+        mock.setup().work().returns_once(return_value);
 
         // Act
         let mut clone = mock.clone();
@@ -48,10 +48,8 @@ mod tests {
 
         // Assert
         assert_eq!(return_value, result);
-        mock.received().work(Times::Once);
-        clone.received().work(Times::Once);
-        mock.received().no_other_calls();
-        clone.received().no_other_calls();
+        mock.verify_calls();
+        clone.verify_calls();
     }
 
     #[test]
@@ -60,7 +58,7 @@ mod tests {
         Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         let return_value = 10;
-        mock.setup().work().returns(return_value);
+        mock.setup().work().returns_once(return_value);
 
         // Act
         let mut clone = mock.clone();
@@ -68,10 +66,8 @@ mod tests {
 
         // Assert
         assert_eq!(return_value, result);
-        mock.received().work(Times::Once);
-        clone.received().work(Times::Once);
-        mock.received().no_other_calls();
-        clone.received().no_other_calls();
+        mock.verify_calls();
+        clone.verify_calls();
     }
 
     #[test]
@@ -80,7 +76,7 @@ mod tests {
         Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
         let return_value = 10;
-        mock.setup().as_Trait().work().returns(return_value);
+        mock.setup().as_Trait().work().returns_once(return_value);
 
         // Act
         let mut clone = mock.clone();
@@ -88,9 +84,7 @@ mod tests {
 
         // Assert
         assert_eq!(return_value, result);
-        mock.received().as_Trait().work(Times::Once);
-        clone.received().as_Trait().work(Times::Once);
-        mock.received().as_Trait().no_other_calls();
-        clone.received().as_Trait().no_other_calls();
+        mock.verify_calls();
+        clone.verify_calls();
     }
 }

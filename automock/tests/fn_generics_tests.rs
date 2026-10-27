@@ -44,14 +44,14 @@ mod tests {
             // Arrange
             let accepted_number = 10;
             let returned_number = 20;
-            get_return::setup(accepted_number).returns(returned_number);
+            get_return::setup(accepted_number).returns_once(returned_number);
 
             // Act
             let actual_returned_number = get_return(accepted_number);
 
             // Assert
             assert_eq!(returned_number, actual_returned_number);
-            get_return::received(accepted_number, Times::Once).no_other_calls();
+            get_return::verify_calls::<i32>();
         }
 
         #[test]
@@ -59,11 +59,11 @@ mod tests {
             // Arrange
             let accepted_number = 10;
             let returned_number = 20;
-            get_return::setup(accepted_number).returns(returned_number);
+            get_return::setup(accepted_number).returns_once(returned_number);
 
             let accepted_str = "quo vadis";
             let returned_str = "veridis quo";
-            get_return::setup(accepted_str).returns(returned_str);
+            get_return::setup(accepted_str).returns_once(returned_str);
 
             // Act
             let actual_returned_number = get_return(accepted_number);
@@ -71,10 +71,9 @@ mod tests {
 
             // Assert
             assert_eq!(returned_number, actual_returned_number);
-            get_return::received(accepted_number, Times::Once).no_other_calls();
-
             assert_eq!(returned_str, actual_returned_str);
-            get_return::received(accepted_str, Times::Once).no_other_calls();
+            get_return::verify_calls::<i32>();
+            get_return::verify_calls::<&str>();
         }
 
         #[test]
@@ -82,7 +81,7 @@ mod tests {
             // Arrange
             let accepted_number = 10;
             let returned_number = 20;
-            get_return::setup(accepted_number).returns(returned_number);
+            get_return::setup(accepted_number).returns_once(returned_number);
             let accepted_str = "str wasn't configured";
 
             // Act
@@ -91,13 +90,13 @@ mod tests {
 
             // Assert
             assert_eq!(returned_number, actual_returned_number);
-            get_return::received(accepted_number, Times::Once).no_other_calls();
             let accepted_str_debug_string = common::debug_string(format!("{accepted_str:?}"));
             let expected_error_msg = format!(
                 "Mock wasn't configured to handle following call:
 	get_return<&str>({accepted_str_debug_string})"
             );
             assert_eq!(Some(expected_error_msg), actual_error_msg);
+            get_return::verify_calls::<i32>();
         }
 
         #[test]
@@ -111,7 +110,7 @@ mod tests {
 
             // Assert
             assert_eq!(accepted_number, returned_number);
-            get_return::received_nothing::<i32>();
+            get_return::verify_calls::<i32>();
         }
     }
 
@@ -122,9 +121,9 @@ mod tests {
         fn return_constraint_Ok() {
             // Arrange
             let returned_number_value = 100;
-            return_constraint::setup().returns(returned_number_value);
+            return_constraint::setup().returns_once(returned_number_value);
             let returned_string_value = String::from("quo vadis");
-            return_constraint::setup().returns(returned_string_value.clone());
+            return_constraint::setup().returns_once(returned_string_value.clone());
 
             // Act
             let actual_number_value = return_constraint();
@@ -132,12 +131,9 @@ mod tests {
 
             // Assert
             assert_eq!(returned_number_value, actual_number_value);
-            return_constraint::received::<i32>(Times::Once).no_other_calls();
-
             assert_eq!(returned_string_value, actual_string_value);
-            return_constraint::received::<String>(Times::Once).no_other_calls();
-
-            return_constraint::received::<()>(Times::Never).no_other_calls();
+            return_constraint::verify_calls::<i32>();
+            return_constraint::verify_calls::<String>();
         }
 
         #[test]
@@ -150,7 +146,7 @@ mod tests {
 
             // Assert
             assert_eq!(i32::default(), actual_number_value);
-            return_constraint::received_nothing::<i32>();
+            return_constraint::verify_calls::<i32>();
         }
     }
 
@@ -161,9 +157,9 @@ mod tests {
         fn return_where_constraint_Ok() {
             // Arrange
             let returned_number_value = 100;
-            return_where_constraint::setup().returns(returned_number_value);
+            return_where_constraint::setup().returns_once(returned_number_value);
             let returned_string_value = String::from("quo vadis");
-            return_where_constraint::setup().returns(returned_string_value.clone());
+            return_where_constraint::setup().returns_once(returned_string_value.clone());
 
             // Act
             let actual_number_value = return_where_constraint();
@@ -171,12 +167,9 @@ mod tests {
 
             // Assert
             assert_eq!(returned_number_value, actual_number_value);
-            return_where_constraint::received::<i32>(Times::Once).no_other_calls();
-
             assert_eq!(returned_string_value, actual_string_value);
-            return_where_constraint::received::<String>(Times::Once).no_other_calls();
-
-            return_where_constraint::received::<()>(Times::Never).no_other_calls();
+            return_where_constraint::verify_calls::<i32>();
+            return_where_constraint::verify_calls::<String>();
         }
 
         #[test]
@@ -189,7 +182,7 @@ mod tests {
 
             // Assert
             assert_eq!(i32::default(), actual_number_value);
-            return_where_constraint::received_nothing::<i32>();
+            return_where_constraint::verify_calls::<i32>();
         }
     }
 
@@ -202,11 +195,11 @@ mod tests {
             let first_accepted_number = 10;
             let returned_string = String::from("quo vadis");
             get_return_different::setup::<i32, _>(Arg::is(|x| *x == first_accepted_number))
-                .returns(returned_string.clone());
+                .returns_once(returned_string.clone());
 
             let second_accepted_number = 20;
             let returned_vec = vec![1, 23, 456];
-            get_return_different::setup(second_accepted_number).returns(returned_vec.clone());
+            get_return_different::setup(second_accepted_number).returns_once(returned_vec.clone());
 
             // Act
             let actual_returned_string: String = get_return_different(first_accepted_number);
@@ -215,10 +208,8 @@ mod tests {
             // Assert
             assert_eq!(returned_string, actual_returned_string);
             assert_eq!(returned_vec, actual_returned_vec);
-            get_return_different::received::<_, String>(first_accepted_number, Times::Once)
-                .no_other_calls();
-            get_return_different::received::<_, Vec<i32>>(second_accepted_number, Times::Once)
-                .no_other_calls();
+            get_return_different::verify_calls::<i32, String>();
+            get_return_different::verify_calls::<i32, Vec<i32>>();
         }
 
         #[test]
@@ -238,8 +229,8 @@ mod tests {
             // Assert
             assert_eq!(String::default(), actual_returned_string);
             assert_eq!(Vec::<i32>::default(), actual_returned_vec);
-            get_return_different::received_nothing::<i32, String>();
-            get_return_different::received_nothing::<i32, Vec<i32>>();
+            get_return_different::verify_calls::<i32, String>();
+            get_return_different::verify_calls::<i32, Vec<i32>>();
         }
     }
 }

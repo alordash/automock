@@ -251,87 +251,80 @@ mod tests {
     fn should_mock_normal_static_function_across_modules() {
         // Arrange
         target_module::target::setup::<i32, i32, 3>(
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
+            10,
+            &20,
+            &mut 30,
+            Arg::is(|pointer: &*const i32| unsafe { **pointer } == 40),
+            Arg::is(|mutable_pointer: &*mut i32| unsafe { **mutable_pointer } == 50),
+            &[1, 2, 3][..],
+            &[4, 5, 6],
             Arg::Any,
             Arg::Any,
         )
-        .returns(42);
+        .returns_once(42);
 
         // Act
         let result = middle_module::call_normal();
 
         // Assert
         assert_eq!(result, 42);
-        target_module::target::received::<i32, i32, 3>(
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            1.time(),
-        );
+        target_module::target::verify_calls::<i32, i32, 3>();
     }
 
     #[test]
     fn should_mock_extern_c_static_function_across_modules() {
         // Arrange
-        target_module::c_target::setup(Arg::Any).returns(42);
+        target_module::c_target::setup(5).returns_once(42);
 
         // Act
         let result = middle_module::call_extern_c();
 
         // Assert
         assert_eq!(result, 42);
-        target_module::c_target::received(Arg::Any, 1.time());
+        target_module::c_target::verify_calls();
     }
 
     #[test]
     fn should_mock_unsafe_static_function_across_modules() {
         // Arrange
-        target_module::unsafe_target::setup(Arg::Any, Arg::Any).returns(42);
+        target_module::unsafe_target::setup(
+            10,
+            Arg::is(|pointer: &*const i32| unsafe { **pointer } == 20),
+        )
+        .returns_once(42);
 
         // Act
         let result = unsafe { middle_module::call_unsafe() };
 
         // Assert
         assert_eq!(result, 42);
-        target_module::unsafe_target::received(Arg::Any, Arg::Any, 1.time());
+        target_module::unsafe_target::verify_calls();
     }
 
     #[tokio::test]
     async fn should_mock_async_static_function_across_modules() {
         // Arrange
-        target_module::async_target::setup(Arg::Any).returns(42);
+        target_module::async_target::setup(5).returns_once(42);
 
         // Act
         let result = outer_module::async_everything().await;
 
         // Assert
         assert_eq!(result, 42);
-        target_module::async_target::received(Arg::Any, 1.time());
+        target_module::async_target::verify_calls();
     }
 
     #[test]
     fn should_mock_recursive_static_function() {
         // Arrange
-        target_module::recursive_target::setup(Arg::Any).returns(42);
+        target_module::recursive_target::setup(5).returns_once(42);
 
         // Act
         let result = middle_module::call_recursive();
 
         // Assert
         assert_eq!(result, 42);
-        target_module::recursive_target::received(Arg::Any, 1.time());
+        target_module::recursive_target::verify_calls();
     }
 
     #[test]
@@ -339,17 +332,15 @@ mod tests {
         // Arrange
         target_module::Implementation::static_setup()
             .as_StaticTrait()
-            .associated(Arg::Any)
-            .returns(42);
+            .associated(5)
+            .returns_once(42);
 
         // Act
         let result = middle_module::call_associated();
 
         // Assert
         assert_eq!(result, 42);
-        target_module::Implementation::static_received()
-            .as_StaticTrait()
-            .associated(Arg::Any, 1.time());
+        target_module::Implementation::verify_static_calls();
     }
 
     #[test]
@@ -357,17 +348,15 @@ mod tests {
         // Arrange
         target_module::Implementation::static_setup()
             .as_StaticTrait()
-            .associated_generic::<i32>(Arg::Any)
-            .returns(42);
+            .associated_generic::<i32>(5)
+            .returns_once(42);
 
         // Act
         let result = middle_module::call_associated_generic();
 
         // Assert
         assert_eq!(result, 42);
-        target_module::Implementation::static_received()
-            .as_StaticTrait()
-            .associated_generic::<i32>(Arg::Any, 1.time());
+        target_module::Implementation::verify_static_calls();
     }
 
     #[test]
@@ -375,16 +364,14 @@ mod tests {
         // Arrange
         target_module::Implementation::static_setup()
             .as_RecursiveTrait()
-            .call(Arg::Any)
-            .returns(42);
+            .call(5)
+            .returns_once(42);
 
         // Act
         let result = middle_module::call_trait_recursion();
 
         // Assert
         assert_eq!(result, 42);
-        target_module::Implementation::static_received()
-            .as_RecursiveTrait()
-            .call(Arg::Any, 1.time());
+        target_module::Implementation::verify_static_calls();
     }
 }

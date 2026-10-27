@@ -1,19 +1,31 @@
+use super::sequence::*;
 use crate::args::*;
 use crate::fn_parameters::*;
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::marker::PhantomData;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+#[cfg_attr(test, allow(unused))]
+static FN_CONFIG_ORDER_NUMBER: AtomicUsize = AtomicUsize::new(0);
+
+#[cfg_attr(test, automock::mock)]
+#[inline(always)]
+pub(crate) fn get_next_fn_config_order_number() -> usize {
+    FN_CONFIG_ORDER_NUMBER.fetch_add(1, Ordering::Relaxed)
+}
 
 #[cfg_attr(test, automock::mock)]
 pub struct FnConfig<'am, TMock> {
     _phantom_mock: PhantomData<TMock>,
+    pub number: usize,
     pub args_checker: DynArgsChecker<'am>,
     pub return_value_sources: VecDeque<ReturnValueSource<'am>>,
-    pub calls: Vec<Rc<DynCall<'am>>>,
     #[allow(clippy::type_complexity)]
     pub maybe_callback: Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>) + 'am>>>,
     pub call_base: bool,
+    pub maybe_sequence: Option<Rc<Sequence>>,
 }
 
 #[cfg_attr(test, automock::mock)]
@@ -21,11 +33,12 @@ impl<'am, TMock> FnConfig<'am, TMock> {
     pub(crate) fn new(args_checker: DynArgsChecker<'am>) -> Self {
         FnConfig {
             _phantom_mock: PhantomData,
+            number: get_next_fn_config_order_number(),
             args_checker,
             return_value_sources: VecDeque::new(),
-            calls: Vec::new(),
             maybe_callback: None,
             call_base: false,
+            maybe_sequence: try_get_current_sequence(),
         }
     }
 
@@ -72,10 +85,6 @@ impl<'am, TMock> FnConfig<'am, TMock> {
         self.maybe_callback = Some(Rc::new(RefCell::new(dyn_callback)));
     }
 
-    pub(crate) fn register_call(&mut self, call: Rc<DynCall<'am>>) {
-        self.calls.push(call);
-    }
-
     pub(crate) fn check_call(&self, call: &DynCall<'am>) -> Vec<ArgCheckResult> {
         self.args_checker.check(call)
     }
@@ -88,36 +97,23 @@ impl<'am, TMock> FnConfig<'am, TMock> {
         &mut self,
         call: &DynCall<'am>,
     ) -> Option<DynReturnValue<'am>> {
-        let return_value_source = self.return_value_sources.front()?;
-
-        return match return_value_source {
-            ReturnValueSource::SingleTime(_) => {
-                let Some(ReturnValueSource::SingleTime(return_value)) =
-                    self.return_value_sources.pop_front()
-                else {
-                    panic!(
-                        "Front return value source must be not empty and single time because it was just checked."
-                    )
-                };
-                Some(return_value)
-            }
-            ReturnValueSource::Perpetual(perpetual_factory) => {
-                let return_value = perpetual_factory();
-                Some(return_value)
-            }
+        let result = self.return_value_sources.pop_front().map(|x| match x {
+            ReturnValueSource::SingleTime(return_value) => return_value,
             ReturnValueSource::Factory(factory) => {
                 let dyn_arg_refs_tuple = call.get_dyn_tuple_of_refs();
                 let return_value = factory(dyn_arg_refs_tuple);
-                return Some(return_value);
+                return_value
             }
-        };
+        });
+
+        return result;
     }
 
     #[allow(clippy::type_complexity)]
     pub(crate) fn get_callback(
         &self,
-    ) -> Option<Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>) + 'am>>> {
-        self.maybe_callback.clone()
+    ) -> Option<&Rc<RefCell<dyn FnMut(*const (), &DynCall<'am>) + 'am>>> {
+        self.maybe_callback.as_ref()
     }
 
     pub(crate) fn set_call_base(&mut self) {
@@ -139,11 +135,13 @@ pub(crate) mod tests {
     use crate::infrastructure::fn_callback_configurator::tests::utilities::*;
     use crate::infrastructure::fn_configurator::tests::utilities::*;
     use automock::Mockable;
+    use core::assert_matches;
     use utilities::*;
 
     #[test]
     fn new_Ok() {
         // Arrange
+        get_next_fn_config_order_number::setup().returns_once(5);
         FnConfig::<Mock>::static_setup()
             .new(automock::Arg::Any)
             .call_base();
@@ -154,9 +152,10 @@ pub(crate) mod tests {
 
         // Assert
         assert!(result.return_value_sources.is_empty());
-        assert!(result.calls.is_empty());
         assert!(result.maybe_callback.is_none());
         assert!(!result.call_base);
+        assert_eq!(result.number, 5);
+        get_next_fn_config_order_number::verify_calls();
     }
 
     #[test]
@@ -219,6 +218,11 @@ pub(crate) mod tests {
         let mock_arg = MockArg(5);
         let raw_mock_arg_ptr = &mock_arg as *const _ as *const ();
         let dyn_call = DynCall::new(CallMock::new());
+        callback::setup::<ZeroSizeArgRefsTuple>(
+            automock::Arg::ref_eq(&mock_arg),
+            automock::Arg::Any,
+        )
+        .expect_once();
 
         // Act
         fn_config.set_callback(callback::<ZeroSizeArgRefsTuple>);
@@ -227,12 +231,7 @@ pub(crate) mod tests {
         let actual_callback = fn_config.maybe_callback.expect("Callback must be set.");
 
         actual_callback.borrow_mut()(raw_mock_arg_ptr, &dyn_call);
-        callback::received::<ZeroSizeArgRefsTuple>(
-            automock::Arg::ref_eq(&mock_arg),
-            automock::Arg::Any,
-            automock::Times::Once,
-        )
-        .no_other_calls();
+        callback::verify_calls::<ZeroSizeArgRefsTuple>();
     }
 
     #[test]
@@ -252,8 +251,10 @@ pub(crate) mod tests {
             .setup()
             .as_ICall()
             .get_ptr_to_boxed_tuple_of_refs()
-            .returns(raw_arg_refs_tuple_ptr);
+            .returns_once(raw_arg_refs_tuple_ptr);
         let dyn_call = DynCall::new(call_mock.clone());
+        callback::setup::<ArgRefsTuple>(automock::Arg::ref_eq(&mock_arg), arg_refs_tuple)
+            .expect_once();
 
         // Act
         fn_config.set_callback(callback::<ArgRefsTuple>);
@@ -262,35 +263,8 @@ pub(crate) mod tests {
         let actual_callback = fn_config.maybe_callback.expect("Callback must be set.");
 
         actual_callback.borrow_mut()(raw_mock_arg_ptr, &dyn_call);
-        call_mock
-            .received()
-            .as_ICall()
-            .get_ptr_to_boxed_tuple_of_refs(automock::Times::Once);
-        callback::received::<ArgRefsTuple>(
-            automock::Arg::ref_eq(&mock_arg),
-            arg_refs_tuple,
-            automock::Times::Once,
-        )
-        .no_other_calls();
-    }
-
-    #[test]
-    fn register_call_Ok() {
-        // Arrange
-        let mut fn_config = fn_config_mock();
-        fn_config
-            .setup()
-            .register_call(automock::Arg::Any)
-            .call_base();
-        let dyn_call = Rc::new(DynCall::new(CallMock::new()));
-        let initial_calls_count = fn_config.calls.len();
-
-        // Act
-        fn_config.register_call(dyn_call);
-
-        // Assert
-        let expected_calls_count = initial_calls_count + 1;
-        assert_eq!(fn_config.calls.len(), expected_calls_count);
+        call_mock.verify_calls();
+        callback::verify_calls::<ArgRefsTuple>();
     }
 
     #[test]
@@ -312,8 +286,8 @@ pub(crate) mod tests {
         args_checker_mock
             .setup()
             .as_IArgsChecker()
-            .check(automock::Arg::Any)
-            .returns(arg_check_results.clone());
+            .check(automock::Arg::ref_eq(&dyn_call))
+            .returns_once(arg_check_results.clone());
 
         // Act
         let result = fn_config.check_call(&dyn_call);
@@ -321,81 +295,67 @@ pub(crate) mod tests {
         // Assert
         assert_eq!(result, arg_check_results);
 
-        args_checker_mock
-            .received()
-            .as_IArgsChecker()
-            .check(automock::Arg::ref_eq(&dyn_call), automock::Times::Once)
-            .no_other_calls();
-    }
-
-    mod has_return_value_tests {
-        use super::*;
-
-        #[allow(non_camel_case_types)]
-        pub struct Params<'a> {
-            pub call_base: bool,
-            pub return_value_sources: VecDeque<ReturnValueSource<'a>>,
-            pub expected_result: bool,
-        }
-        pub fn test(
-            Params {
-                call_base,
-                return_value_sources,
-                expected_result,
-            }: Params,
-        ) {
-            // Arrange
-            let mut fn_config = fn_config_mock();
-            fn_config.return_value_sources = return_value_sources;
-            fn_config.call_base = call_base;
-            fn_config.setup().has_return_value().call_base();
-
-            // Act
-            let result = fn_config.has_return_value();
-
-            // Assert
-            assert_eq!(result, expected_result)
-        }
+        args_checker_mock.verify_calls();
     }
 
     #[test]
     fn has_return_value_DoNotCallBaseAndNoReturnValueSources_ReturnsFalse() {
-        has_return_value_tests::test(has_return_value_tests::Params {
-            call_base: false,
-            return_value_sources: VecDeque::new(),
-            expected_result: false,
-        });
+        // Arrange
+        let mut fn_config = fn_config_mock();
+        fn_config.setup().has_return_value().call_base();
+
+        // Act
+        let result = fn_config.has_return_value();
+
+        // Assert
+        assert!(!result);
     }
 
     #[test]
     fn has_return_value_CallBaseAndNoReturnValueSources_ReturnsTrue() {
-        has_return_value_tests::test(has_return_value_tests::Params {
-            call_base: true,
-            return_value_sources: VecDeque::new(),
-            expected_result: true,
-        });
+        // Arrange
+        let mut fn_config = fn_config_mock();
+        fn_config.call_base = true;
+        fn_config.setup().has_return_value().call_base();
+
+        // Act
+        let result = fn_config.has_return_value();
+
+        // Assert
+        assert!(result);
     }
 
     #[test]
     fn has_return_value_DoNotCallBaseAndSomeReturnValueSources_ReturnsTrue() {
-        has_return_value_tests::test(has_return_value_tests::Params {
-            call_base: false,
-            return_value_sources: VecDeque::from(vec![ReturnValueSource::SingleTime(
-                DynReturnValue::new(5),
-            )]),
-            expected_result: true,
-        });
+        // Arrange
+        let mut fn_config = fn_config_mock();
+        fn_config
+            .return_value_sources
+            .push_back(ReturnValueSource::SingleTime(DynReturnValue::new(5)));
+        fn_config.setup().has_return_value().call_base();
+
+        // Act
+        let result = fn_config.has_return_value();
+
+        // Assert
+        assert!(result);
     }
 
     #[test]
     fn has_return_value_CallBaseAndSomeReturnValueSources_ReturnsTrue() {
-        has_return_value_tests::test(has_return_value_tests::Params {
-            call_base: true,
-            return_value_sources: VecDeque::from(vec![ReturnValueSource::SingleTime(
-                DynReturnValue::new(5),
-            )]),
-            expected_result: true,
-        });
+        // Arrange
+        let mut fn_config = fn_config_mock();
+        fn_config.call_base = true;
+        fn_config
+            .return_value_sources
+            .push_back(ReturnValueSource::SingleTime(DynReturnValue::new(5)));
+        fn_config.setup().has_return_value().call_base();
+
+        // Act
+        let result = fn_config.has_return_value();
+
+        // Assert
+        assert!(result);
     }
 
     #[test]
@@ -452,15 +412,18 @@ pub(crate) mod tests {
             expected_return_value_sources_length
         );
 
-        let actual_existed_dyn_return_value = match fn_config
+        let actual_existed_return_value_source = fn_config
             .return_value_sources
             .pop_front()
-            .expect("Existed return value should exist.")
-        {
-            ReturnValueSource::SingleTime(x) => x,
-            y => panic!(
-                "Existed return value must be `ReturnValueSource::SingleTime`, was instead: {y:?}"
-            ),
+            .expect("Existed return value should exist.");
+        assert_matches!(
+            actual_existed_return_value_source,
+            ReturnValueSource::SingleTime(_)
+        );
+        let ReturnValueSource::SingleTime(actual_existed_dyn_return_value) =
+            actual_existed_return_value_source
+        else {
+            unreachable!()
         };
         let actual_existed_return_value: TExistedReturnValue =
             actual_existed_dyn_return_value.downcast_into();
@@ -468,45 +431,11 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn select_next_return_value_FrontPerpetual_ReturnsSomeButDoesNotPopFront() {
+    fn select_next_return_value_FrontFactory_ReturnsSomeAndPopsFront() {
         // Arrange
         let mut fn_config = fn_config_mock();
         type TReturnValue = i32;
         let return_value: TReturnValue = 5;
-        let return_value_source =
-            ReturnValueSource::Perpetual(Box::new(move || DynReturnValue::new(return_value)));
-        fn_config
-            .return_value_sources
-            .push_front(return_value_source);
-        let initial_return_value_sources_length = fn_config.return_value_sources.len();
-        fn_config
-            .setup()
-            .select_next_return_value(automock::Arg::Any)
-            .call_base();
-        let dyn_call = DynCall::new(CallMock::new());
-
-        // Act
-        let result = fn_config.select_next_return_value(&dyn_call);
-
-        // Assert
-        let dyn_return_value = result.expect("Result must contain return value.");
-        let actual_return_value: TReturnValue = dyn_return_value.downcast_into();
-        assert_eq!(actual_return_value, return_value);
-
-        assert_eq!(
-            fn_config.return_value_sources.len(),
-            initial_return_value_sources_length
-        );
-    }
-
-    #[test]
-    fn select_next_return_value_FrontFactory_ReturnsSomeButDoesNotPopFront() {
-        // Arrange
-        let mut fn_config = fn_config_mock();
-        type TReturnValue = i32;
-        let return_value: TReturnValue = 5;
-        return_value_source_factory::setup(automock::Arg::Any)
-            .returns(DynReturnValue::new(return_value));
         let return_value_source = ReturnValueSource::Factory(Box::new(return_value_source_factory));
         fn_config
             .return_value_sources
@@ -518,12 +447,16 @@ pub(crate) mod tests {
             .call_base();
         let dyn_arg_refs_tuple = dyn_arg_refs_tuple_mock();
         let dyn_arg_refs_tuple_id = dyn_arg_refs_tuple.id();
+        return_value_source_factory::setup(automock::Arg::is(|x: &DynArgRefsTuple| {
+            x.id() == dyn_arg_refs_tuple_id
+        }))
+        .returns_once(DynReturnValue::new(return_value));
         let mut call_mock = CallMock::new();
         call_mock
             .setup()
             .as_ICall()
             .get_dyn_tuple_of_refs()
-            .returns(dyn_arg_refs_tuple);
+            .returns_once(dyn_arg_refs_tuple);
         let dyn_call = DynCall::new(call_mock.clone());
 
         // Act
@@ -536,20 +469,11 @@ pub(crate) mod tests {
 
         assert_eq!(
             fn_config.return_value_sources.len(),
-            initial_return_value_sources_length
+            initial_return_value_sources_length - 1
         );
 
-        call_mock
-            .received()
-            .as_ICall()
-            .get_dyn_tuple_of_refs(automock::Times::Once)
-            .no_other_calls();
-
-        return_value_source_factory::received(
-            automock::Arg::is(|x: &DynArgRefsTuple| x.id() == dyn_arg_refs_tuple_id),
-            automock::Times::Once,
-        )
-        .no_other_calls();
+        call_mock.verify_calls();
+        return_value_source_factory::verify_calls();
     }
 
     #[test]
@@ -584,10 +508,10 @@ pub(crate) mod tests {
 
         // Assert
         let callback = result.expect("Callback must be set.");
-        inner_callback::received_nothing();
+        inner_callback::verify_calls();
+        inner_callback::setup(ptr, automock::Arg::ref_eq(&dyn_call)).expect_once();
         callback.borrow_mut()(ptr, &dyn_call);
-        inner_callback::received(ptr, automock::Arg::ref_eq(&dyn_call), automock::Times::Once)
-            .no_other_calls();
+        inner_callback::verify_calls();
     }
 
     #[test]
@@ -626,12 +550,13 @@ pub(crate) mod tests {
         pub fn fn_config_mock<'am>() -> FnConfig<'am, Mock> {
             FnConfig {
                 _phantom_mock: PhantomData,
+                number: 0,
                 args_checker: DynArgsChecker::new(ArgsCheckerMock::new()),
                 return_value_sources: VecDeque::new(),
-                calls: Vec::new(),
                 maybe_callback: None,
                 call_base: false,
                 __mock_data: Default::default(),
+                maybe_sequence: None,
             }
         }
 

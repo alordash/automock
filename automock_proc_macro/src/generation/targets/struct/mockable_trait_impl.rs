@@ -1,6 +1,6 @@
 use crate::common::*;
 use crate::generation::common::*;
-use crate::generation::mock_controls::models::*;
+use crate::generation::mock_struct::common::*;
 use not_enough_syntax::*;
 use proc_macro2::Span;
 use syn::punctuated::Punctuated;
@@ -10,9 +10,7 @@ pub(crate) struct Params {
     pub struct_ident: Ident,
     pub generics: Generics,
     pub setup_struct_ident: Ident,
-    pub received_struct_ident: Ident,
     pub static_setup_struct_ident: Ident,
-    pub static_received_struct_ident: Ident,
 }
 pub(crate) fn generate(
     span: Span,
@@ -20,9 +18,7 @@ pub(crate) fn generate(
         struct_ident,
         generics,
         setup_struct_ident,
-        received_struct_ident,
         static_setup_struct_ident,
-        static_received_struct_ident,
     }: Params,
 ) -> ItemImpl {
     let mut struct_generics = generics.clone();
@@ -38,36 +34,29 @@ pub(crate) fn generate(
         qself: None,
         path: path::from_ident_with_generics(setup_struct_ident, &generics),
     });
-    let received_struct_type = Type::Path(TypePath {
-        attrs: Vec::new(),
-        qself: None,
-        path: path::from_ident_with_generics(received_struct_ident, &generics),
-    });
     let static_setup_struct_type = Type::Path(TypePath {
         attrs: Vec::new(),
         qself: None,
         path: path::from_ident_with_generics(static_setup_struct_ident, &generics),
     });
-    let static_received_struct_type = Type::Path(TypePath {
-        attrs: Vec::new(),
-        qself: None,
-        path: path::from_ident_with_generics(static_received_struct_ident, &generics),
-    });
     let id_impl = id_fn_impl::new(span, id_fn_impl::Params { public: false });
     let type_setup = associated_type_impl(span, "Setup", setup_struct_type);
-    let fn_setup = fn_control(span, ControlType::Setup);
-    let type_received = associated_type_impl(span, "Received", received_struct_type);
-    let fn_received = fn_control(span, ControlType::Received);
+    let fn_setup = fn_setup(span);
     let type_static_setup = associated_type_impl(span, "StaticSetup", static_setup_struct_type);
-    let fn_static_setup = fn_static_control(
+    let fn_static_setup = fn_static_setup(span, GenericArgument::Type(struct_type.clone()));
+    let fn_verify_calls = verify_calls_fn::generate(
         span,
-        StaticControlType::Setup {
-            mock_generic_argument: Box::new(GenericArgument::Type(struct_type.clone())),
+        verify_calls_fn::Params {
+            for_mockable_trait: true,
         },
     );
-    let type_static_received =
-        associated_type_impl(span, "StaticReceived", static_received_struct_type);
-    let fn_static_received = fn_static_control(span, StaticControlType::Received);
+    let fn_verify_static_calls = verify_calls_fn::generate_static(
+        span,
+        verify_calls_fn::StaticParams {
+            mock_struct_path: struct_path,
+            for_mockable_trait: true,
+        },
+    );
     let result = ItemImpl {
         attrs: Vec::new(),
         modifiers: ImplModifiers::default(),
@@ -88,12 +77,10 @@ pub(crate) fn generate(
             ImplItem::Fn(id_impl),
             ImplItem::Type(type_setup),
             ImplItem::Fn(fn_setup),
-            ImplItem::Type(type_received),
-            ImplItem::Fn(fn_received),
             ImplItem::Type(type_static_setup),
             ImplItem::Fn(fn_static_setup),
-            ImplItem::Type(type_static_received),
-            ImplItem::Fn(fn_static_received),
+            ImplItem::Fn(fn_verify_calls),
+            ImplItem::Fn(fn_verify_static_calls),
         ],
     };
     return result;
@@ -114,12 +101,8 @@ fn associated_type_impl(span: Span, name: &'static str, ty: Type) -> ImplItemTyp
     return result;
 }
 
-fn fn_control(span: Span, control_type: ControlType) -> ImplItemFn {
-    let (fn_name, control_name) = match control_type {
-        ControlType::Setup => ("setup", "Setup"),
-        ControlType::Received => ("received", "Received"),
-    };
-    let control_path = path::new(span, ["Self", control_name]);
+fn fn_setup(span: Span) -> ImplItemFn {
+    let control_path = path::new(span, ["Self", "Setup"]);
     let result = ImplItemFn {
         attrs: Vec::new(),
         vis: Visibility::Inherited,
@@ -130,7 +113,7 @@ fn fn_control(span: Span, control_type: ControlType) -> ImplItemFn {
             safety: Safety::Default,
             abi: None,
             fn_token: Token![fn](span),
-            ident: Ident::new(fn_name, span),
+            ident: Ident::new("setup", span),
             generics: Generics::default(),
             paren_token: token::Paren(span),
             inputs: punctuated([mut_ref_self_fn_arg(span)]),
@@ -166,12 +149,8 @@ fn fn_control(span: Span, control_type: ControlType) -> ImplItemFn {
     return result;
 }
 
-fn fn_static_control(span: Span, static_control_type: StaticControlType) -> ImplItemFn {
-    let (fn_name, static_control_name) = match static_control_type {
-        StaticControlType::Setup { .. } => ("static_setup", "StaticSetup"),
-        StaticControlType::Received => ("static_received", "StaticReceived"),
-    };
-    let static_control_path = path::new(span, ["Self", static_control_name]);
+fn fn_static_setup(span: Span, mock_generic_argument: GenericArgument) -> ImplItemFn {
+    let static_control_path = path::new(span, ["Self", "StaticSetup"]);
     let constructor_stmt = Expr::Struct(ExprStruct {
         attrs: Vec::new(),
         qself: None,
@@ -181,18 +160,11 @@ fn fn_static_control(span: Span, static_control_type: StaticControlType) -> Impl
         dot2_token: None,
         rest: None,
     });
-    let stmts = match static_control_type {
-        StaticControlType::Setup {
-            mock_generic_argument,
-        } => {
-            let reset_fn_data_stmt = reset_fn_data_stmt::new(span, *mock_generic_argument);
-            vec![
-                Stmt::Expr(Expr::Call(reset_fn_data_stmt), Some(Token![;](span))),
-                Stmt::Expr(constructor_stmt, None),
-            ]
-        }
-        StaticControlType::Received => vec![Stmt::Expr(constructor_stmt, None)],
-    };
+    let reset_fn_data_stmt = reset_fn_data_stmt::new(span, mock_generic_argument);
+    let stmts = vec![
+        Stmt::Expr(Expr::Call(reset_fn_data_stmt), Some(Token![;](span))),
+        Stmt::Expr(constructor_stmt, None),
+    ];
     let result = ImplItemFn {
         attrs: Vec::new(),
         vis: Visibility::Inherited,
@@ -203,7 +175,7 @@ fn fn_static_control(span: Span, static_control_type: StaticControlType) -> Impl
             safety: Safety::Default,
             abi: None,
             fn_token: Token![fn](span),
-            ident: Ident::new(fn_name, span),
+            ident: Ident::new("static_setup", span),
             generics: Generics::default(),
             paren_token: token::Paren(span),
             inputs: Punctuated::new(),

@@ -88,8 +88,27 @@ pub(crate) mod tests {
     fn and_does_WithoutMock_Ok<'am>() {
         // Arrange
         let owner = Owner;
-        let fn_callback_configurator = fn_callback_configurator::<false>(&owner);
-        let arg_refs_tuple = ArgRefsTuple(5);
+        let fn_callback_configurator =
+            fn_callback_configurator::<false>(transmute_lifetime!(&owner));
+        fn_callback_configurator
+            .fn_config
+            .borrow_mut()
+            .setup()
+            .set_callback::<ArgRefsTuple, Mock>(automock::Arg::is_mut(
+                |callback: &mut Box<dyn FnMut(&'am Mock, ArgRefsTuple)>| {
+                    // Arrange
+                    let arg_refs_tuple = ArgRefsTuple(5);
+                    mockless_callback::setup(arg_refs_tuple).expect_once();
+
+                    // Act
+                    callback.as_mut()(&Mock, arg_refs_tuple);
+
+                    // Assert
+                    mockless_callback::verify_calls();
+                    return true;
+                },
+            ))
+            .expect_once();
 
         // Act
         let result = fn_callback_configurator.and_does(mockless_callback);
@@ -100,17 +119,7 @@ pub(crate) mod tests {
         fn_callback_configurator
             .fn_config
             .borrow_mut()
-            .received()
-            .set_callback(
-                automock::Arg::is_mut(|callback: &mut Box<dyn FnMut(&'am Mock, ArgRefsTuple)>| {
-                    callback.as_mut()(&Mock, arg_refs_tuple);
-                    mockless_callback::received(arg_refs_tuple, automock::Times::Once)
-                        .no_other_calls();
-                    return true;
-                }),
-                automock::Times::Once,
-            )
-            .no_other_calls();
+            .verify_calls();
     }
 
     #[test]
@@ -118,7 +127,28 @@ pub(crate) mod tests {
     fn and_does_WithMock_Ok<'am>() {
         // Arrange
         let owner = Owner;
-        let fn_callback_configurator = fn_callback_configurator::<true>(&owner);
+        let fn_callback_configurator =
+            fn_callback_configurator::<true>(transmute_lifetime!(&owner));
+        fn_callback_configurator
+            .fn_config
+            .borrow_mut()
+            .setup()
+            .set_callback(automock::Arg::is_mut(
+                |callback: &mut Box<dyn FnMut(&'am MockArg, ArgRefsTuple)>| {
+                    // Arrange
+                    let mock_arg = MockArg(5);
+                    let arg_refs_tuple = ArgRefsTuple(10);
+                    callback::setup(automock::Arg::ref_eq(&mock_arg), arg_refs_tuple).expect_once();
+
+                    // Act
+                    callback.as_mut()(transmute_lifetime!(&mock_arg), arg_refs_tuple);
+
+                    // Assert
+                    callback::verify_calls();
+                    return true;
+                },
+            ))
+            .expect_once();
 
         // Act
         let result = fn_callback_configurator.and_does(callback);
@@ -129,25 +159,7 @@ pub(crate) mod tests {
         fn_callback_configurator
             .fn_config
             .borrow_mut()
-            .received()
-            .set_callback(
-                automock::Arg::is_mut(
-                    |callback: &mut Box<dyn FnMut(&'am MockArg, ArgRefsTuple)>| {
-                        let mock_arg = MockArg(5);
-                        let arg_refs_tuple = ArgRefsTuple(10);
-                        callback.as_mut()(transmute_lifetime!(&mock_arg), arg_refs_tuple);
-                        callback::received(
-                            automock::Arg::ref_eq(&mock_arg),
-                            arg_refs_tuple,
-                            automock::Times::Once,
-                        )
-                        .no_other_calls();
-                        return true;
-                    },
-                ),
-                automock::Times::Once,
-            )
-            .no_other_calls();
+            .verify_calls();
     }
 
     #[test]
@@ -174,19 +186,13 @@ pub(crate) mod tests {
 
         pub fn fn_callback_configurator<const PASSES_MOCK_TO_CALLBACK: bool>(
             owner: &Owner,
-        ) -> FnCallbackConfigurator<
-            'static,
-            Mock,
-            Owner,
-            ArgRefsTuple,
-            MockArg,
-            PASSES_MOCK_TO_CALLBACK,
-        > {
+        ) -> FnCallbackConfigurator<'_, Mock, Owner, ArgRefsTuple, MockArg, PASSES_MOCK_TO_CALLBACK>
+        {
             FnCallbackConfigurator {
                 _phantom_args_tuple: PhantomData,
                 _phantom_mock_arg: PhantomData,
                 fn_config: Rc::new(RefCell::new(fn_config_mock())),
-                owner: transmute_lifetime!(owner),
+                owner,
             }
         }
 

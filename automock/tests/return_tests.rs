@@ -14,7 +14,7 @@ mod tests {
     #[test]
     fn returns_SingleTime() {
         // Arrange
-        work::setup().returns(10);
+        work::setup().returns_once(10);
 
         // Act
         let result = work();
@@ -22,9 +22,15 @@ mod tests {
 
         // Assert
         assert_eq!(result, 10);
-        assert_eq!(panic_message, Some(r#"Mock wasn't configured to handle following call because no return value was provided:
-	work()"#.to_owned()));
-        work::received(1.times()).no_other_calls();
+        assert_eq!(
+            panic_message,
+            Some(
+                r#"Mock wasn't configured to handle following call:
+	work()"#
+                    .to_owned()
+            )
+        );
+        work::verify_calls();
     }
 
     #[test]
@@ -42,15 +48,36 @@ mod tests {
         assert_eq!(first, 10);
         assert_eq!(second, 20);
         assert_eq!(third, 30);
-        assert_eq!(panic_message, Some(r#"Mock wasn't configured to handle following call because no return value was provided:
-	work()"#.to_owned()));
-        work::received(3.times()).no_other_calls();
+        assert_eq!(
+            panic_message,
+            Some(
+                r#"Mock wasn't configured to handle following call:
+	work()"#
+                    .to_owned()
+            )
+        );
+        work::verify_calls();
     }
 
     #[test]
-    fn always_returns_AtLeastTwoTimes() {
+    fn returns_once_SameArgsTwoConfigs_UsesNextConfigAfterFirstIsExhausted() {
         // Arrange
-        work::setup().always_returns(10);
+        work::setup().returns_once(10).setup().returns_once(20);
+
+        // Act
+        let first = work();
+        let second = work();
+
+        // Assert
+        assert_eq!(first, 10);
+        assert_eq!(second, 20);
+        work::verify_calls();
+    }
+
+    #[test]
+    fn returns_MultipleTimes() {
+        // Arrange
+        work::setup().returns(10, 2.times());
 
         // Act
         let first = work();
@@ -59,13 +86,13 @@ mod tests {
         // Assert
         assert_eq!(first, 10);
         assert_eq!(second, 10);
-        work::received(2.times()).no_other_calls();
+        work::verify_calls();
     }
 
     #[test]
-    fn returns_with_AtLeastTwoTimes() {
+    fn returns_with_MultipleTimes() {
         // Arrange
-        work::setup().returns_with(|_| 10);
+        work::setup().returns_with(|_| 10, 2.times());
 
         // Act
         let first = work();
@@ -74,6 +101,6 @@ mod tests {
         // Assert
         assert_eq!(first, 10);
         assert_eq!(second, 10);
-        work::received(2.times()).no_other_calls();
+        work::verify_calls();
     }
 }

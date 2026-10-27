@@ -170,15 +170,14 @@ mod tests {
 
         mock.setup()
             .generator(42)
-            .returns(Box::new(GeneratedValue(123)));
+            .returns_once(Box::new(GeneratedValue(123)));
 
         // Act
         let generator = mock.generator(42);
 
         // Assert
         assert_eq!(generator.value(), 123);
-
-        mock.received().generator(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -189,15 +188,14 @@ mod tests {
 
         mock.setup()
             .generator(42)
-            .returns(Box::new(GeneratedValue(123)));
+            .returns_once(Box::new(GeneratedValue(123)));
 
         // Act
         let result = consumer::generator(&mock);
 
         // Assert
         assert_eq!(result, 123);
-
-        mock.received().generator(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -208,15 +206,14 @@ mod tests {
 
         mock.setup()
             .iterator(42)
-            .returns(Box::new(std::iter::once(123)));
+            .returns_once(Box::new(std::iter::once(123)));
 
         // Act
         let result: Vec<i32> = mock.iterator(42).collect();
 
         // Assert
         assert_eq!(result, vec![123]);
-
-        mock.received().iterator(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -227,15 +224,14 @@ mod tests {
 
         mock.setup()
             .iterator(42)
-            .returns(Box::new(std::iter::once(123)));
+            .returns_once(Box::new(std::iter::once(123)));
 
         // Act
         let result = consumer::iterator(&mock);
 
         // Assert
         assert_eq!(result, vec![123]);
-
-        mock.received().iterator(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -246,15 +242,14 @@ mod tests {
 
         mock.setup()
             .iterator_send_sync(42)
-            .returns(Box::new(std::iter::once(123)));
+            .returns_once(Box::new(std::iter::once(123)));
 
         // Act
         let result = mock.iterator_send_sync(42).collect::<Vec<_>>();
 
         // Assert
         assert_eq!(result, vec![123]);
-
-        mock.received().iterator_send_sync(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -263,15 +258,16 @@ mod tests {
         Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
-        mock.setup().future(42).returns(Box::pin(async { 123 }));
+        mock.setup()
+            .future(42)
+            .returns_once(Box::pin(async { 123 }));
 
         // Act
         let result = mock.future(42).await;
 
         // Assert
         assert_eq!(result, 123);
-
-        mock.received().future(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -282,15 +278,14 @@ mod tests {
 
         mock.setup()
             .future_send(42)
-            .returns(Box::pin(async { 123 }));
+            .returns_once(Box::pin(async { 123 }));
 
         // Act
         let result = mock.future_send(42).await;
 
         // Assert
         assert_eq!(result, 123);
-
-        mock.received().future_send(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -299,7 +294,9 @@ mod tests {
         Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
-        mock.setup().function(42).returns(Box::new(|x| x + 100));
+        mock.setup()
+            .function(42)
+            .returns_once(Box::new(|x| x + 100));
 
         // Act
         let function = mock.function(42);
@@ -308,8 +305,7 @@ mod tests {
 
         // Assert
         assert_eq!(result, 123);
-
-        mock.received().function(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -320,7 +316,7 @@ mod tests {
 
         mock.setup()
             .function_send_sync(42)
-            .returns(Box::new(|x| x + 100));
+            .returns_once(Box::new(|x| x + 100));
 
         // Act
         let function = mock.function_send_sync(42);
@@ -329,8 +325,7 @@ mod tests {
 
         // Assert
         assert_eq!(result, 123);
-
-        mock.received().function_send_sync(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -341,15 +336,14 @@ mod tests {
 
         mock.setup()
             .complicated_iterator(42)
-            .returns(Box::new(vec![100, 200, 300].into_iter()));
+            .returns_once(Box::new(vec![100, 200, 300].into_iter()));
 
         // Act
         let result = mock.complicated_iterator(42).collect::<Vec<_>>();
 
         // Assert
         assert_eq!(result, vec![100, 200, 300,]);
-
-        mock.received().complicated_iterator(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -360,15 +354,14 @@ mod tests {
 
         mock.setup()
             .generator(42)
-            .returns(Box::new(GeneratedValue(123)));
+            .returns_once(Box::new(GeneratedValue(123)));
 
         // Act
         let result = consumer::generator(&mock);
 
         // Assert
         assert_eq!(result, 123);
-
-        mock.received().generator(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -377,14 +370,15 @@ mod tests {
         Factory::static_setup().new().call_base();
         let mut mock = Factory::new();
 
-        mock.setup().future(42).returns(Box::pin(async { 123 }));
+        mock.setup()
+            .future(42)
+            .returns_once(Box::pin(async { 123 }));
 
         // Act
         let result = consumer::future(&mock).await;
 
         // Assert
         assert_eq!(result, 123);
-
-        mock.received().future(42, Times::Once);
+        mock.verify_calls();
     }
 }

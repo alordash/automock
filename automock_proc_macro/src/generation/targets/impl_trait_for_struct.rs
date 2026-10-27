@@ -1,7 +1,6 @@
-mod as_trait_control_impl;
+mod as_trait_setup_impl;
 
 use crate::common::*;
-use crate::generation::mock_controls::models::*;
 use crate::generation::mock_controls::*;
 use crate::generation::mock_struct::models::*;
 use crate::generation::targets::common::*;
@@ -50,20 +49,9 @@ pub(crate) fn generate_module(mut item_impl: ItemImpl) -> MockMod {
                     maybe_trait_ident: Some(impl_trait_for_struct_info.trait_ident.clone()),
                 },
             );
-            let trait_received_struct = received::generate(
+            let setup_struct_impl = as_trait_setup_impl::generate(
                 source_span,
-                received::Params {
-                    ident: path::last_ident(&impl_trait_for_struct_info.target_path).clone(),
-                    generics: control_struct_generics.clone(),
-                    generics_for_impl: control_struct_generics.clone(),
-                    mock_struct_path: &impl_trait_for_struct_info.target_path,
-                    fn_infos: &impl_trait_for_struct_info.associated_fns,
-                    maybe_trait_ident: Some(impl_trait_for_struct_info.trait_ident.clone()),
-                },
-            );
-            let setup_struct_impl = as_trait_control_impl::generate(
-                source_span,
-                as_trait_control_impl::Params {
+                as_trait_setup_impl::Params {
                     struct_path: &control_struct_path,
                     struct_generics: control_struct_impl_generics.clone(),
                     trait_control_struct_path: &trait_setup_struct.path,
@@ -76,34 +64,12 @@ pub(crate) fn generate_module(mut item_impl: ItemImpl) -> MockMod {
                         .merged_generics
                         .where_clause
                         .clone(),
-                    control_type: ControlType::Setup,
-                    is_static: false,
-                },
-            );
-            let received_struct_impl = as_trait_control_impl::generate(
-                source_span,
-                as_trait_control_impl::Params {
-                    struct_path: &control_struct_path,
-                    struct_generics: control_struct_impl_generics.clone(),
-                    trait_control_struct_path: &trait_received_struct.path,
-                    as_trait_where_predicates: impl_trait_for_struct_info
-                        .as_trait_where_predicates
-                        .as_ref(),
-                    trait_ident: &impl_trait_for_struct_info.trait_ident,
-                    trait_generics: impl_trait_for_struct_info.trait_simple_generics.clone(),
-                    maybe_common_where_clause: impl_trait_for_struct_info
-                        .merged_generics
-                        .where_clause
-                        .clone(),
-                    control_type: ControlType::Received,
                     is_static: false,
                 },
             );
             let associated_controls = TraitAssociatedControls {
                 trait_setup_struct,
-                trait_received_struct,
                 setup_struct_impl,
-                received_struct_impl,
             };
             return associated_controls;
         });
@@ -121,22 +87,9 @@ pub(crate) fn generate_module(mut item_impl: ItemImpl) -> MockMod {
                 maybe_trait_ident: Some(impl_trait_for_struct_info.trait_ident.clone()),
             },
         );
-        let trait_static_received_struct = static_received::generate(
+        let static_setup_struct_impl = as_trait_setup_impl::generate(
             source_span,
-            static_received::Params {
-                ident: path::last_ident(&impl_trait_for_struct_info.target_path).clone(),
-                generics: control_struct_generics.clone(),
-                generics_for_impl: control_struct_generics,
-                maybe_argument_types: None,
-                mock_struct_path: &impl_trait_for_struct_info.target_path,
-                fn_infos: &impl_trait_for_struct_info.static_fns,
-                for_static_fn: false,
-                maybe_trait_ident: Some(impl_trait_for_struct_info.trait_ident.clone()),
-            },
-        );
-        let static_setup_struct_impl = as_trait_control_impl::generate(
-            source_span,
-            as_trait_control_impl::Params {
+            as_trait_setup_impl::Params {
                 struct_path: &control_struct_path,
                 struct_generics: control_struct_impl_generics.clone(),
                 trait_control_struct_path: &trait_static_setup_struct.path,
@@ -149,34 +102,12 @@ pub(crate) fn generate_module(mut item_impl: ItemImpl) -> MockMod {
                     .merged_generics
                     .where_clause
                     .clone(),
-                control_type: ControlType::Setup,
-                is_static: true,
-            },
-        );
-        let static_received_struct_impl = as_trait_control_impl::generate(
-            source_span,
-            as_trait_control_impl::Params {
-                struct_path: &control_struct_path,
-                struct_generics: control_struct_impl_generics,
-                trait_control_struct_path: &trait_static_received_struct.path,
-                as_trait_where_predicates: impl_trait_for_struct_info
-                    .as_trait_where_predicates
-                    .as_ref(),
-                trait_ident: &impl_trait_for_struct_info.trait_ident,
-                trait_generics: impl_trait_for_struct_info.trait_simple_generics.clone(),
-                maybe_common_where_clause: impl_trait_for_struct_info
-                    .merged_generics
-                    .where_clause
-                    .clone(),
-                control_type: ControlType::Received,
                 is_static: true,
             },
         );
         let static_controls = TraitStaticControls {
             trait_static_setup_struct,
-            trait_static_received_struct,
             static_setup_struct_impl,
-            static_received_struct_impl,
         };
         return static_controls;
     });
@@ -270,22 +201,14 @@ pub(crate) fn generate_module(mut item_impl: ItemImpl) -> MockMod {
         [
             Item::Struct(x.trait_setup_struct.item_struct),
             Item::Impl(x.trait_setup_struct.item_impl),
-            Item::Struct(x.trait_received_struct.item_struct),
-            Item::Impl(x.trait_received_struct.clone_impl),
-            Item::Impl(x.trait_received_struct.item_impl),
             Item::Impl(x.setup_struct_impl),
-            Item::Impl(x.received_struct_impl),
         ]
     }))
     .chain(maybe_static_controls.into_iter().flat_map(|x| {
         [
             Item::Struct(x.trait_static_setup_struct.item_struct),
             Item::Impl(x.trait_static_setup_struct.item_impl),
-            Item::Struct(x.trait_static_received_struct.item_struct),
-            Item::Impl(x.trait_static_received_struct.clone_impl),
-            Item::Impl(x.trait_static_received_struct.item_impl),
             Item::Impl(x.static_setup_struct_impl),
-            Item::Impl(x.static_received_struct_impl),
         ]
     }))
     .collect();

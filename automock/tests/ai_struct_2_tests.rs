@@ -457,11 +457,13 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().one_arg(42).returns(123);
+        mock.setup().no_args().expect_once();
+
+        mock.setup().one_arg(42).returns_once(123);
 
         mock.setup()
             .many_args(42, "hello".to_owned(), true, Some(vec![1, 2, 3]))
-            .returns(456);
+            .returns_once(456);
 
         // Act
         mock.no_args();
@@ -474,17 +476,7 @@ mod tests {
         assert_eq!(one, 123);
         assert_eq!(many, 456);
 
-        mock.received().no_args(Times::Once);
-
-        mock.received().one_arg(42, Times::Once);
-
-        mock.received().many_args(
-            42,
-            "hello".to_owned(),
-            true,
-            Some(vec![1, 2, 3]),
-            Times::Once,
-        );
+        mock.verify_calls();
     }
 
     #[test]
@@ -495,13 +487,13 @@ mod tests {
 
         mock.setup()
             .generic::<String>("input".to_owned())
-            .returns("output".to_owned());
+            .returns_once("output".to_owned());
 
         mock.setup()
             .generic_two::<i32, String>(42, "hello".to_owned())
-            .returns((123, "world".to_owned()));
+            .returns_once((123, "world".to_owned()));
 
-        mock.setup().generic_bounded::<i32>(42).returns(456);
+        mock.setup().generic_bounded::<i32>(42).returns_once(456);
 
         // Act
         let generic = mock.generic::<String>("input".to_owned());
@@ -517,13 +509,7 @@ mod tests {
 
         assert_eq!(bounded, 456);
 
-        mock.received()
-            .generic::<String>("input".to_owned(), Times::Once);
-
-        mock.received()
-            .generic_two::<i32, String>(42, "hello".to_owned(), Times::Once);
-
-        mock.received().generic_bounded::<i32>(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -534,7 +520,7 @@ mod tests {
 
         let value = 42;
 
-        mock.setup().generic_lifetime(&value).returns(&value);
+        mock.setup().generic_lifetime(&value).returns_once(&value);
 
         // Act
         let result = mock.generic_lifetime(&value);
@@ -542,7 +528,7 @@ mod tests {
         // Assert
         assert_eq!(result, &42);
 
-        mock.received().generic_lifetime(&value, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -553,7 +539,7 @@ mod tests {
 
         mock.setup()
             .const_generic::<4>([1, 2, 3, 4])
-            .returns([5, 6, 7, 8]);
+            .returns_once([5, 6, 7, 8]);
 
         // Act
         let result = mock.const_generic::<4>([1, 2, 3, 4]);
@@ -561,8 +547,7 @@ mod tests {
         // Assert
         assert_eq!(result, [5, 6, 7, 8]);
 
-        mock.received()
-            .const_generic::<4>([1, 2, 3, 4], Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -573,11 +558,11 @@ mod tests {
 
         let value = 42;
 
-        mock.setup().lifetime(&value).returns(&value);
+        mock.setup().lifetime(&value).returns_once(&value);
 
         mock.setup()
             .multiple_lifetimes("hello", "world")
-            .returns(("result-a", "result-b"));
+            .returns_once(("result-a", "result-b"));
 
         // Act
         let result = mock.lifetime(&value);
@@ -589,10 +574,7 @@ mod tests {
 
         assert_eq!(multiple, ("result-a", "result-b"));
 
-        mock.received().lifetime(&value, Times::Once);
-
-        mock.received()
-            .multiple_lifetimes("hello", "world", Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -603,7 +585,13 @@ mod tests {
 
         mock.setup()
             .where_clause::<String>("hello".to_owned())
-            .returns("world".to_owned());
+            .returns_once("world".to_owned());
+
+        mock.setup()
+            .where_projection::<std::vec::IntoIter<i32>>(Arg::is(
+                |value: &std::vec::IntoIter<i32>| value.as_slice() == [1, 2, 3],
+            ))
+            .expect_once();
 
         // Act
         let result = mock.where_clause::<String>("hello".to_owned());
@@ -613,11 +601,7 @@ mod tests {
         // Assert
         assert_eq!(result, "world");
 
-        mock.received()
-            .where_clause::<String>("hello".to_owned(), Times::Once);
-
-        mock.received()
-            .where_projection::<std::vec::IntoIter<i32>>(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -626,11 +610,11 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().generic_result(42).returns(Ok(123));
+        mock.setup().generic_result(42).returns_once(Ok(123));
 
         mock.setup()
             .nested_type(Some(vec![1, 2, 3]))
-            .returns(Some(vec![4, 5, 6]));
+            .returns_once(Some(vec![4, 5, 6]));
 
         // Act
         let result = mock.generic_result(42);
@@ -642,10 +626,7 @@ mod tests {
 
         assert_eq!(nested, Some(vec![4, 5, 6]));
 
-        mock.received().generic_result(42, Times::Once);
-
-        mock.received()
-            .nested_type(Some(vec![1, 2, 3]), Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -654,11 +635,15 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
+        mock.setup()
+            .type_monster(Arg::is(|value: &Option<_>| value.is_none()))
+            .expect_once();
+
         // Act
         mock.type_monster(None);
 
         // Assert
-        mock.received().type_monster(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -671,17 +656,25 @@ mod tests {
         let mut mutable = 123;
         let reference = &value;
 
+        mock.setup()
+            .references(&42, &mut 123, &&42, &mut &42)
+            .expect_once();
+
+        mock.setup()
+            .raw_pointers(
+                Arg::is(|pointer: &*const i32| unsafe { **pointer } == 42),
+                Arg::is(|mutable_pointer: &*mut i32| unsafe { **mutable_pointer } == 123),
+                Arg::is(|pointer: &*const *mut i32| unsafe { ***pointer } == 123),
+            )
+            .expect_once();
+
         // Act
         mock.references(&value, &mut mutable, &reference, &mut &value);
 
         mock.raw_pointers(&value, &mut mutable, &(&mut mutable as *mut _));
 
         // Assert
-        mock.received()
-            .references(Arg::Any, Arg::Any, Arg::Any, Arg::Any, Times::Once);
-
-        mock.received()
-            .raw_pointers(Arg::Any, Arg::Any, Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -692,15 +685,15 @@ mod tests {
 
         mock.setup()
             .function_pointer(increment as fn(i32) -> i32)
-            .returns(123);
+            .returns_once(123);
 
         mock.setup()
             .unsafe_function_pointer(pointer_length as unsafe fn(*const u8) -> usize)
-            .returns(456);
+            .returns_once(456);
 
         mock.setup()
             .c_function_pointer(c_increment as extern "C" fn(i32) -> i32)
-            .returns(789);
+            .returns_once(789);
 
         // Act
         let normal = mock.function_pointer(increment);
@@ -716,14 +709,7 @@ mod tests {
 
         assert_eq!(c_result, 789);
 
-        mock.received()
-            .function_pointer(increment as fn(i32) -> i32, Times::Once);
-
-        mock.received()
-            .unsafe_function_pointer(pointer_length as unsafe fn(*const u8) -> usize, Times::Once);
-
-        mock.received()
-            .c_function_pointer(c_increment as extern "C" fn(i32) -> i32, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -732,11 +718,11 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().closure(Arg::Any).returns(10);
+        mock.setup().closure(Arg::Any).returns_once(10);
 
-        mock.setup().closure_mut(Arg::Any).returns(20);
+        mock.setup().closure_mut(Arg::Any).returns_once(20);
 
-        mock.setup().closure_once(Arg::Any).returns(30);
+        mock.setup().closure_once(Arg::Any).returns_once(30);
 
         // Act
         let result = mock.closure(|x| x + 1);
@@ -754,11 +740,7 @@ mod tests {
 
         assert_eq!(once_result, 30);
 
-        mock.received().closure(Arg::Any, Times::Once);
-
-        mock.received().closure_mut(Arg::Any, Times::Once);
-
-        mock.received().closure_once(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -767,7 +749,7 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().impl_iterator(Arg::Any).returns(123);
+        mock.setup().impl_iterator(Arg::Any).returns_once(123);
 
         // Act
         let result = mock.impl_iterator(vec![1, 2, 3].into_iter());
@@ -775,22 +757,27 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received().impl_iterator(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
+    #[allow(clippy::borrowed_box)]
     fn dyn_arguments() {
         // Arrange
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
         mock.setup()
-            .dyn_display(Arg::Any)
-            .returns("displayed".to_owned());
+            .dyn_display(Arg::is(|x: &Box<dyn std::fmt::Display>| {
+                x.to_string() == "42"
+            }))
+            .returns_once("displayed".to_owned());
 
         mock.setup()
-            .dyn_debug(Arg::Any)
-            .returns("debugged".to_owned());
+            .dyn_debug(Arg::is(|x: &&dyn std::fmt::Debug| {
+                format!("{x:?}") == "\"hello\""
+            }))
+            .returns_once("debugged".to_owned());
 
         // Act
         let display: Box<dyn std::fmt::Display> = Box::new(42);
@@ -806,9 +793,7 @@ mod tests {
 
         assert_eq!(debug_result, "debugged");
 
-        mock.received().dyn_display(Arg::Any, Times::Once);
-
-        mock.received().dyn_debug(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -817,11 +802,15 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
+        mock.setup()
+            .self_argument(Arg::is(|value: &Option<_>| value.is_none()))
+            .expect_once();
+
         // Act
         mock.self_argument(None);
 
         // Assert
-        mock.received().self_argument(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -832,11 +821,11 @@ mod tests {
 
         mock.setup()
             .return_self()
-            .returns(Monster::<'static, i32, 4>::new());
+            .returns_once(Monster::<'static, i32, 4>::new());
 
         mock.setup()
             .return_option_self()
-            .returns(Some(Monster::<'static, i32, 4>::new()));
+            .returns_once(Some(Monster::<'static, i32, 4>::new()));
 
         // Act
         let result = mock.return_self();
@@ -848,9 +837,7 @@ mod tests {
 
         assert!(option.is_some());
 
-        mock.received().return_self(Times::Once);
-
-        mock.received().return_option_self(Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -861,7 +848,11 @@ mod tests {
 
         mock.setup()
             .unsafe_function_pointer(pointer_length as unsafe fn(*const u8) -> usize)
-            .returns(123);
+            .returns_once(123);
+
+        mock.setup()
+            .unsafe_method(Arg::is(|pointer: &*mut i32| unsafe { **pointer } == 42))
+            .expect_once();
 
         let mut value = 42;
 
@@ -873,10 +864,7 @@ mod tests {
         }
 
         // Assert
-        mock.received().unsafe_method(Arg::Any, Times::Once);
-
-        mock.received()
-            .unsafe_function_pointer(pointer_length as unsafe fn(*const u8) -> usize, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -885,7 +873,11 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().extern_c(42).returns(123);
+        mock.setup().extern_c(42).returns_once(123);
+
+        mock.setup()
+            .unsafe_extern_c(Arg::is(|pointer: &*mut i32| unsafe { **pointer } == 42))
+            .expect_once();
 
         let mut value = 42;
 
@@ -899,9 +891,7 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received().extern_c(42, Times::Once);
-
-        mock.received().unsafe_extern_c(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -910,11 +900,13 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().async_method(42).returns(123);
+        mock.setup().async_no_args().expect_once();
+
+        mock.setup().async_method(42).returns_once(123);
 
         mock.setup()
             .async_generic::<String>("input".to_owned())
-            .returns("output".to_owned());
+            .returns_once("output".to_owned());
 
         // Act
         mock.async_no_args().await;
@@ -928,12 +920,7 @@ mod tests {
 
         assert_eq!(generic, "output");
 
-        mock.received().async_no_args(Times::Once);
-
-        mock.received().async_method(42, Times::Once);
-
-        mock.received()
-            .async_generic::<String>("input".to_owned(), Times::Once);
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -941,6 +928,10 @@ mod tests {
         // Arrange
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
+
+        mock.setup()
+            .async_unsafe(Arg::is(|pointer: &*mut i32| unsafe { **pointer } == 42))
+            .expect_once();
 
         let mut value = 42;
 
@@ -950,21 +941,23 @@ mod tests {
         }
 
         // Assert
-        mock.received().async_unsafe(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
     fn static_functions() {
         // Arrange
         Monster::<'static, i32, 4>::static_setup()
+            .static_no_args()
+            .expect_once()
             .static_with_args(42, "hello".to_owned())
-            .returns(123)
+            .returns_once(123)
             .static_generic::<String>("input".to_owned())
-            .returns("output".to_owned())
+            .returns_once("output".to_owned())
             .static_const::<4>([1, 2, 3, 4])
-            .returns([5, 6, 7, 8])
+            .returns_once([5, 6, 7, 8])
             .static_where::<String>("input".to_owned())
-            .returns("output".to_owned());
+            .returns_once("output".to_owned());
 
         // Act
         Monster::<'static, i32, 4>::static_no_args();
@@ -986,21 +979,7 @@ mod tests {
 
         assert_eq!(where_result, "output");
 
-        Monster::<'static, i32, 4>::static_received().static_no_args(Times::Once);
-
-        Monster::<'static, i32, 4>::static_received().static_with_args(
-            42,
-            "hello".to_owned(),
-            Times::Once,
-        );
-
-        Monster::<'static, i32, 4>::static_received()
-            .static_generic::<String>("input".to_owned(), Times::Once);
-
-        Monster::<'static, i32, 4>::static_received().static_const::<4>([1, 2, 3, 4], Times::Once);
-
-        Monster::<'static, i32, 4>::static_received()
-            .static_where::<String>("input".to_owned(), Times::Once);
+        Monster::<'static, i32, 4>::verify_static_calls();
     }
 
     #[test]
@@ -1009,7 +988,7 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().one_arg(42).returns(123);
+        mock.setup().one_arg(42).returns_once(123);
 
         // Act
         let result = consumer::call(&mock);
@@ -1017,7 +996,7 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received().one_arg(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -1028,7 +1007,7 @@ mod tests {
 
         mock.setup()
             .generic::<String>("hello".to_owned())
-            .returns("world".to_owned());
+            .returns_once("world".to_owned());
 
         // Act
         let result = consumer::generic(&mock);
@@ -1036,8 +1015,7 @@ mod tests {
         // Assert
         assert_eq!(result, "world");
 
-        mock.received()
-            .generic::<String>("hello".to_owned(), Times::Once);
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -1046,7 +1024,7 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().async_method(42).returns(123);
+        mock.setup().async_method(42).returns_once(123);
 
         // Act
         let result = consumer::asynchronous(&mock).await;
@@ -1054,7 +1032,7 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        mock.received().async_method(42, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -1062,6 +1040,10 @@ mod tests {
         // Arrange
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
+
+        mock.setup()
+            .unsafe_method(Arg::is(|pointer: &*mut i32| unsafe { **pointer } == 42))
+            .expect_once();
 
         let mut value = 42;
 
@@ -1071,7 +1053,7 @@ mod tests {
         }
 
         // Assert
-        mock.received().unsafe_method(Arg::Any, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -1079,7 +1061,7 @@ mod tests {
         // Arrange
         Monster::<'static, i32, 4>::static_setup()
             .static_with_args(42, "hello".to_owned())
-            .returns(123);
+            .returns_once(123);
 
         // Act
         let result = consumer::static_call::<'static, i32, 4>();
@@ -1087,11 +1069,7 @@ mod tests {
         // Assert
         assert_eq!(result, 123);
 
-        Monster::<'static, i32, 4>::static_received().static_with_args(
-            42,
-            "hello".to_owned(),
-            Times::Once,
-        );
+        Monster::<'static, i32, 4>::verify_static_calls();
     }
 
     #[test]
@@ -1100,7 +1078,7 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().by_value().returns(123);
+        mock.setup().by_value().returns_once(123);
 
         // Act
         let result = mock.by_value();
@@ -1115,7 +1093,7 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().boxed().returns(123);
+        mock.setup().boxed().returns_once(123);
 
         // Act
         let result = Box::new(mock).boxed();
@@ -1130,7 +1108,7 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().rc().returns(123);
+        mock.setup().rc().returns_once(123);
 
         let mock = std::rc::Rc::new(mock);
 
@@ -1147,7 +1125,7 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().arc().returns(123);
+        mock.setup().arc().returns_once(123);
 
         let mock = std::sync::Arc::new(mock);
 
@@ -1164,7 +1142,7 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().pinned().returns(123);
+        mock.setup().pinned().returns_once(123);
 
         let mock = Box::pin(mock);
 
@@ -1181,14 +1159,16 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
+        mock.setup().by_mut_ref(42).expect_once();
+
+        mock.setup().explicit_mut_ref(123).expect_once();
+
         // Act
         mock.by_mut_ref(42);
         mock.explicit_mut_ref(123);
 
         // Assert
-        mock.received().by_mut_ref(42, Times::Once);
-
-        mock.received().explicit_mut_ref(123, Times::Once);
+        mock.verify_calls();
     }
 
     #[test]
@@ -1197,9 +1177,7 @@ mod tests {
         Monster::<'static, i32, 4>::static_setup().new().call_base();
         let mut mock = Monster::<'static, i32, 4>::new();
 
-        mock.setup().one_arg(42).returns(123);
-
-        mock.setup().body_call(42).returns(456);
+        mock.setup().body_call(42).returns_once(456);
 
         // Act
         let result = mock.body_call(42);
@@ -1207,6 +1185,6 @@ mod tests {
         // Assert
         assert_eq!(result, 456);
 
-        mock.received().body_call(42, Times::Once);
+        mock.verify_calls();
     }
 }

@@ -29,6 +29,7 @@ pub(crate) fn prepare(
     let split_items = split_items(impl_items);
     let impl_struct_syntax_as_fn_owner = ImplTraitForStructSyntaxAsFnOwner {
         trait_ident: &trait_ident,
+        trait_path: &trait_path,
         struct_ident: path::last_ident(&target_path),
         generics: &merged_generics,
     };
@@ -131,6 +132,7 @@ fn prase_target_type(target_type: &Type) -> Path {
 
 struct ImplTraitForStructSyntaxAsFnOwner<'a> {
     pub trait_ident: &'a Ident,
+    pub trait_path: &'a Path,
     pub struct_ident: &'a Ident,
     pub generics: &'a Generics,
 }
@@ -139,8 +141,12 @@ impl<'a> IFnOwner for ImplTraitForStructSyntaxAsFnOwner<'a> {
         Some(self.trait_ident)
     }
 
-    fn format_name(&self) -> String {
-        format!("<{} as {}>", self.struct_ident, self.trait_ident)
+    fn name(&self) -> String {
+        self.struct_ident.to_string()
+    }
+
+    fn maybe_trait_path(&self) -> Option<Path> {
+        Some(self.trait_path.clone())
     }
 
     fn generics(&self) -> &Generics {

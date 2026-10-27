@@ -37,17 +37,14 @@ mod tests {
 
         mock.setup().calculate::<i32>(42).call_base();
 
-        mock.setup().transform::<i32>(42).returns(123);
+        mock.setup().transform::<i32>(42).returns_once(123);
 
         // Act
         let result = mock.calculate::<i32>(42);
 
         // Assert
         assert_eq!(result, 123);
-
-        mock.received()
-            .transform::<i32>(42, Times::Once)
-            .no_other_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -57,16 +54,13 @@ mod tests {
 
         mock.setup().calculate::<i32>(42).call_base();
 
-        mock.setup().transform::<i32>(42).returns(123);
+        mock.setup().transform::<i32>(42).returns_once(123);
 
         // Act
         let result = mock.calculate::<i32>(42);
 
         // Assert
         assert_eq!(result, 123);
-
-        mock.received()
-            .transform::<i32>(42, Times::Once)
-            .no_other_calls();
+        mock.verify_calls();
     }
 }

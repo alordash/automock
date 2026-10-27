@@ -18,15 +18,14 @@ mod fn_tests {
         }
 
         let mocked_value = DEFAULT_VALUE + 1;
-        f::setup().returns(mocked_value);
+        f::setup().returns_once(mocked_value);
 
         // Act
         let result = g(f);
 
         // Assert
         assert_eq!(mocked_value, result);
-
-        f::received(Times::Exactly(1)).no_other_calls();
+        f::verify_calls();
     }
 }
 
@@ -54,15 +53,14 @@ mod trait_tests {
 
         let mocked_value = DEFAULT_VALUE + 1;
         let mut mock = TraitMock::new();
-        mock.setup().f().returns(mocked_value);
+        mock.setup().f().returns_once(mocked_value);
 
         // Act
         let result = g(&mock);
 
         // Assert
         assert_eq!(mocked_value, result);
-
-        mock.received().f(Times::Exactly(1)).no_other_calls();
+        mock.verify_calls();
     }
 
     #[test]
@@ -73,17 +71,16 @@ mod trait_tests {
         }
 
         let mocked_value = DEFAULT_VALUE + 1;
-        TraitMock::static_setup().static_f().returns(mocked_value);
+        TraitMock::static_setup()
+            .static_f()
+            .returns_once(mocked_value);
 
         // Act
         let static_result = g_static::<TraitMock>();
 
         // Assert
         assert_eq!(mocked_value, static_result);
-
-        TraitMock::static_received()
-            .static_f(Times::Exactly(1))
-            .no_other_calls();
+        TraitMock::verify_static_calls();
     }
 }
 
@@ -119,14 +116,14 @@ mod struct_tests {
         let mocked_value = DEFAULT_VALUE + 1;
         Struct::static_setup().new().call_base();
         let mut mock = Struct::new();
-        mock.setup().f().returns(mocked_value);
+        mock.setup().f().returns_once(mocked_value);
 
         // Act
         let result = g(&mock);
 
         // Assert
         assert_eq!(mocked_value, result);
-
-        mock.received().f(Times::Exactly(1)).no_other_calls();
+        Struct::verify_static_calls();
+        mock.verify_calls();
     }
 }

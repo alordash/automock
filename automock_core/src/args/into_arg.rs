@@ -33,6 +33,7 @@ mod tests {
     use crate::args::arg::tests::utilities::*;
     use crate::args::arg_cmp::tests::utilities::*;
     use automock::Mockable;
+    use core::assert_matches;
 
     #[test]
     fn into_arg_RegularValue_Ok() {
@@ -41,25 +42,24 @@ mod tests {
         let value: T = 5;
         let arg_cmp_mock = arg_cmp_mock::<T>();
         let arg_cmp_mock_id = arg_cmp_mock.id();
-        ArgCmp::static_setup()
-            .new_eq(automock::Arg::Any, automock::Arg::Any)
-            .returns(arg_cmp_mock);
         let print_arg = "quo vadis".to_owned();
-        format_debug_string::setup::<T>(automock::Arg::Any).returns(print_arg.clone());
+        ArgCmp::static_setup()
+            .new_eq(print_arg.clone(), value)
+            .returns_once(arg_cmp_mock);
+        format_debug_string::setup::<T>(&value).returns_once(print_arg.clone());
 
         // Act
         let result = value.into_arg(format_debug_string);
 
         // Assert
-        let arg_cmp = match result {
-            Arg::Eq(v, _) => v,
-            _ => panic!("Expected result to be Arg::Eq, was instead: {result:?}"),
+        assert_matches!(result, Arg::Eq(_, _));
+        let Arg::Eq(arg_cmp, _) = result else {
+            unreachable!()
         };
         assert_eq!(arg_cmp.id(), arg_cmp_mock_id);
 
-        ArgCmp::static_received()
-            .new_eq(print_arg, value, automock::Times::Once)
-            .no_other_calls();
+        ArgCmp::<T>::verify_static_calls();
+        format_debug_string::verify_calls::<T>();
     }
 
     #[test]
@@ -72,10 +72,7 @@ mod tests {
         let result = arg.into_arg(format_debug_string);
 
         // Assert
-        match result {
-            Arg::Any => (),
-            _ => panic!("Expected result to be `Arg::Any`, was instead: {result:?}"),
-        }
+        assert_matches!(result, Arg::Any);
     }
 
     #[test]
@@ -84,27 +81,27 @@ mod tests {
         type T = i32;
         let value: T = 5;
         let mut arg_cmp_mock = arg_cmp_mock::<T>();
-        arg_cmp_mock.setup().value().returns(&value);
-        let arg = Arg::Eq(arg_cmp_mock, Internal);
         let print_arg = "quo vadis".to_owned();
-        format_debug_string::setup::<T>(automock::Arg::Any).returns(print_arg.clone());
+        arg_cmp_mock
+            .setup()
+            .value()
+            .returns_once(&value)
+            .set_print_arg(print_arg.clone())
+            .expect_once();
+        let arg = Arg::Eq(arg_cmp_mock, Internal);
+        format_debug_string::setup::<T>(automock::Arg::ref_eq(&value))
+            .returns_once(print_arg.clone());
 
         // Act
         let result = arg.into_arg(format_debug_string);
 
         // Assert
-        let mut arg_cmp = match result {
-            Arg::Eq(arg_cmp, _) => arg_cmp,
-            _ => panic!("Expected result to be `Arg::Eq`, was instead: {result:?}"),
+        assert_matches!(result, Arg::Eq(_, _));
+        let Arg::Eq(mut arg_cmp, _) = result else {
+            unreachable!()
         };
-        arg_cmp
-            .received()
-            .value(automock::Times::Once)
-            .set_print_arg(print_arg, automock::Times::Once)
-            .no_other_calls();
-
-        format_debug_string::received(automock::Arg::ref_eq(&value), automock::Times::Once)
-            .no_other_calls();
+        arg_cmp.verify_calls();
+        format_debug_string::verify_calls::<T>();
     }
 
     #[test]
@@ -113,27 +110,27 @@ mod tests {
         type T = i32;
         let value: T = 5;
         let mut arg_cmp_mock = arg_cmp_mock::<T>();
-        arg_cmp_mock.setup().value().returns(&value);
-        let arg = Arg::NotEq(arg_cmp_mock, Internal);
         let print_arg = "quo vadis".to_owned();
-        format_debug_string::setup::<T>(automock::Arg::Any).returns(print_arg.clone());
+        arg_cmp_mock
+            .setup()
+            .value()
+            .returns_once(&value)
+            .set_print_arg(print_arg.clone())
+            .expect_once();
+        let arg = Arg::NotEq(arg_cmp_mock, Internal);
+        format_debug_string::setup::<T>(automock::Arg::ref_eq(&value))
+            .returns_once(print_arg.clone());
 
         // Act
         let result = arg.into_arg(format_debug_string);
 
         // Assert
-        let mut arg_cmp = match result {
-            Arg::NotEq(arg_cmp, _) => arg_cmp,
-            _ => panic!("Expected result to be `Arg::NotEq`, was instead: {result:?}"),
+        assert_matches!(result, Arg::NotEq(_, _));
+        let Arg::NotEq(mut arg_cmp, _) = result else {
+            unreachable!()
         };
-        arg_cmp
-            .received()
-            .value(automock::Times::Once)
-            .set_print_arg(print_arg, automock::Times::Once)
-            .no_other_calls();
-
-        format_debug_string::received(automock::Arg::ref_eq(&value), automock::Times::Once)
-            .no_other_calls();
+        arg_cmp.verify_calls();
+        format_debug_string::verify_calls::<T>();
     }
 
     #[test]
@@ -146,12 +143,9 @@ mod tests {
         let result = arg.into_arg(format_debug_string);
 
         // Assert
-        match result {
-            Arg::Is(_, _) => (),
-            _ => panic!("Expected result to be `Arg::Any`, was instead: {result:?}"),
-        }
+        assert_matches!(result, Arg::Is(_, _));
 
-        ptr_predicate::received_nothing();
+        ptr_predicate::verify_calls::<i32>();
     }
 
     #[automock::mock]

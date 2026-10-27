@@ -25,7 +25,7 @@ mod tests {
     #[test]
     fn DiffTraitSetup_work_DoesNotAffectAnotherModule() {
         // Arrange
-        a::TraitMock::static_setup().work().returns(10);
+        a::TraitMock::static_setup().work().returns_once(10);
 
         // Act
         let panic_message = record_panic(|| {

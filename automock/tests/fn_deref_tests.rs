@@ -47,7 +47,9 @@ mod tests {
             let [r1, r2, r3] = &v;
             let counter = Counter::new();
 
-            ref_test::setup(r1).does(move |_| counter.inc());
+            ref_test::setup(r1)
+                .expect(3.times())
+                .and_does(move |_| counter.inc());
 
             // Act 1
             ref_test(r2);
@@ -55,16 +57,13 @@ mod tests {
 
             // Assert 1
             assert_eq!(2, counter.get());
-            ref_test::received(r1, Times::Exactly(2))
-                .received(r2, Times::Exactly(2))
-                .received(r3, Times::Exactly(2));
 
             // Act 2
             ref_test(r1);
 
             // Assert 2
             assert_eq!(3, counter.get());
-            ref_test::received(r1, Times::Exactly(3)).no_other_calls();
+            ref_test::verify_calls();
         }
 
         #[test]
@@ -74,7 +73,13 @@ mod tests {
             let [r1, r2, r3] = &v;
             let counter = Counter::new();
 
-            ref_test::setup(Arg::ref_eq(r1)).does(move |_| counter.inc());
+            ref_test::setup(Arg::ref_eq(r1))
+                .expect_once()
+                .and_does(move |_| counter.inc())
+                .setup(Arg::ref_eq(r2))
+                .expect_once()
+                .setup(Arg::ref_eq(r3))
+                .expect_once();
 
             // Act 1
             ref_test(r2);
@@ -82,16 +87,13 @@ mod tests {
 
             // Assert 1
             assert_eq!(0, counter.get());
-            ref_test::received(Arg::ref_eq(r1), Times::Never)
-                .received(Arg::ref_eq(r2), Times::Once)
-                .received(Arg::ref_eq(r3), Times::Once);
 
             // Act 2
             ref_test(r1);
 
             // Assert 2
             assert_eq!(1, counter.get());
-            ref_test::received(Arg::ref_eq(r1), Times::Once).no_other_calls();
+            ref_test::verify_calls();
         }
     }
 
@@ -105,7 +107,9 @@ mod tests {
             let [r1, r2, r3] = v;
             let counter = Counter::new();
 
-            rc_test::setup(r1.clone()).does(move |_| counter.inc());
+            rc_test::setup(r1.clone())
+                .expect(3.times())
+                .and_does(move |_| counter.inc());
 
             // Act 1
             rc_test(r2.clone());
@@ -113,19 +117,13 @@ mod tests {
 
             // Assert 1
             assert_eq!(2, counter.get());
-            rc_test::received(r1.clone(), Times::Exactly(2))
-                .received(r2.clone(), Times::Exactly(2))
-                .received(r3.clone(), Times::Exactly(2));
 
             // Act 2
             rc_test(r1.clone());
 
             // Assert 2
             assert_eq!(3, counter.get());
-            rc_test::received(r1, Times::Exactly(3))
-                .received(r2, Times::Exactly(3))
-                .received(r3, Times::Exactly(3))
-                .no_other_calls();
+            rc_test::verify_calls();
         }
 
         #[test]
@@ -135,7 +133,13 @@ mod tests {
             let [r1, r2, r3] = v;
             let counter = Counter::new();
 
-            rc_test::setup(Arg::ref_eq(r1.clone())).does(move |_| counter.inc());
+            rc_test::setup(Arg::ref_eq(r1.clone()))
+                .expect_once()
+                .and_does(move |_| counter.inc())
+                .setup(Arg::ref_eq(r2.clone()))
+                .expect_once()
+                .setup(Arg::ref_eq(r3.clone()))
+                .expect_once();
 
             // Act 1
             rc_test(r2.clone());
@@ -143,16 +147,13 @@ mod tests {
 
             // Assert 1
             assert_eq!(0, counter.get());
-            rc_test::received(Arg::ref_eq(r1.clone()), Times::Never)
-                .received(Arg::ref_eq(r2), Times::Once)
-                .received(Arg::ref_eq(r3), Times::Once);
 
             // Act 2
             rc_test(r1.clone());
 
             // Assert 2
             assert_eq!(1, counter.get());
-            rc_test::received(Arg::ref_eq(r1), Times::Once).no_other_calls();
+            rc_test::verify_calls();
         }
     }
 
@@ -166,7 +167,9 @@ mod tests {
             let [r1, r2, r3] = v;
             let counter = Counter::new();
 
-            arc_test::setup(r1.clone()).does(move |_| counter.inc());
+            arc_test::setup(r1.clone())
+                .expect(3.times())
+                .and_does(move |_| counter.inc());
 
             // Act 1
             arc_test(r2.clone());
@@ -174,19 +177,13 @@ mod tests {
 
             // Assert 1
             assert_eq!(2, counter.get());
-            arc_test::received(r1.clone(), Times::Exactly(2))
-                .received(r2.clone(), Times::Exactly(2))
-                .received(r3.clone(), Times::Exactly(2));
 
             // Act 2
             arc_test(r1.clone());
 
             // Assert 2
             assert_eq!(3, counter.get());
-            arc_test::received(r1, Times::Exactly(3))
-                .received(r2, Times::Exactly(3))
-                .received(r3, Times::Exactly(3))
-                .no_other_calls();
+            arc_test::verify_calls();
         }
 
         #[test]
@@ -196,7 +193,13 @@ mod tests {
             let [r1, r2, r3] = v;
             let counter = Counter::new();
 
-            arc_test::setup(Arg::ref_eq(r1.clone())).does(move |_| counter.inc());
+            arc_test::setup(Arg::ref_eq(r1.clone()))
+                .expect_once()
+                .and_does(move |_| counter.inc())
+                .setup(Arg::ref_eq(r2.clone()))
+                .expect_once()
+                .setup(Arg::ref_eq(r3.clone()))
+                .expect_once();
 
             // Act 1
             arc_test(r2.clone());
@@ -204,16 +207,13 @@ mod tests {
 
             // Assert 1
             assert_eq!(0, counter.get());
-            arc_test::received(Arg::ref_eq(r1.clone()), Times::Never)
-                .received(Arg::ref_eq(r2), Times::Once)
-                .received(Arg::ref_eq(r3), Times::Once);
 
             // Act 2
             arc_test(r1.clone());
 
             // Assert 2
             assert_eq!(1, counter.get());
-            arc_test::received(Arg::ref_eq(r1), Times::Once).no_other_calls();
+            arc_test::verify_calls();
         }
     }
 
@@ -227,7 +227,9 @@ mod tests {
             let [r1, r2, r3] = v;
             let counter = Counter::new();
 
-            custom_test::setup(r1.clone()).does(move |_| counter.inc());
+            custom_test::setup(r1.clone())
+                .expect(3.times())
+                .and_does(move |_| counter.inc());
 
             // Act 1
             custom_test(r2.clone());
@@ -235,19 +237,13 @@ mod tests {
 
             // Assert 1
             assert_eq!(2, counter.get());
-            custom_test::received(r1.clone(), Times::Exactly(2))
-                .received(r2.clone(), Times::Exactly(2))
-                .received(r3.clone(), Times::Exactly(2));
 
             // Act 2
             custom_test(r1.clone());
 
             // Assert 2
             assert_eq!(3, counter.get());
-            custom_test::received(r1, Times::Exactly(3))
-                .received(r2, Times::Exactly(3))
-                .received(r3, Times::Exactly(3))
-                .no_other_calls();
+            custom_test::verify_calls();
         }
 
         #[test]
@@ -257,7 +253,13 @@ mod tests {
             let [r1, r2, r3] = v;
             let counter = Counter::new();
 
-            custom_test::setup(Arg::ref_eq(r1.clone())).does(move |_| counter.inc());
+            custom_test::setup(Arg::ref_eq(r1.clone()))
+                .expect_once()
+                .and_does(move |_| counter.inc())
+                .setup(Arg::ref_eq(r2.clone()))
+                .expect_once()
+                .setup(Arg::ref_eq(r3.clone()))
+                .expect_once();
 
             // Act 1
             custom_test(r2.clone());
@@ -265,16 +267,13 @@ mod tests {
 
             // Assert 1
             assert_eq!(0, counter.get());
-            custom_test::received(Arg::ref_eq(r1.clone()), Times::Never)
-                .received(Arg::ref_eq(r2), Times::Once)
-                .received(Arg::ref_eq(r3), Times::Once);
 
             // Act 2
             custom_test(r1.clone());
 
             // Assert 2
             assert_eq!(1, counter.get());
-            custom_test::received(Arg::ref_eq(r1), Times::Once).no_other_calls();
+            custom_test::verify_calls();
         }
     }
 }

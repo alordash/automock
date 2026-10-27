@@ -168,12 +168,14 @@ pub(crate) mod tests {
         let arg_cmp_mock_id = arg_cmp_mock.id();
         ArgCmp::<T>::static_setup()
             .new(
-                automock::Arg::Any,
-                automock::Arg::Any,
-                automock::Arg::Any,
-                automock::Arg::Any,
+                print_arg.clone(),
+                value,
+                automock::Arg::is(|comparator| {
+                    core::ptr::eq(*comparator as *const (), <T as PartialEq>::eq as *const ())
+                }),
+                automock::Arg::is(Option::<DerefInfo>::is_none),
             )
-            .returns(arg_cmp_mock)
+            .returns_once(arg_cmp_mock)
             .new_eq(automock::Arg::Any, automock::Arg::Any)
             .call_base();
 
@@ -183,19 +185,7 @@ pub(crate) mod tests {
         // Assert
         assert_eq!(result.id(), arg_cmp_mock_id);
 
-        ArgCmp::<T>::static_received()
-            .new(
-                print_arg,
-                value,
-                automock::Arg::is(|comparator| {
-                    core::ptr::eq(*comparator as *const (), <T as PartialEq>::eq as *const ())
-                }),
-                automock::Arg::is(|maybe_deref_info: &Option<DerefInfo>| {
-                    maybe_deref_info.is_none()
-                }),
-                automock::Times::Once,
-            )
-            .no_other_calls();
+        ArgCmp::<T>::verify_static_calls();
     }
 
     #[test]
@@ -209,18 +199,20 @@ pub(crate) mod tests {
         let deref_info_mock = deref_info_mock();
         DerefInfo::static_setup()
             .from_ref(automock::Arg::<&T>::Any)
-            .returns(deref_info_mock);
+            .returns_once(deref_info_mock);
 
         let arg_cmp_mock = arg_cmp_mock();
         let arg_cmp_mock_id = arg_cmp_mock.id();
         ArgCmp::<T>::static_setup()
             .new(
-                automock::Arg::Any,
-                automock::Arg::Any,
-                automock::Arg::Any,
-                automock::Arg::Any,
+                print_arg.clone(),
+                automock::Arg::ref_eq(value.clone()),
+                automock::Arg::is(|comparator| {
+                    core::ptr::eq(*comparator as *const (), ptr_cmp::<U, T> as *const ())
+                }),
+                automock::Arg::is(Option::<DerefInfo>::is_some),
             )
-            .returns(arg_cmp_mock)
+            .returns_once(arg_cmp_mock)
             .new_ref_eq(automock::Arg::Any, automock::Arg::Any)
             .call_base();
 
@@ -230,23 +222,8 @@ pub(crate) mod tests {
         // Assert
         assert_eq!(result.id(), arg_cmp_mock_id);
 
-        ArgCmp::<T>::static_received()
-            .new(
-                print_arg,
-                automock::Arg::ref_eq(value.clone()),
-                automock::Arg::is(|comparator| {
-                    core::ptr::eq(*comparator as *const (), ptr_cmp::<U, T> as *const ())
-                }),
-                automock::Arg::is(|maybe_deref_info: &Option<DerefInfo>| {
-                    maybe_deref_info.is_some()
-                }),
-                automock::Times::Once,
-            )
-            .no_other_calls();
-
-        DerefInfo::static_received()
-            .from_ref::<T, U>(automock::Arg::Any, automock::Times::Once)
-            .no_other_calls();
+        ArgCmp::<T>::verify_static_calls();
+        DerefInfo::verify_static_calls();
     }
 
     #[test]
@@ -330,19 +307,18 @@ pub(crate) mod tests {
             .call_base();
         let expected_result = false;
         let other = 10;
-        comparator::setup::<T>(automock::Arg::Any, automock::Arg::Any).returns(expected_result);
+        comparator::setup::<T>(
+            automock::Arg::ref_eq(arg_cmp.value.as_ref()),
+            automock::Arg::ref_eq(&other),
+        )
+        .returns_once(expected_result);
 
         // Act
         let result = arg_cmp.is_arg_equal_to(&other);
 
         // Assert
         assert_eq!(result, expected_result);
-        comparator::received::<T>(
-            automock::Arg::ref_eq(arg_cmp.value.as_ref()),
-            automock::Arg::ref_eq(&other),
-            automock::Times::Once,
-        )
-        .no_other_calls();
+        comparator::verify_calls::<T>();
     }
 
     #[test]
@@ -383,12 +359,13 @@ pub(crate) mod tests {
         let mut deref_info = deref_info_mock();
         let expected_ptr = 1234 as *const ();
         let actual_ptr = 5678 as *const ();
+        let actual_value: T = 5;
         deref_info
             .setup()
             .expected_value_deref_ptr()
-            .returns(expected_ptr)
-            .get_actual_value_deref_ptr::<T>(automock::Arg::Any)
-            .returns(actual_ptr);
+            .returns_once(expected_ptr)
+            .get_actual_value_deref_ptr::<T>(automock::Arg::ref_eq(&actual_value))
+            .returns_once(actual_ptr);
         let mut arg_cmp = ArgCmp {
             print_arg: "quo vadis".to_owned(),
             value: Box::new(1),
@@ -400,7 +377,6 @@ pub(crate) mod tests {
             .setup()
             .get_ptrs_info_suffix(automock::Arg::Any)
             .call_base();
-        let actual_value: T = 5;
 
         // Act
         let result = arg_cmp.get_ptrs_info_suffix(&actual_value);
@@ -417,11 +393,7 @@ pub(crate) mod tests {
             expected_actual_ptr_info_suffix
         );
 
-        deref_info
-            .received()
-            .expected_value_deref_ptr(automock::Times::Once)
-            .get_actual_value_deref_ptr(&actual_value, automock::Times::Once)
-            .no_other_calls();
+        deref_info.verify_calls();
     }
 
     pub mod utilities {

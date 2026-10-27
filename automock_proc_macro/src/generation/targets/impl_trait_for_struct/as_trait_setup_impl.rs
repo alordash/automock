@@ -1,5 +1,4 @@
 use crate::common::*;
-use crate::generation::mock_controls::models::*;
 use not_enough_syntax::*;
 use proc_macro2::Span;
 use quote::format_ident;
@@ -13,7 +12,6 @@ pub(crate) struct Params<'a> {
     pub trait_ident: &'a Ident,
     pub trait_generics: Generics,
     pub maybe_common_where_clause: Option<WhereClause>,
-    pub control_type: ControlType,
     pub is_static: bool,
 }
 pub(crate) fn generate(
@@ -26,18 +24,10 @@ pub(crate) fn generate(
         trait_ident,
         mut trait_generics,
         maybe_common_where_clause,
-        control_type,
         is_static,
     }: Params,
 ) -> ItemImpl {
-    let mut control_struct_ident_suffix = match control_type {
-        ControlType::Setup => "Setup",
-        ControlType::Received => "Received",
-    }
-    .to_string();
-    if is_static {
-        control_struct_ident_suffix = format!("Static{control_struct_ident_suffix}")
-    };
+    let control_struct_ident_suffix = if is_static { "StaticSetup" } else { "Setup" };
     let self_ty_path = TypePath {
         attrs: Vec::new(),
         qself: None,

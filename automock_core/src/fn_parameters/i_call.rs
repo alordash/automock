@@ -1,5 +1,6 @@
 use crate::args::*;
 use crate::fn_parameters::*;
+use crate::infrastructure::*;
 
 pub trait ICall: IGenericsInfoProvider {
     fn is_zst(&self) -> bool {
@@ -63,12 +64,12 @@ pub(crate) mod tests {
     fn get_dyn_tuple_of_refs_IsZst_ReturnsZeroSize() {
         // Arrange
         let mut call = IsZstCall::new();
-        call.setup().as_ICall().is_zst().returns(true);
+        call.setup().as_ICall().is_zst().returns_once(true);
         let dyn_arg_refs_tuple = dyn_arg_refs_tuple_mock();
         let dyn_arg_refs_tuple_id = dyn_arg_refs_tuple.id();
         DynArgRefsTuple::static_setup()
             .zero_size()
-            .returns(dyn_arg_refs_tuple);
+            .returns_once(dyn_arg_refs_tuple);
 
         // Act
         let result = call.get_dyn_tuple_of_refs();
@@ -76,13 +77,8 @@ pub(crate) mod tests {
         // Assert
         assert_eq!(result.id(), dyn_arg_refs_tuple_id);
 
-        DynArgRefsTuple::static_received()
-            .zero_size(automock::Times::Once)
-            .no_other_calls();
-        call.received()
-            .as_ICall()
-            .is_zst(automock::Times::Once)
-            .no_other_calls();
+        DynArgRefsTuple::verify_static_calls();
+        call.verify_calls();
     }
 
     #[test]
@@ -93,14 +89,18 @@ pub(crate) mod tests {
         call.setup()
             .as_ICall()
             .is_zst()
-            .returns(false)
+            .returns_once(false)
             .get_ptr_to_boxed_tuple_of_refs()
-            .returns(raw_ptr);
+            .returns_once(raw_ptr);
         let dyn_arg_refs_tuple = dyn_arg_refs_tuple_mock();
         let dyn_arg_refs_tuple_id = dyn_arg_refs_tuple.id();
         DynArgRefsTuple::static_setup()
-            .from_raw(automock::Arg::Any)
-            .returns(dyn_arg_refs_tuple);
+            .from_raw(automock::Arg::is(
+                |actual_raw_ptr: &*mut (dyn IArgRefsTuple + '_)| {
+                    actual_raw_ptr.addr() == raw_ptr.addr()
+                },
+            ))
+            .returns_once(dyn_arg_refs_tuple);
 
         // Act
         let result = call.get_dyn_tuple_of_refs();
@@ -108,19 +108,8 @@ pub(crate) mod tests {
         // Assert
         assert_eq!(result.id(), dyn_arg_refs_tuple_id);
 
-        DynArgRefsTuple::static_received()
-            .from_raw(
-                automock::Arg::is(|actual_raw_ptr: &*mut (dyn IArgRefsTuple + '_)| {
-                    actual_raw_ptr.addr() == raw_ptr.addr()
-                }),
-                automock::Times::Once,
-            )
-            .no_other_calls();
-        call.received()
-            .as_ICall()
-            .is_zst(automock::Times::Once)
-            .get_ptr_to_boxed_tuple_of_refs(automock::Times::Once)
-            .no_other_calls();
+        DynArgRefsTuple::verify_static_calls();
+        call.verify_calls();
     }
 
     pub mod utilities {

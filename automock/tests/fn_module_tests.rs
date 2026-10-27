@@ -25,7 +25,7 @@ mod tests {
     #[test]
     fn SameNameSetupInOneModule_work_DoesNotAffectAnotherModule() {
         // Arrange
-        a::work::setup().returns(10);
+        a::work::setup().returns_once(10);
 
         // Act
         let panic_message = record_panic(b::work);

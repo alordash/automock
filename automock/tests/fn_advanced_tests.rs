@@ -54,11 +54,11 @@ mod tests {
         {
             let r2 = &v2;
 
-            accept_ref::setup(r1).returns(r2);
+            accept_ref::setup(r1).returns_once(r2);
 
             accept_ref(r1);
 
-            accept_ref::received(r1, Times::Once).no_other_calls();
+            accept_ref::verify_calls();
         }
     }
 
@@ -69,13 +69,12 @@ mod tests {
         {
             let v2 = 23;
             let r2 = &&&&v2;
-            accept_many_ref::setup(r2, Arg::Any).returns(r1);
+            accept_many_ref::setup(r2, &()).returns_once(r1);
 
             let r = accept_many_ref(r2, &());
 
             assert_eq!(r1, r);
-
-            accept_many_ref::received(r2, Arg::Any, Times::Once).no_other_calls();
+            accept_many_ref::verify_calls();
         }
     }
 }

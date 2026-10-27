@@ -102,30 +102,24 @@ mod tests {
         fn accept_ref_DidNotReceive_Ok() {
             // Arrange
             let r = &&&5;
-            let r_ptr = core::ptr::from_ref(r);
             let return_value = 175;
             let unexpected_r = &&&14;
-            let unexpected_r_ptr = core::ptr::from_ref(unexpected_r);
 
-            accept_ref::setup(r).returns(return_value);
+            accept_ref::setup(r)
+                .returns_once(return_value)
+                .setup(unexpected_r)
+                .returns_once(return_value);
 
             // Act
             let actual_return_value = accept_ref(r);
-            let panic_msg =
-                record_panic(|| accept_ref::received(Arg::ref_eq(unexpected_r), Times::Once));
+            let panic_msg = record_panic(accept_ref::verify_calls);
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	accept_ref((&&&i32): equal to {unexpected_r})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_ref(*{r}*)
-	1. r (&&&i32):
-		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r}
-		Actual   (ptr: {r_ptr:?}): {r}"
+                "Expected following calls:
+	accept_ref(&&&i32 == {unexpected_r}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -135,21 +129,25 @@ accept_ref(*{r}*)
             // Arrange
             let r = &&&5;
             let return_value = 175;
+            let unexpected_r = &&&14;
 
-            accept_ref::setup(r).returns(return_value);
+            accept_ref::setup(r).returns_once(return_value);
 
             // Act
+            let panic_msg = record_panic(|| accept_ref(unexpected_r));
             let actual_return_value = accept_ref(r);
-            let panic_msg = record_panic(accept_ref::received_nothing);
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Did not expect to receive any other calls. Received 1 unexpected call:
-1. accept_ref({r})"
+                "Mock wasn't configured to handle following call:
+	accept_ref({unexpected_r})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_ref(*{unexpected_r}*)"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            accept_ref::verify_calls();
         }
 
         #[test]
@@ -172,30 +170,24 @@ accept_ref(*{r}*)
         fn accept_ref_ptr_DidNotReceive_Ok() {
             // Arrange
             let r = &&(&&&5 as *const &&i32);
-            let r_ptr = core::ptr::from_ref(r);
             let return_value = 175;
             let unexpected_r = &&(&&&14 as *const &&i32);
-            let unexpected_r_ptr = core::ptr::from_ref(unexpected_r);
 
-            accept_ref_ptr::setup(r).returns(return_value);
+            accept_ref_ptr::setup(r)
+                .returns_once(return_value)
+                .setup(unexpected_r)
+                .returns_once(return_value);
 
             // Act
             let actual_return_value = accept_ref_ptr(r);
-            let panic_msg =
-                record_panic(|| accept_ref_ptr::received(Arg::ref_eq(unexpected_r), Times::Once));
+            let panic_msg = record_panic(accept_ref_ptr::verify_calls);
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	accept_ref_ptr((&&*const &&i32): equal to {unexpected_r:?})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_ref_ptr(*{r:?}*)
-	1. r (&&*const &&i32):
-		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
-		Actual   (ptr: {r_ptr:?}): {r:?}"
+                "Expected following calls:
+	accept_ref_ptr(&&*const &&i32 == {unexpected_r:?}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -205,21 +197,25 @@ accept_ref_ptr(*{r:?}*)
             // Arrange
             let r = &&(&&&5 as *const &&i32);
             let return_value = 175;
+            let unexpected_r = &&(&&&14 as *const &&i32);
 
-            accept_ref_ptr::setup(r).returns(return_value);
+            accept_ref_ptr::setup(r).returns_once(return_value);
 
             // Act
+            let panic_msg = record_panic(|| accept_ref_ptr(unexpected_r));
             let actual_return_value = accept_ref_ptr(r);
-            let panic_msg = record_panic(accept_ref_ptr::received_nothing);
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Did not expect to receive any other calls. Received 1 unexpected call:
-1. accept_ref_ptr({r:?})"
+                "Mock wasn't configured to handle following call:
+	accept_ref_ptr({unexpected_r:?})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_ref_ptr(*{unexpected_r:?}*)"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            accept_ref_ptr::verify_calls();
         }
 
         #[test]
@@ -254,28 +250,21 @@ accept_ref_ptr(*{r:?}*)
             let return_value: T2 = 64.0f64;
             let unexpected_t1: T1 = 235;
 
-            generic::setup(t1).returns(return_value);
+            generic::setup(t1)
+                .returns_once(return_value)
+                .setup(unexpected_t1)
+                .returns_once(return_value);
 
             // Act
             let actual_return_value: T2 = generic(t1);
-            let panic_msg =
-                record_panic(|| generic::received::<T1, T2>(unexpected_t1, Times::Once));
+            let panic_msg = record_panic(generic::verify_calls::<T1, T2>);
 
             // Assert
             assert_eq!(return_value, actual_return_value);
-            let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
-            let arg_debug_string =
-                common::debug_string(format!("({t1_name}): equal to {unexpected_t1}"));
-            let t1_debug_string = common::debug_string(t1.to_string());
+            let arg_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	generic<{t1_name}, {t2_name}>({arg_debug_string})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-generic(*{t1_debug_string}*)
-	1. t1 ({t1_name}):
-		Expected: {unexpected_t1_debug_string}
-		Actual:   {t1_debug_string}"
+                "Expected following calls:
+	generic<{t1_name}, {t2_name}>({arg_debug_string}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -292,25 +281,24 @@ generic(*{t1_debug_string}*)
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t3: T3 = 11;
+            let unexpected_return_value: T4 = "unexpected".to_owned();
 
-            generic::setup(t1).returns(return_value);
+            generic::setup(t1).returns_once(return_value);
+            generic::setup::<T3, T4>(unexpected_t3).returns_once(unexpected_return_value);
 
             // Act
             let actual_return_value: T2 = generic(t1);
-            let panic_msg =
-                record_panic(|| generic::received::<T3, T4>(unexpected_t3, Times::Once));
+            let panic_msg = record_panic(generic::verify_calls::<T3, T4>);
 
             // Assert
             assert_eq!(return_value, actual_return_value);
-            let arg_debug_string =
-                common::debug_string(format!("({t3_name}): equal to {unexpected_t3}"));
+            let arg_debug_string = common::debug_string(unexpected_t3.to_string());
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	generic<{t3_name}, {t4_name}>({arg_debug_string})
-Actually received no matching calls
-Received no non-matching calls"
+                "Expected following calls:
+	generic<{t3_name}, {t4_name}>({arg_debug_string}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            generic::verify_calls::<T1, T2>();
         }
 
         #[test]
@@ -322,22 +310,26 @@ Received no non-matching calls"
             let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
+            let unexpected_t1: T1 = 235;
 
-            generic::setup(t1).returns(return_value);
+            generic::setup(t1).returns_once(return_value);
 
             // Act
+            let panic_msg = record_panic(|| generic::<T1, T2>(unexpected_t1));
             let actual_return_value = generic(t1);
-            let panic_msg = record_panic(generic::received_nothing::<T1, T2>);
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
-            let t1_debug_string = common::debug_string(t1.to_string());
+            let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
-                "Did not expect to receive any other calls. Received 1 unexpected call:
-1. generic<{t1_name}, {t2_name}>({t1_debug_string})"
+                "Mock wasn't configured to handle following call:
+	generic<{t1_name}, {t2_name}>({unexpected_t1_debug_string})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: generic(*{unexpected_t1_debug_string}*)"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            generic::verify_calls::<T1, T2>();
         }
     }
 
@@ -355,9 +347,10 @@ Received no non-matching calls"
             let panic_msg = record_panic(|| mock.accept_ref(r));
 
             // Assert
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Trait::accept_ref({r})"
+	Trait<{t0_name}>::accept_ref({r})"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -368,32 +361,25 @@ Received no non-matching calls"
             let mut mock = TraitMock::<T0>::new();
 
             let r = &&&5;
-            let r_ptr = core::ptr::from_ref(r);
             let return_value = 175;
             let unexpected_r = &&&14;
-            let unexpected_r_ptr = core::ptr::from_ref(unexpected_r);
 
-            mock.setup().accept_ref(r).returns(return_value);
+            mock.setup().accept_ref(r).returns_once(return_value);
+            mock.setup()
+                .accept_ref(unexpected_r)
+                .returns_once(return_value);
 
             // Act
             let actual_return_value = mock.accept_ref(r);
-            let panic_msg = record_panic(|| {
-                mock.received()
-                    .accept_ref(Arg::ref_eq(unexpected_r), Times::Once)
-            });
+            let panic_msg = record_panic(|| mock.verify_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	Trait::accept_ref((&&&i32): equal to {unexpected_r})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_ref(*{r}*)
-	1. r (&&&i32):
-		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r}
-		Actual   (ptr: {r_ptr:?}): {r}"
+                "Expected following calls:
+	Trait<{t0_name}>::accept_ref(&&&i32 == {unexpected_r}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -405,21 +391,26 @@ accept_ref(*{r}*)
 
             let r = &&&5;
             let return_value = 175;
+            let unexpected_r = &&&14;
 
-            mock.setup().accept_ref(r).returns(return_value);
+            mock.setup().accept_ref(r).returns_once(return_value);
 
             // Act
+            let panic_msg = record_panic(|| mock.accept_ref(unexpected_r));
             let actual_return_value = mock.accept_ref(r);
-            let panic_msg = record_panic(|| mock.received().no_other_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
-                "Did not expect to receive any other calls. Received 1 unexpected call:
-1. Trait::accept_ref({r})"
+                "Mock wasn't configured to handle following call:
+	Trait<{t0_name}>::accept_ref({unexpected_r})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_ref(*{unexpected_r}*)"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            mock.verify_calls();
         }
 
         #[test]
@@ -433,9 +424,10 @@ accept_ref(*{r}*)
             let panic_msg = record_panic(|| mock.accept_ref_ptr(r));
 
             // Assert
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Trait::accept_ref_ptr({r:?})"
+	Trait<{t0_name}>::accept_ref_ptr({r:?})"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -446,32 +438,25 @@ accept_ref(*{r}*)
             let mut mock = TraitMock::<T0>::new();
 
             let r = &&(&&&5 as *const &&i32);
-            let r_ptr = core::ptr::from_ref(r);
             let return_value = 175;
             let unexpected_r = &&(&&&14 as *const &&i32);
-            let unexpected_r_ptr = core::ptr::from_ref(unexpected_r);
 
-            mock.setup().accept_ref_ptr(r).returns(return_value);
+            mock.setup().accept_ref_ptr(r).returns_once(return_value);
+            mock.setup()
+                .accept_ref_ptr(unexpected_r)
+                .returns_once(return_value);
 
             // Act
             let actual_return_value = mock.accept_ref_ptr(r);
-            let panic_msg = record_panic(|| {
-                mock.received()
-                    .accept_ref_ptr(Arg::ref_eq(unexpected_r), Times::Once)
-            });
+            let panic_msg = record_panic(|| mock.verify_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	Trait::accept_ref_ptr((&&*const &&i32): equal to {unexpected_r:?})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_ref_ptr(*{r:?}*)
-	1. r (&&*const &&i32):
-		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
-		Actual   (ptr: {r_ptr:?}): {r:?}"
+                "Expected following calls:
+	Trait<{t0_name}>::accept_ref_ptr(&&*const &&i32 == {unexpected_r:?}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -483,21 +468,26 @@ accept_ref_ptr(*{r:?}*)
 
             let r = &&(&&&5 as *const &&i32);
             let return_value = 175;
+            let unexpected_r = &&(&&&14 as *const &&i32);
 
-            mock.setup().accept_ref_ptr(r).returns(return_value);
+            mock.setup().accept_ref_ptr(r).returns_once(return_value);
 
             // Act
+            let panic_msg = record_panic(|| mock.accept_ref_ptr(unexpected_r));
             let actual_return_value = mock.accept_ref_ptr(r);
-            let panic_msg = record_panic(|| mock.received().no_other_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
-                "Did not expect to receive any other calls. Received 1 unexpected call:
-1. Trait::accept_ref_ptr({r:?})"
+                "Mock wasn't configured to handle following call:
+	Trait<{t0_name}>::accept_ref_ptr({unexpected_r:?})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_ref_ptr(*{unexpected_r:?}*)"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            mock.verify_calls();
         }
 
         #[test]
@@ -506,6 +496,7 @@ accept_ref_ptr(*{r:?}*)
             let mock = TraitMock::<T0>::new();
             type T1 = i32;
             type T2 = f64;
+            let t0_name = core::any::type_name::<T0>();
             let t1_name = core::any::type_name::<T1>();
             let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
@@ -517,7 +508,7 @@ accept_ref_ptr(*{r:?}*)
             let t1_debug_string = common::debug_string(t1.to_string());
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Trait::generic<{t1_name}, {t2_name}>({t1_debug_string})",
+	Trait<{t0_name}>::generic<{t1_name}, {t2_name}>({t1_debug_string})",
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -528,36 +519,28 @@ accept_ref_ptr(*{r:?}*)
             let mut mock = TraitMock::<T0>::new();
             type T1 = i32;
             type T2 = f64;
+            let t0_name = core::any::type_name::<T0>();
             let t1_name = core::any::type_name::<T1>();
             let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t1: T1 = 235;
 
-            mock.setup().generic(t1).returns(return_value);
+            mock.setup().generic(t1).returns_once(return_value);
+            mock.setup()
+                .generic(unexpected_t1)
+                .returns_once(return_value);
 
             // Act
             let actual_return_value: T2 = mock.generic(t1);
-            let panic_msg = record_panic(|| {
-                mock.received()
-                    .generic::<T1, T2>(unexpected_t1, Times::Once)
-            });
+            let panic_msg = record_panic(|| mock.verify_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
-            let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
-            let arg_debug_string =
-                common::debug_string(format!("({t1_name}): equal to {unexpected_t1}"));
-            let t1_debug_string = common::debug_string(t1.to_string());
+            let arg_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	Trait::generic<{t1_name}, {t2_name}>({arg_debug_string})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-generic(*{t1_debug_string}*)
-	1. t1 ({t1_name}):
-		Expected: {unexpected_t1_debug_string}
-		Actual:   {t1_debug_string}"
+                "Expected following calls:
+	Trait<{t0_name}>::generic<{t1_name}, {t2_name}>({arg_debug_string}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -570,30 +553,29 @@ generic(*{t1_debug_string}*)
             type T2 = f64;
             type T3 = usize;
             type T4 = String;
+            let t0_name = core::any::type_name::<T0>();
             let t3_name = core::any::type_name::<T3>();
             let t4_name = core::any::type_name::<T4>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t3: T3 = 11;
+            let unexpected_return_value: T4 = "unexpected".to_owned();
 
-            mock.setup().generic(t1).returns(return_value);
+            mock.setup().generic(t1).returns_once(return_value);
+            mock.setup()
+                .generic::<T3, T4>(unexpected_t3)
+                .returns_once(unexpected_return_value);
 
             // Act
             let actual_return_value: T2 = mock.generic(t1);
-            let panic_msg = record_panic(|| {
-                mock.received()
-                    .generic::<T3, T4>(unexpected_t3, Times::Once)
-            });
+            let panic_msg = record_panic(|| mock.verify_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
-            let arg_debug_string =
-                common::debug_string(format!("({t3_name}): equal to {unexpected_t3}"));
+            let arg_debug_string = common::debug_string(unexpected_t3.to_string());
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	Trait::generic<{t3_name}, {t4_name}>({arg_debug_string})
-Actually received no matching calls
-Received no non-matching calls"
+                "Expected following calls:
+	Trait<{t0_name}>::generic<{t3_name}, {t4_name}>({arg_debug_string}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -604,25 +586,30 @@ Received no non-matching calls"
             let mut mock = TraitMock::<T0>::new();
             type T1 = i32;
             type T2 = f64;
+            let t0_name = core::any::type_name::<T0>();
             let t1_name = core::any::type_name::<T1>();
             let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
+            let unexpected_t1: T1 = 235;
 
-            mock.setup().generic(t1).returns(return_value);
+            mock.setup().generic(t1).returns_once(return_value);
 
             // Act
+            let panic_msg = record_panic(|| mock.generic::<T1, T2>(unexpected_t1));
             let actual_return_value = mock.generic(t1);
-            let panic_msg = record_panic(|| mock.received().no_other_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
-            let t1_debug_string = common::debug_string(t1.to_string());
+            let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
-                "Did not expect to receive any other calls. Received 1 unexpected call:
-1. Trait::generic<{t1_name}, {t2_name}>({t1_debug_string})"
+                "Mock wasn't configured to handle following call:
+	Trait<{t0_name}>::generic<{t1_name}, {t2_name}>({unexpected_t1_debug_string})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: generic(*{unexpected_t1_debug_string}*)"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            mock.verify_calls();
         }
     }
 
@@ -641,9 +628,10 @@ Received no non-matching calls"
             let panic_msg = record_panic(|| mock.accept_ref(r));
 
             // Assert
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Struct::accept_ref({r})"
+	Struct<{t0_name}>::accept_ref({r})"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -655,32 +643,25 @@ Received no non-matching calls"
             let mut mock = Struct::<T0>::new();
 
             let r = &&&5;
-            let r_ptr = core::ptr::from_ref(r);
             let return_value = 175;
             let unexpected_r = &&&14;
-            let unexpected_r_ptr = core::ptr::from_ref(unexpected_r);
 
-            mock.setup().accept_ref(r).returns(return_value);
+            mock.setup().accept_ref(r).returns_once(return_value);
+            mock.setup()
+                .accept_ref(unexpected_r)
+                .returns_once(return_value);
 
             // Act
             let actual_return_value = mock.accept_ref(r);
-            let panic_msg = record_panic(|| {
-                mock.received()
-                    .accept_ref(Arg::ref_eq(unexpected_r), Times::Once)
-            });
+            let panic_msg = record_panic(|| mock.verify_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	Struct::accept_ref((&&&i32): equal to {unexpected_r})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_ref(*{r}*)
-	1. _r (&&&i32):
-		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r}
-		Actual   (ptr: {r_ptr:?}): {r}"
+                "Expected following calls:
+	Struct<{t0_name}>::accept_ref(&&&i32 == {unexpected_r}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -693,21 +674,26 @@ accept_ref(*{r}*)
 
             let r = &&&5;
             let return_value = 175;
+            let unexpected_r = &&&14;
 
-            mock.setup().accept_ref(r).returns(return_value);
+            mock.setup().accept_ref(r).returns_once(return_value);
 
             // Act
+            let panic_msg = record_panic(|| mock.accept_ref(unexpected_r));
             let actual_return_value = mock.accept_ref(r);
-            let panic_msg = record_panic(|| mock.received().no_other_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
-                "Did not expect to receive any other calls. Received 1 unexpected call:
-1. Struct::accept_ref({r})"
+                "Mock wasn't configured to handle following call:
+	Struct<{t0_name}>::accept_ref({unexpected_r})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_ref(*{unexpected_r}*)"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            mock.verify_calls();
         }
 
         #[test]
@@ -722,9 +708,10 @@ accept_ref(*{r}*)
             let panic_msg = record_panic(|| mock.accept_ref_ptr(r));
 
             // Assert
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Struct::accept_ref_ptr({r:?})"
+	Struct<{t0_name}>::accept_ref_ptr({r:?})"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -736,32 +723,25 @@ accept_ref(*{r}*)
             let mut mock = Struct::<T0>::new();
 
             let r = &&(&&&5 as *const &&i32);
-            let r_ptr = core::ptr::from_ref(r);
             let return_value = 175;
             let unexpected_r = &&(&&&14 as *const &&i32);
-            let unexpected_r_ptr = core::ptr::from_ref(unexpected_r);
 
-            mock.setup().accept_ref_ptr(r).returns(return_value);
+            mock.setup().accept_ref_ptr(r).returns_once(return_value);
+            mock.setup()
+                .accept_ref_ptr(unexpected_r)
+                .returns_once(return_value);
 
             // Act
             let actual_return_value = mock.accept_ref_ptr(r);
-            let panic_msg = record_panic(|| {
-                mock.received()
-                    .accept_ref_ptr(Arg::ref_eq(unexpected_r), Times::Once)
-            });
+            let panic_msg = record_panic(|| mock.verify_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	Struct::accept_ref_ptr((&&*const &&i32): equal to {unexpected_r:?})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_ref_ptr(*{r:?}*)
-	1. _r (&&*const &&i32):
-		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
-		Actual   (ptr: {r_ptr:?}): {r:?}"
+                "Expected following calls:
+	Struct<{t0_name}>::accept_ref_ptr(&&*const &&i32 == {unexpected_r:?}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -774,21 +754,26 @@ accept_ref_ptr(*{r:?}*)
 
             let r = &&(&&&5 as *const &&i32);
             let return_value = 175;
+            let unexpected_r = &&(&&&14 as *const &&i32);
 
-            mock.setup().accept_ref_ptr(r).returns(return_value);
+            mock.setup().accept_ref_ptr(r).returns_once(return_value);
 
             // Act
+            let panic_msg = record_panic(|| mock.accept_ref_ptr(unexpected_r));
             let actual_return_value = mock.accept_ref_ptr(r);
-            let panic_msg = record_panic(|| mock.received().no_other_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
+            let t0_name = core::any::type_name::<T0>();
             let expected_panic_msg = format!(
-                "Did not expect to receive any other calls. Received 1 unexpected call:
-1. Struct::accept_ref_ptr({r:?})"
+                "Mock wasn't configured to handle following call:
+	Struct<{t0_name}>::accept_ref_ptr({unexpected_r:?})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_ref_ptr(*{unexpected_r:?}*)"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            mock.verify_calls();
         }
 
         #[test]
@@ -798,6 +783,7 @@ accept_ref_ptr(*{r:?}*)
             let mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
+            let t0_name = core::any::type_name::<T0>();
             let t1_name = core::any::type_name::<T1>();
             let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
@@ -809,7 +795,7 @@ accept_ref_ptr(*{r:?}*)
             let t1_debug_string = common::debug_string(t1.to_string());
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	Struct::generic<{t1_name}, {t2_name}>({t1_debug_string})",
+	Struct<{t0_name}>::generic<{t1_name}, {t2_name}>({t1_debug_string})",
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -821,36 +807,28 @@ accept_ref_ptr(*{r:?}*)
             let mut mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
+            let t0_name = core::any::type_name::<T0>();
             let t1_name = core::any::type_name::<T1>();
             let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t1: T1 = 235;
 
-            mock.setup().generic(t1).returns(return_value);
+            mock.setup().generic(t1).returns_once(return_value);
+            mock.setup()
+                .generic(unexpected_t1)
+                .returns_once(return_value);
 
             // Act
             let actual_return_value: T2 = mock.generic(t1);
-            let panic_msg = record_panic(|| {
-                mock.received()
-                    .generic::<T1, T2>(unexpected_t1, Times::Once)
-            });
+            let panic_msg = record_panic(|| mock.verify_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
-            let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
-            let arg_debug_string =
-                common::debug_string(format!("({t1_name}): equal to {unexpected_t1}"));
-            let t1_debug_string = common::debug_string(t1.to_string());
+            let arg_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	Struct::generic<{t1_name}, {t2_name}>({arg_debug_string})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-generic(*{t1_debug_string}*)
-	1. _t1 ({t1_name}):
-		Expected: {unexpected_t1_debug_string}
-		Actual:   {t1_debug_string}"
+                "Expected following calls:
+	Struct<{t0_name}>::generic<{t1_name}, {t2_name}>({arg_debug_string}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -864,30 +842,29 @@ generic(*{t1_debug_string}*)
             type T2 = f64;
             type T3 = usize;
             type T4 = String;
+            let t0_name = core::any::type_name::<T0>();
             let t3_name = core::any::type_name::<T3>();
             let t4_name = core::any::type_name::<T4>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t3: T3 = 11;
+            let unexpected_return_value: T4 = "unexpected".to_owned();
 
-            mock.setup().generic(t1).returns(return_value);
+            mock.setup().generic(t1).returns_once(return_value);
+            mock.setup()
+                .generic::<T3, T4>(unexpected_t3)
+                .returns_once(unexpected_return_value);
 
             // Act
             let actual_return_value: T2 = mock.generic(t1);
-            let panic_msg = record_panic(|| {
-                mock.received()
-                    .generic::<T3, T4>(unexpected_t3, Times::Once)
-            });
+            let panic_msg = record_panic(|| mock.verify_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
-            let arg_debug_string =
-                common::debug_string(format!("({t3_name}): equal to {unexpected_t3}"));
+            let arg_debug_string = common::debug_string(unexpected_t3.to_string());
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	Struct::generic<{t3_name}, {t4_name}>({arg_debug_string})
-Actually received no matching calls
-Received no non-matching calls"
+                "Expected following calls:
+	Struct<{t0_name}>::generic<{t3_name}, {t4_name}>({arg_debug_string}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -899,25 +876,30 @@ Received no non-matching calls"
             let mut mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
+            let t0_name = core::any::type_name::<T0>();
             let t1_name = core::any::type_name::<T1>();
             let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
+            let unexpected_t1: T1 = 235;
 
-            mock.setup().generic(t1).returns(return_value);
+            mock.setup().generic(t1).returns_once(return_value);
 
             // Act
+            let panic_msg = record_panic(|| mock.generic::<T1, T2>(unexpected_t1));
             let actual_return_value = mock.generic(t1);
-            let panic_msg = record_panic(|| mock.received().no_other_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
-            let t1_debug_string = common::debug_string(t1.to_string());
+            let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
-                "Did not expect to receive any other calls. Received 1 unexpected call:
-1. Struct::generic<{t1_name}, {t2_name}>({t1_debug_string})"
+                "Mock wasn't configured to handle following call:
+	Struct<{t0_name}>::generic<{t1_name}, {t2_name}>({unexpected_t1_debug_string})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: generic(*{unexpected_t1_debug_string}*)"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            mock.verify_calls();
         }
     }
 
@@ -938,7 +920,7 @@ Received no non-matching calls"
             // Assert
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	<Struct as Trait>::accept_ref({r})"
+	<Struct<[u8; 3]> as Trait<alloc::string::String>>::accept_ref({r})"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -950,33 +932,28 @@ Received no non-matching calls"
             let mut mock = Struct::<T0>::new();
 
             let r = &&&5;
-            let r_ptr = core::ptr::from_ref(r);
             let return_value = 175;
             let unexpected_r = &&&14;
-            let unexpected_r_ptr = core::ptr::from_ref(unexpected_r);
 
-            mock.setup().as_Trait().accept_ref(r).returns(return_value);
+            mock.setup()
+                .as_Trait()
+                .accept_ref(r)
+                .returns_once(return_value);
+            mock.setup()
+                .as_Trait()
+                .accept_ref(unexpected_r)
+                .returns_once(return_value);
 
             // Act
             let actual_return_value = Trait::accept_ref(&mock, r);
-            let panic_msg = record_panic(|| {
-                mock.received()
-                    .as_Trait()
-                    .accept_ref(Arg::ref_eq(unexpected_r), Times::Once)
-            });
+            let panic_msg = record_panic(|| mock.verify_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	<Struct as Trait>::accept_ref((&&&i32): equal to {unexpected_r})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_ref(*{r}*)
-	1. r (&&&i32):
-		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r}
-		Actual   (ptr: {r_ptr:?}): {r}"
+                "Expected following calls:
+	<Struct<[u8; 3]> as Trait<alloc::string::String>>::accept_ref(&&&i32 == {unexpected_r}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -989,21 +966,28 @@ accept_ref(*{r}*)
 
             let r = &&&5;
             let return_value = 175;
+            let unexpected_r = &&&14;
 
-            mock.setup().as_Trait().accept_ref(r).returns(return_value);
+            mock.setup()
+                .as_Trait()
+                .accept_ref(r)
+                .returns_once(return_value);
 
             // Act
+            let panic_msg = record_panic(|| Trait::accept_ref(&mock, unexpected_r));
             let actual_return_value = Trait::accept_ref(&mock, r);
-            let panic_msg = record_panic(|| mock.received().as_Trait().no_other_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Did not expect to receive any other calls. Received 1 unexpected call:
-1. <Struct as Trait>::accept_ref({r})"
+                "Mock wasn't configured to handle following call:
+	<Struct<[u8; 3]> as Trait<alloc::string::String>>::accept_ref({unexpected_r})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_ref(*{unexpected_r}*)"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            mock.verify_calls();
         }
 
         #[test]
@@ -1020,7 +1004,7 @@ accept_ref(*{r}*)
             // Assert
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	<Struct as Trait>::accept_ref_ptr({r:?})"
+	<Struct<[u8; 3]> as Trait<alloc::string::String>>::accept_ref_ptr({r:?})"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -1032,36 +1016,28 @@ accept_ref(*{r}*)
             let mut mock = Struct::<T0>::new();
 
             let r = &&(&&&5 as *const &&i32);
-            let r_ptr = core::ptr::from_ref(r);
             let return_value = 175;
             let unexpected_r = &&(&&&14 as *const &&i32);
-            let unexpected_r_ptr = core::ptr::from_ref(unexpected_r);
 
             mock.setup()
                 .as_Trait()
                 .accept_ref_ptr(r)
-                .returns(return_value);
+                .returns_once(return_value);
+            mock.setup()
+                .as_Trait()
+                .accept_ref_ptr(unexpected_r)
+                .returns_once(return_value);
 
             // Act
             let actual_return_value = Trait::accept_ref_ptr(&mock, r);
-            let panic_msg = record_panic(|| {
-                mock.received()
-                    .as_Trait()
-                    .accept_ref_ptr(Arg::ref_eq(unexpected_r), Times::Once)
-            });
+            let panic_msg = record_panic(|| mock.verify_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	<Struct as Trait>::accept_ref_ptr((&&*const &&i32): equal to {unexpected_r:?})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_ref_ptr(*{r:?}*)
-	1. r (&&*const &&i32):
-		Expected (ptr: {unexpected_r_ptr:?}): {unexpected_r:?}
-		Actual   (ptr: {r_ptr:?}): {r:?}"
+                "Expected following calls:
+	<Struct<[u8; 3]> as Trait<alloc::string::String>>::accept_ref_ptr(&&*const &&i32 == {unexpected_r:?}) 1 time"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -1074,24 +1050,28 @@ accept_ref_ptr(*{r:?}*)
 
             let r = &&(&&&5 as *const &&i32);
             let return_value = 175;
+            let unexpected_r = &&(&&&14 as *const &&i32);
 
             mock.setup()
                 .as_Trait()
                 .accept_ref_ptr(r)
-                .returns(return_value);
+                .returns_once(return_value);
 
             // Act
+            let panic_msg = record_panic(|| Trait::accept_ref_ptr(&mock, unexpected_r));
             let actual_return_value = Trait::accept_ref_ptr(&mock, r);
-            let panic_msg = record_panic(|| mock.received().as_Trait().no_other_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
 
             let expected_panic_msg = format!(
-                "Did not expect to receive any other calls. Received 1 unexpected call:
-1. <Struct as Trait>::accept_ref_ptr({r:?})"
+                "Mock wasn't configured to handle following call:
+	<Struct<[u8; 3]> as Trait<alloc::string::String>>::accept_ref_ptr({unexpected_r:?})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_ref_ptr(*{unexpected_r:?}*)"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            mock.verify_calls();
         }
 
         #[test]
@@ -1112,7 +1092,7 @@ accept_ref_ptr(*{r:?}*)
             let t1_debug_string = common::debug_string(t1.to_string());
             let expected_panic_msg = format!(
                 "Mock wasn't configured to handle following call:
-	<Struct as Trait>::generic<{t1_name}, {t2_name}>({t1_debug_string})",
+	<Struct<[u8; 3]> as Trait<alloc::string::String>>::generic<{t1_name}, {t2_name}>({t1_debug_string})",
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -1124,37 +1104,31 @@ accept_ref_ptr(*{r:?}*)
             let mut mock = Struct::<T0>::new();
             type T1 = i32;
             type T2 = f64;
-            let t1_name = core::any::type_name::<T1>();
-            let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t1: T1 = 235;
 
-            mock.setup().as_Trait().generic(t1).returns(return_value);
+            mock.setup()
+                .as_Trait()
+                .generic(t1)
+                .returns_once(return_value);
+            mock.setup()
+                .as_Trait()
+                .generic(unexpected_t1)
+                .returns_once(return_value);
 
             // Act
             let actual_return_value: T2 = Trait::generic(&mock, t1);
-            let panic_msg = record_panic(|| {
-                mock.received()
-                    .as_Trait()
-                    .generic::<T1, T2>(unexpected_t1, Times::Once)
-            });
+            let panic_msg = record_panic(|| mock.verify_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
-            let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
-            let arg_debug_string =
-                common::debug_string(format!("({t1_name}): equal to {unexpected_t1}"));
-            let t1_debug_string = common::debug_string(t1.to_string());
+            let arg_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	<Struct as Trait>::generic<{t1_name}, {t2_name}>({arg_debug_string})
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-generic(*{t1_debug_string}*)
-	1. t1 ({t1_name}):
-		Expected: {unexpected_t1_debug_string}
-		Actual:   {t1_debug_string}"
+                "Expected following calls:
+	<Struct<[u8; 3]> as Trait<alloc::string::String>>::generic<{t1_name}, {t2_name}>({arg_debug_string}) 1 time",
+                t1_name = core::any::type_name::<T1>(),
+                t2_name = core::any::type_name::<T2>(),
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -1168,31 +1142,32 @@ generic(*{t1_debug_string}*)
             type T2 = f64;
             type T3 = usize;
             type T4 = String;
-            let t3_name = core::any::type_name::<T3>();
-            let t4_name = core::any::type_name::<T4>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
             let unexpected_t3: T3 = 11;
+            let unexpected_return_value: T4 = "unexpected".to_owned();
 
-            mock.setup().as_Trait().generic(t1).returns(return_value);
+            mock.setup()
+                .as_Trait()
+                .generic(t1)
+                .returns_once(return_value);
+            mock.setup()
+                .as_Trait()
+                .generic::<T3, T4>(unexpected_t3)
+                .returns_once(unexpected_return_value);
 
             // Act
             let actual_return_value: T2 = Trait::generic(&mock, t1);
-            let panic_msg = record_panic(|| {
-                mock.received()
-                    .as_Trait()
-                    .generic::<T3, T4>(unexpected_t3, Times::Once)
-            });
+            let panic_msg = record_panic(|| mock.verify_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
-            let arg_debug_string =
-                common::debug_string(format!("({t3_name}): equal to {unexpected_t3}"));
+            let arg_debug_string = common::debug_string(unexpected_t3.to_string());
             let expected_panic_msg = format!(
-                "Expected to receive a call exactly once matching:
-	<Struct as Trait>::generic<{t3_name}, {t4_name}>({arg_debug_string})
-Actually received no matching calls
-Received no non-matching calls"
+                "Expected following calls:
+	<Struct<[u8; 3]> as Trait<alloc::string::String>>::generic<{t3_name}, {t4_name}>({arg_debug_string}) 1 time",
+                t3_name = core::any::type_name::<T3>(),
+                t4_name = core::any::type_name::<T4>(),
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
         }
@@ -1208,21 +1183,28 @@ Received no non-matching calls"
             let t2_name = core::any::type_name::<T2>();
             let t1: T1 = 5;
             let return_value: T2 = 64.0f64;
+            let unexpected_t1: T1 = 235;
 
-            mock.setup().as_Trait().generic(t1).returns(return_value);
+            mock.setup()
+                .as_Trait()
+                .generic(t1)
+                .returns_once(return_value);
 
             // Act
+            let panic_msg = record_panic(|| Trait::generic::<T1, T2>(&mock, unexpected_t1));
             let actual_return_value = Trait::generic(&mock, t1);
-            let panic_msg = record_panic(|| mock.received().as_Trait().no_other_calls());
 
             // Assert
             assert_eq!(return_value, actual_return_value);
-            let t1_debug_string = common::debug_string(t1.to_string());
+            let unexpected_t1_debug_string = common::debug_string(unexpected_t1.to_string());
             let expected_panic_msg = format!(
-                "Did not expect to receive any other calls. Received 1 unexpected call:
-1. <Struct as Trait>::generic<{t1_name}, {t2_name}>({t1_debug_string})"
+                "Mock wasn't configured to handle following call:
+	<Struct<[u8; 3]> as Trait<alloc::string::String>>::generic<{t1_name}, {t2_name}>({unexpected_t1_debug_string})
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: generic(*{unexpected_t1_debug_string}*)"
             );
             assert_eq!(Some(expected_panic_msg), panic_msg);
+            mock.verify_calls();
         }
     }
 }

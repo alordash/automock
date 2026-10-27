@@ -29,12 +29,11 @@ pub(crate) fn generate<T: Borrow<FnInfo>>(
         maybe_trait_ident,
     }: Params<T>,
 ) -> StaticSetupStruct {
-    let item_struct = control_struct::new_static(
+    let item_struct = setup_struct::new_static(
         source_span,
         ident,
         generics,
         maybe_argument_types,
-        ControlType::Setup,
         maybe_trait_ident,
     );
     let path = path::from_ident_with_generics(item_struct.ident.clone(), &item_struct.generics);

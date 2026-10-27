@@ -11,6 +11,7 @@ pub(crate) struct FnInfo {
     pub visibility: Visibility,
     pub merged_generics: Generics,
     pub maybe_owner_name: Option<String>,
+    pub maybe_trait_path: Option<Path>,
     pub fn_ident: Ident,
     pub fn_data_name: String,
     pub maybe_self_type: Option<Receiver>,

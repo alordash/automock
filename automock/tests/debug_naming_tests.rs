@@ -22,24 +22,28 @@ mod tests {
     #[test]
     fn accept_WithoutDebugNaming_ReturnsQuestions() {
         // Arrange
+        accept::setup(Payload(20)).expect_once();
+
         // Act
-        accept(Payload(10));
-        let panic_message = record_panic(|| {
-            accept::received(Payload(20), 1.time());
-        });
+        let call_panic_message = record_panic(|| accept(Payload(10)));
+        let verify_panic_message = record_panic(accept::verify_calls::<Payload>);
 
         // Assert
         assert_eq!(
-            panic_message,
+            call_panic_message,
             Some(
-                r#"Expected to receive a call exactly once matching:
+                r#"Mock wasn't configured to handle following call:
 	accept<debug_naming_tests::Payload>(?)
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept(*?*)
-	1. __arg0 (debug_naming_tests::Payload):
-		Expected: ?
-		Actual:   ?"#
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept(*?*)"#
+                    .to_owned()
+            )
+        );
+        assert_eq!(
+            verify_panic_message,
+            Some(
+                r#"Expected following calls:
+	accept<debug_naming_tests::Payload>(?) 1 time"#
                     .to_owned()
             )
         );
@@ -49,24 +53,28 @@ accept(*?*)
     #[test]
     fn accept_WithDebugNaming_ReturnsDebugStrings() {
         // Arrange
+        accept::setup(Payload(20)).expect_once();
+
         // Act
-        accept(Payload(10));
-        let panic_message = record_panic(|| {
-            accept::received(Payload(20), 1.time());
-        });
+        let call_panic_message = record_panic(|| accept(Payload(10)));
+        let verify_panic_message = record_panic(accept::verify_calls::<Payload>);
 
         // Assert
         assert_eq!(
-            panic_message,
+            call_panic_message,
             Some(
-                r#"Expected to receive a call exactly once matching:
-	accept<debug_naming_tests::Payload>((debug_naming_tests::Payload): equal to Payload(20))
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept(*Payload(10)*)
-	1. __arg0 (debug_naming_tests::Payload):
-		Expected: Payload(20)
-		Actual:   Payload(10)"#
+                r#"Mock wasn't configured to handle following call:
+	accept<debug_naming_tests::Payload>(Payload(10))
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept(*Payload(10)*)"#
+                    .to_owned()
+            )
+        );
+        assert_eq!(
+            verify_panic_message,
+            Some(
+                r#"Expected following calls:
+	accept<debug_naming_tests::Payload>(debug_naming_tests::Payload == Payload(20)) 1 time"#
                     .to_owned()
             )
         );
@@ -76,24 +84,28 @@ accept(*Payload(10)*)
     #[test]
     fn accept_debug_WithoutDebugNaming_ReturnsDebugStrings() {
         // Arrange
+        accept_debug::setup(Payload(20)).expect_once();
+
         // Act
-        accept_debug(Payload(10));
-        let panic_message = record_panic(|| {
-            accept_debug::received(Payload(20), 1.time());
-        });
+        let call_panic_message = record_panic(|| accept_debug(Payload(10)));
+        let verify_panic_message = record_panic(accept_debug::verify_calls::<Payload>);
 
         // Assert
         assert_eq!(
-            panic_message,
+            call_panic_message,
             Some(
-                r#"Expected to receive a call exactly once matching:
-	accept_debug<debug_naming_tests::Payload>((debug_naming_tests::Payload): equal to Payload(20))
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_debug(*Payload(10)*)
-	1. __arg0 (debug_naming_tests::Payload):
-		Expected: Payload(20)
-		Actual:   Payload(10)"#
+                r#"Mock wasn't configured to handle following call:
+	accept_debug<debug_naming_tests::Payload>(Payload(10))
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_debug(*Payload(10)*)"#
+                    .to_owned()
+            )
+        );
+        assert_eq!(
+            verify_panic_message,
+            Some(
+                r#"Expected following calls:
+	accept_debug<debug_naming_tests::Payload>(debug_naming_tests::Payload == Payload(20)) 1 time"#
                     .to_owned()
             )
         );
@@ -103,24 +115,28 @@ accept_debug(*Payload(10)*)
     #[test]
     fn accept_debug_WithDebugNaming_ReturnsDebugStrings() {
         // Arrange
+        accept_debug::setup(Payload(20)).expect_once();
+
         // Act
-        accept_debug(Payload(10));
-        let panic_message = record_panic(|| {
-            accept_debug::received(Payload(20), 1.time());
-        });
+        let call_panic_message = record_panic(|| accept_debug(Payload(10)));
+        let verify_panic_message = record_panic(accept_debug::verify_calls::<Payload>);
 
         // Assert
         assert_eq!(
-            panic_message,
+            call_panic_message,
             Some(
-                r#"Expected to receive a call exactly once matching:
-	accept_debug<debug_naming_tests::Payload>((debug_naming_tests::Payload): equal to Payload(20))
-Actually received no matching calls
-Received 1 non-matching call (non-matching arguments indicated with '*' characters):
-accept_debug(*Payload(10)*)
-	1. __arg0 (debug_naming_tests::Payload):
-		Expected: Payload(20)
-		Actual:   Payload(10)"#
+                r#"Mock wasn't configured to handle following call:
+	accept_debug<debug_naming_tests::Payload>(Payload(10))
+List of existing configuration ordered by number of correctly matched arguments (non-matching arguments indicated with '*' characters):
+	1. Matched 0/1 arguments: accept_debug(*Payload(10)*)"#
+                    .to_owned()
+            )
+        );
+        assert_eq!(
+            verify_panic_message,
+            Some(
+                r#"Expected following calls:
+	accept_debug<debug_naming_tests::Payload>(debug_naming_tests::Payload == Payload(20)) 1 time"#
                     .to_owned()
             )
         );

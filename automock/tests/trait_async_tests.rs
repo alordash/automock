@@ -69,12 +69,13 @@ mod tests {
     async fn nothing_Ok() {
         // Arrange
         let mut mock = TraitMock::new();
+        mock.setup().nothing().expect_once();
 
         // Act
         mock.nothing().await;
 
         // Assert
-        mock.received().nothing(Times::Once).no_other_calls();
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -82,12 +83,13 @@ mod tests {
         // Arrange
         let mut mock = TraitMock::new();
         let value = 1;
+        mock.setup().input(value).expect_once();
 
         // Act
         mock.input(value).await;
 
         // Assert
-        mock.received().input(value, Times::Once).no_other_calls();
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -95,14 +97,14 @@ mod tests {
         // Arrange
         let mut mock = TraitMock::new();
         let result = 2;
-        mock.setup().output().returns(result);
+        mock.setup().output().returns_once(result);
 
         // Act
         let actual_result = mock.output().await;
 
         // Assert
         assert_eq!(result, actual_result);
-        mock.received().output(Times::Once).no_other_calls();
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -111,58 +113,55 @@ mod tests {
         let mut mock = TraitMock::new();
         let value = 1;
         let result = 2;
-        mock.setup().input_output(Arg::Any).returns(result);
+        mock.setup().input_output(value).returns_once(result);
 
         // Act
         let actual_result = mock.input_output(value).await;
 
         // Assert
         assert_eq!(result, actual_result);
-        mock.received()
-            .input_output(value, Times::Once)
-            .no_other_calls();
+        mock.verify_calls();
     }
 
     #[tokio::test]
     async fn static_nothing_Ok() {
         // Arrange
+        TraitMock::static_setup().static_nothing().expect_once();
+
         // Act
         TraitMock::static_nothing().await;
 
         // Assert
-        TraitMock::static_received()
-            .static_nothing(Times::Once)
-            .no_other_calls();
+        TraitMock::verify_static_calls();
     }
 
     #[tokio::test]
     async fn static_input_Ok() {
         // Arrange
         let value = 1;
+        TraitMock::static_setup().static_input(value).expect_once();
 
         // Act
         TraitMock::static_input(value).await;
 
         // Assert
-        TraitMock::static_received()
-            .static_input(value, Times::Once)
-            .no_other_calls();
+        TraitMock::verify_static_calls();
     }
 
     #[tokio::test]
     async fn static_output_Ok() {
         // Arrange
         let result = 2;
-        TraitMock::static_setup().static_output().returns(result);
+        TraitMock::static_setup()
+            .static_output()
+            .returns_once(result);
 
         // Act
         let actual_result = TraitMock::static_output().await;
 
         // Assert
         assert_eq!(result, actual_result);
-        TraitMock::static_received()
-            .static_output(Times::Once)
-            .no_other_calls();
+        TraitMock::verify_static_calls();
     }
 
     #[tokio::test]
@@ -171,17 +170,15 @@ mod tests {
         let value = 1;
         let result = 2;
         TraitMock::static_setup()
-            .static_input_output(Arg::Any)
-            .returns(result);
+            .static_input_output(value)
+            .returns_once(result);
 
         // Act
         let actual_result = TraitMock::static_input_output(value).await;
 
         // Assert
         assert_eq!(result, actual_result);
-        TraitMock::static_received()
-            .static_input_output(value, Times::Once)
-            .no_other_calls();
+        TraitMock::verify_static_calls();
     }
 
     #[tokio::test]
@@ -189,12 +186,13 @@ mod tests {
         // Arrange
         let mut mock = TraitMock::new();
         mock.setup().nothing_base().call_base();
+        mock.setup().dependency().expect_once();
 
         // Act
         mock.nothing_base().await;
 
         // Assert
-        mock.received().dependency(Times::Once).no_other_calls();
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -202,13 +200,14 @@ mod tests {
         // Arrange
         let mut mock = TraitMock::new();
         let value = 1;
-        mock.setup().input_base(Arg::Any).call_base();
+        mock.setup().input_base(value).call_base();
+        mock.setup().dependency().expect_once();
 
         // Act
         mock.input_base(value).await;
 
         // Assert
-        mock.received().dependency(Times::Once).no_other_calls();
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -216,13 +215,14 @@ mod tests {
         // Arrange
         let mut mock = TraitMock::new();
         mock.setup().output_base().call_base();
+        mock.setup().dependency().expect_once();
 
         // Act
         let actual_result = mock.output_base().await;
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        mock.received().dependency(Times::Once).no_other_calls();
+        mock.verify_calls();
     }
 
     #[tokio::test]
@@ -230,28 +230,31 @@ mod tests {
         // Arrange
         let mut mock = TraitMock::new();
         let value = 1;
-        mock.setup().input_output_base(Arg::Any).call_base();
+        mock.setup().input_output_base(value).call_base();
+        mock.setup().dependency().expect_once();
 
         // Act
         let actual_result = mock.input_output_base(value).await;
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        mock.received().dependency(Times::Once).no_other_calls();
+        mock.verify_calls();
     }
 
     #[tokio::test]
     async fn static_nothing_base_Ok() {
         // Arrange
-        TraitMock::static_setup().static_nothing_base().call_base();
+        TraitMock::static_setup()
+            .static_nothing_base()
+            .call_base()
+            .static_dependency()
+            .expect_once();
 
         // Act
         TraitMock::static_nothing_base().await;
 
         // Assert
-        TraitMock::static_received()
-            .static_dependency(Times::Once)
-            .no_other_calls();
+        TraitMock::verify_static_calls();
     }
 
     #[tokio::test]
@@ -259,31 +262,33 @@ mod tests {
         // Arrange
         let value = 1;
         TraitMock::static_setup()
-            .static_input_base(Arg::Any)
-            .call_base();
+            .static_input_base(value)
+            .call_base()
+            .static_dependency()
+            .expect_once();
 
         // static_Act
         TraitMock::static_input_base(value).await;
 
         // Assert
-        TraitMock::static_received()
-            .static_dependency(Times::Once)
-            .no_other_calls();
+        TraitMock::verify_static_calls();
     }
 
     #[tokio::test]
     async fn static_output_base_Ok() {
         // Arrange
-        TraitMock::static_setup().static_output_base().call_base();
+        TraitMock::static_setup()
+            .static_output_base()
+            .call_base()
+            .static_dependency()
+            .expect_once();
 
         // Act
         let actual_result = TraitMock::static_output_base().await;
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        TraitMock::static_received()
-            .static_dependency(Times::Once)
-            .no_other_calls();
+        TraitMock::verify_static_calls();
     }
 
     #[tokio::test]
@@ -291,16 +296,16 @@ mod tests {
         // Arrange
         let value = 1;
         TraitMock::static_setup()
-            .static_input_output_base(Arg::Any)
-            .call_base();
+            .static_input_output_base(value)
+            .call_base()
+            .static_dependency()
+            .expect_once();
 
         // Act
         let actual_result = TraitMock::static_input_output_base(value).await;
 
         // Assert
         assert_eq!(DEFAULT_RESULT, actual_result);
-        TraitMock::static_received()
-            .static_dependency(Times::Once)
-            .no_other_calls();
+        TraitMock::verify_static_calls();
     }
 }

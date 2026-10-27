@@ -284,34 +284,35 @@ mod tests {
     fn should_mock_static_function_from_the_depths_of_hell() {
         // Arrange
         target::setup::<i32, i32, 3>(
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
+            10,
+            &20,
+            &mut 30,
+            Arg::is(|pointer: &*const i32| unsafe { **pointer } == 40),
+            Arg::is(|mutable_pointer: &*mut i32| unsafe { **mutable_pointer } == 50),
+            &[1, 2, 3][..],
+            &[4, 5, 6],
             Arg::Any,
             Arg::Any,
         )
-        .always_returns(42);
+        .returns(42, 7.times())
+        .setup(
+            10,
+            &60,
+            &mut 70,
+            Arg::is(|pointer: &*const i32| unsafe { **pointer } == 80),
+            Arg::is(|mutable_pointer: &*mut i32| unsafe { **mutable_pointer } == 90),
+            &[7, 8, 9][..],
+            &[10, 11, 12],
+            Arg::Any,
+            Arg::Any,
+        )
+        .returns_once(42);
 
         // Act
         let result = evil();
 
         // Assert
         assert_eq!(result, 42 * 8);
-        target::received::<i32, i32, 3>(
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            Arg::Any,
-            8.times(),
-        );
+        target::verify_calls::<i32, i32, 3>();
     }
 }

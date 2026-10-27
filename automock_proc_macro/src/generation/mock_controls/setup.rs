@@ -25,8 +25,7 @@ pub(crate) fn generate<T: Borrow<FnInfo>>(
         maybe_trait_ident,
     }: Params<T>,
 ) -> SetupStruct {
-    let item_struct =
-        control_struct::new(span, ident, generics, ControlType::Setup, maybe_trait_ident);
+    let item_struct = setup_struct::new(span, ident, generics, maybe_trait_ident);
     let path = path::from_ident_with_generics(item_struct.ident.clone(), &generics_for_impl);
     let item_impl = setup_impl::generate(
         span,
