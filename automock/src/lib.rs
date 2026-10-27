@@ -98,12 +98,14 @@
 //! There is one limitation: `automock` cannot mock traits that have super traits (other than
 //! `Clone`). For example, this won't compile:
 //! ```compile_fail
-//! #[mock] trait Trait: SuperTrait {}
+//! #[mock]
+//! trait Trait: SuperTrait {}
 //! ```
 //! But this will:
 //! ```
 //! # use automock::*;
-//! #[mock] trait Trait: Clone {}
+//! #[mock]
+//! trait Trait: Clone {}
 //! # fn main() {}
 //! ```
 //!
@@ -172,7 +174,8 @@
 //!    be mocked; `bar` will always use base implementation:
 //!    ```
 //!    # use automock::*;
-//!    #[mock] struct Struct;
+//!    #[mock]
+//!    struct Struct;
 //!
 //!    #[mock]
 //!    impl Struct {
@@ -204,7 +207,8 @@
 //! ```
 //! use automock::*;
 //!
-//! #[mock] struct Struct;
+//! #[mock]
+//! struct Struct;
 //! #[mock]
 //! impl Struct {
 //!     pub fn new() -> Self { Self }
@@ -325,7 +329,8 @@
 //!    For example, this is a wrong way of configuring standalone function:
 //!    ```no_run
 //!    # use automock::*;
-//!    #[mock] fn work(v: i32) -> i32 { v }
+//!    #[mock
+//!    fn work(v: i32) -> i32 { v }
 //!   
 //!    work::setup(1).returns_once(10);
 //!    work::setup(2).returns_once(20); // `work::setup(2)` will clear previous configuration
@@ -372,7 +377,8 @@
 //! ```
 //! use automock::*;
 //!
-//! #[mock] struct Struct;
+//! #[mock]
+//! struct Struct;
 //!
 //! #[mock]
 //! impl Struct {
@@ -449,9 +455,12 @@
 //!
 //! ```
 //! # use automock::*;
-//! #[mock] trait Trait {}
-//! #[mock] struct Struct;
-//! #[mock] impl Struct { pub fn new() -> Self { Self } }
+//! #[mock]
+//! trait Trait {}
+//! #[mock]
+//! struct Struct;
+//! #[mock]
+//! impl Struct { pub fn new() -> Self { Self } }
 //!
 //! # fn main() {
 //! // Arrange
@@ -473,9 +482,12 @@
 //!
 //! ```
 //! # use automock::*;
-//! #[mock] struct Struct;
-//! #[mock] impl Struct { pub fn new() -> Self { Self } }
-//! #[mock] fn work(_: Struct) {}
+//! #[mock]
+//! struct Struct;
+//! #[mock]
+//! impl Struct { pub fn new() -> Self { Self } }
+//! #[mock]
+//! fn work(_: Struct) {}
 //!
 //! # fn main() {
 //! // Arrange
@@ -517,7 +529,8 @@
 //! ```
 //! use automock::*;
 //!
-//! #[mock] fn work(v: i32) -> i32 { v + 1 }
+//! #[mock]
+//! fn work(v: i32) -> i32 { v + 1 }
 //!
 //! # fn main() {
 //! // Arrange
@@ -549,8 +562,10 @@
 //! ```
 //! use automock::*;
 //!
-//! #[mock] fn get(v: i32) -> i32 { v + 1 }
-//! #[mock] fn set(v: i32) {}
+//! #[mock]
+//! fn get(v: i32) -> i32 { v + 1 }
+//! #[mock]
+//! fn set(v: i32) {}
 //!
 //! # fn main() {
 //! get::setup(Arg::Any)    // Function with return value
@@ -596,7 +611,8 @@
 //! ```
 //! use automock::*;
 //!
-//! #[mock] fn dependency() {}
+//! #[mock]
+//! fn dependency() {}
 //! #[mock]
 //! fn work() {
 //!     dependency();   // will be called in test
@@ -620,7 +636,8 @@
 //!
 //! ```compile_fail
 //! # use automock::*;
-//! #[mock] fn work() -> i32 { 1 }
+//! #[mock]
+//! fn work() -> i32 { 1 }
 //! work::setup().call_base().returns_once(10);
 //!                        // ^^^^^^^^^^^^ - error, return value is already
 //!                        //                provided by base implementation
@@ -665,7 +682,8 @@
 //! ```
 //! use automock::*;
 //!
-//! #[mock] fn work() {}
+//! #[mock]
+//! fn work() {}
 //!
 //! # fn main() {
 //! work::setup().expect_once();
@@ -679,7 +697,8 @@
 //! ```should_panic
 //! use automock::*;
 //!
-//! #[mock] fn work() {}
+//! #[mock]
+//! fn work() {}
 //!
 //! work::setup().expect_once();
 //! work::verify_calls();
@@ -692,7 +711,8 @@
 //! ```
 //! use automock::*;
 //!
-//! #[mock] fn work(_: i32, _: &str) {}
+//! #[mock]
+//! fn work(_: i32, _: &str) {}
 //!
 //! # fn main() {
 //! // Arrange
@@ -809,7 +829,8 @@
 //! ```
 //! use automock::*;
 //!
-//! #[mock] fn get<T1, T2: Default>(t1: T1) -> T2 { T2::default() }
+//! #[mock]
+//! fn get<T1, T2: Default>(t1: T1) -> T2 { T2::default() }
 //!
 //! # fn main() {
 //! // Arrange
@@ -967,8 +988,10 @@
 //! use automock::*;
 //! # #[mock] struct Struct;
 //!
-//! #[mock] unsafe trait Trait {}
-//! #[mock] unsafe impl Trait for Struct {}
+//! #[mock]
+//! unsafe trait Trait {}
+//! #[mock]
+//! unsafe impl Trait for Struct {}
 //! # fn main() {}
 //! ```
 //!
@@ -980,9 +1003,12 @@
 //! ```
 //! use automock::*;
 //!
-//! #[mock] async fn async_dep() {}
-//! #[mock] unsafe fn unsafe_dep() {}
-//! #[mock] extern "C" fn extern_dep() {}
+//! #[mock]
+//! async fn async_dep() {}
+//! #[mock]
+//! unsafe fn unsafe_dep() {}
+//! #[mock]
+//! extern "C" fn extern_dep() {}
 //!
 //! #[mock]
 //! # #[allow(improper_ctypes_definitions)]
@@ -1011,7 +1037,8 @@
 //! ```
 //! use automock::*;
 //!
-//! #[mock] fn set(_: i32) {}
+//! #[mock]
+//! fn set(_: i32) {}
 //!
 //! # fn main() {
 //! let sequence = in_sequence(|| {
@@ -1057,14 +1084,16 @@
 //! ```
 //! use automock::*;
 //!
-//! #[mock] fn first() {}
+//! #[mock]
+//! fn first() {}
 //!
 //! #[mock]
 //! trait Trait {
 //!     fn second(&self);
 //! }
 //!
-//! #[mock] struct Struct;
+//! #[mock]
+//! struct Struct;
 //! #[mock]
 //! impl Struct {
 //!     pub fn new() -> Self { Self }
