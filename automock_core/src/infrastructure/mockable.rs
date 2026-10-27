@@ -3,6 +3,9 @@ pub trait Mockable<'__am> {
     /// Returns id of this mock. Each mock object has unique id, regardless of mock type.
     fn id(&self) -> usize;
 
+    /// Returns mock data of this object.
+    fn mock_data(&self) -> super::SharedMockData;
+
     /// Struct used to set up mock.
     type Setup;
     /// Begins mock set up.

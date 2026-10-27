@@ -249,6 +249,7 @@ fn generate_inner_impl(
     maybe_static_setup: &Option<StaticSetupStruct>,
 ) -> ItemImpl {
     let id_fn_impl = id_fn_impl::new(span, id_fn_impl::Params { public: true });
+    let mock_data_fn = mock_data_fn_impl::new(span, mock_data_fn_impl::Params { public: true });
     let mock_struct_fn_new = mock_struct_fn_new::new(span);
     let maybe_associated_setup_creation_fn =
         maybe_associated_setup.as_ref().map(|associated_controls| {
@@ -283,7 +284,7 @@ fn generate_inner_impl(
         .iter()
         .chain(trait_info.static_fns.iter())
         .filter_map(|fn_info| try_extract_base_fn(span, trait_info, fn_info, mod_ident));
-    let items = [id_fn_impl, mock_struct_fn_new]
+    let items = [id_fn_impl, mock_data_fn, mock_struct_fn_new]
         .into_iter()
         .chain(maybe_associated_setup_creation_fn)
         .chain(maybe_static_controls_creation_fns)
