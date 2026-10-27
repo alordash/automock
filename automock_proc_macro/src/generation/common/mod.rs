@@ -1,5 +1,4 @@
 pub(crate) mod call_stmt;
-pub(crate) mod clone_impl;
 pub(crate) mod fn_data_stmt;
 pub(crate) mod generic_arguments;
 pub(crate) mod id_fn_impl;

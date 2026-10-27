@@ -52,12 +52,6 @@ pub(crate) fn generate(
         }),
         semi_token: None,
     };
-    let clone_impl = clone_impl::generate(
-        span,
-        generics_for_impl.clone(),
-        path.clone(),
-        &item_struct.fields,
-    );
     let trait_impl = generate_trait_impl(
         span,
         trait_info,
@@ -86,7 +80,6 @@ pub(crate) fn generate(
 
     let result = TraitMockStruct {
         item_struct,
-        clone_impl,
         trait_impl,
         inner_impl,
         mock_generics_info_provider_impl,
