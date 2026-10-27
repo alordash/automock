@@ -3,7 +3,6 @@ mod source_struct_fields;
 mod struct_setup_struct;
 
 use crate::common::patch_lifetime;
-use crate::generation::common::*;
 use crate::generation::fn_info::*;
 use crate::generation::targets::common::*;
 use crate::generation::targets::models::*;
@@ -26,12 +25,6 @@ pub(crate) fn generate_module(mut item_struct: ItemStruct) -> MockMod {
             is_static: false,
         },
     );
-    let struct_setup_struct_clone_impl = clone_impl::generate(
-        source_span,
-        generics_for_impl.clone(),
-        path::from_ident_with_generics(struct_setup_struct.ident.clone(), &generics_for_impl),
-        &struct_setup_struct.fields,
-    );
     let struct_static_setup_struct = struct_setup_struct::generate(
         source_span,
         struct_setup_struct::Params {
@@ -39,15 +32,6 @@ pub(crate) fn generate_module(mut item_struct: ItemStruct) -> MockMod {
             generics: generics_for_control_structs.clone(),
             is_static: true,
         },
-    );
-    let struct_static_setup_struct_clone_impl = clone_impl::generate(
-        source_span,
-        generics_for_impl.clone(),
-        path::from_ident_with_generics(
-            struct_static_setup_struct.ident.clone(),
-            &generics_for_impl,
-        ),
-        &struct_static_setup_struct.fields,
     );
     let mockable_trait_impl = mockable_trait_impl::generate(
         source_span,
@@ -81,9 +65,7 @@ pub(crate) fn generate_module(mut item_struct: ItemStruct) -> MockMod {
         Item::Impl(mockable_trait_impl),
         Item::Impl(mock_generics_info_provider_impl),
         Item::Struct(struct_setup_struct),
-        Item::Impl(struct_setup_struct_clone_impl),
         Item::Struct(struct_static_setup_struct),
-        Item::Impl(struct_static_setup_struct_clone_impl),
     ];
     let item_mod = ItemMod {
         attrs: vec![

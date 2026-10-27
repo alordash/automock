@@ -40,6 +40,7 @@ pub(crate) fn generate(
         path: path::from_ident_with_generics(static_setup_struct_ident, &generics),
     });
     let id_impl = id_fn_impl::new(span, id_fn_impl::Params { public: false });
+    let mock_data_impl = mock_data_fn_impl::new(span, mock_data_fn_impl::Params { public: false });
     let type_setup = associated_type_impl(span, "Setup", setup_struct_type);
     let fn_setup = fn_setup(span);
     let type_static_setup = associated_type_impl(span, "StaticSetup", static_setup_struct_type);
@@ -75,6 +76,7 @@ pub(crate) fn generate(
         brace_token: token::Brace(span),
         items: vec![
             ImplItem::Fn(id_impl),
+            ImplItem::Fn(mock_data_impl),
             ImplItem::Type(type_setup),
             ImplItem::Fn(fn_setup),
             ImplItem::Type(type_static_setup),

@@ -808,13 +808,13 @@ mod tests {
         let mut mock = MonsterMock::<i32, 4, DefaultOutput, DefaultIterator<i32>>::new();
 
         mock.setup().boxed().expect_once();
+        let mock_data = mock.mock_data();
 
         // Act
-        let mut clone = mock.clone();
         Box::new(mock).boxed();
 
         // Assert
-        clone.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]

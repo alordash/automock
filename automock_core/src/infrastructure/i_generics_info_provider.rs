@@ -107,10 +107,6 @@ mod tests {
             .and_does(|_, (hasher,)| hasher.write(const_values_bytes));
 
         let mut generics_hasher_mock = generics_hasher_mock();
-        GenericsHasher::static_setup()
-            .as_Default()
-            .default()
-            .returns_once(generics_hasher_mock.clone());
         let hash = 5;
         generics_hasher_mock
             .setup()
@@ -122,6 +118,12 @@ mod tests {
             .finish()
             .returns_once(hash);
 
+        let mock_data = generics_hasher_mock.mock_data();
+        GenericsHasher::static_setup()
+            .as_Default()
+            .default()
+            .returns_once(generics_hasher_mock);
+
         // Act
         let result = generics_info_provider.get_generics_hash_key();
 
@@ -129,7 +131,7 @@ mod tests {
         assert_eq!(result.0, hash);
         generics_info_provider.verify_calls();
         GenericsHasher::verify_static_calls();
-        generics_hasher_mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     mod utilities {
