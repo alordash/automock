@@ -1,6 +1,8 @@
 use automock::*;
 use std::marker::PhantomData;
 
+mod common;
+
 #[mock]
 struct Struct<S: ?Sized, const CS: usize> {
     s: PhantomData<S>,
@@ -84,10 +86,13 @@ mod tests {
         Trait::<_, CT>::work(&mock, t1);
 
         // Assert
+        let t1_arg_string = common::debug_string(format!("{t1:?}"));
         assert_panics(
             || Trait::<_, CT>::work(&mock, t1),
-            r#"Mock wasn't configured to handle following call:
-	<Struct<[u8], 3> as Trait<i32, 5>>::work(?)"#,
+            format!(
+                r#"Mock wasn't configured to handle following call:
+	<Struct<[u8], 3> as Trait<i32, 5>>::work({t1_arg_string})"#
+            ),
         );
         mock.verify_calls();
     }
@@ -115,10 +120,13 @@ mod tests {
         Trait::<_, CT>::work(&mock, t1);
 
         // Assert
+        let t1_arg_string = common::debug_string(format!("{t1:?}"));
         assert_panics(
             || mock.verify_calls(),
-            r#"Expected following calls:
-	<Struct<[u8], 3> as Trait<i32, 5>>::work(?) 1 time"#,
+            format!(
+                r#"Expected following calls:
+	<Struct<[u8], 3> as Trait<i32, 5>>::work({t1_arg_string}) 1 time"#
+            ),
         );
     }
 }

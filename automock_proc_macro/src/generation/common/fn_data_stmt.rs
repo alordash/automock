@@ -136,16 +136,16 @@ fn trait_name_expr(span: Span, trait_path: &Path, fn_info: &FnInfo) -> Expr {
             .iter()
             .filter_map(|argument| match argument {
                 GenericArgument::Type(ty) => {
-                    if let Type::Path(type_path) = ty {
-                        if fn_info.merged_generics.const_params().any(|param| {
+                    if let Type::Path(type_path) = ty
+                        && fn_info.merged_generics.const_params().any(|param| {
                             type_path.qself.is_none() && type_path.path.is_ident(&param.ident)
-                        }) {
-                            return Some(Expr::Path(ExprPath {
-                                attrs: Vec::new(),
-                                qself: None,
-                                path: type_path.path.clone(),
-                            }));
-                        }
+                        })
+                    {
+                        return Some(Expr::Path(ExprPath {
+                            attrs: Vec::new(),
+                            qself: None,
+                            path: type_path.path.clone(),
+                        }));
                     }
                     Some(Expr::Call(expr::call::new(
                         span,

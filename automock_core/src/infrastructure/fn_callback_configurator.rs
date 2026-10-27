@@ -84,6 +84,7 @@ pub(crate) mod tests {
     const IRRELEVANT: bool = false;
 
     #[test]
+    #[allow(clippy::extra_unused_lifetimes)]
     fn and_does_WithoutMock_Ok<'am>() {
         // Arrange
         let owner = Owner;
