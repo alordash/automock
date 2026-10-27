@@ -5,7 +5,9 @@
 //!
 //! ```
 //! use automock::*;
-//! #[mock] trait Trait {}
+//!
+//! #[mock]
+//! trait Trait {}
 //!
 //! # fn main() {
 //! let mock = TraitMock::new();
@@ -17,7 +19,6 @@
 //! `verify_calls()` checks that all expected calls happened. Unexpected calls panic immediately.
 //! ```
 //! # use automock::*;
-//!
 //! #[mock]
 //! trait Trait {
 //!     fn work(&self, v: i32) -> i32;
@@ -25,7 +26,7 @@
 //!
 //! # fn main() {
 //! // Arrange
-//! let mut mock = TraitMock::new();    // `mock` must be mutable in order to be configured
+//! let mut mock = TraitMock::new();
 //! mock.setup()
 //!     .work(1).returns_once(10);
 //!
@@ -46,10 +47,9 @@
 //! * [Mocking static functions](#mocking-static-functions)
 //! * [Mocking static associated functions](#mocking-static-associated-functions)
 //! * [Arguments matching](#arguments-matching)
-//! * [Comparing mocks](#comparing-mocks)
 //! * [Controlling function behavior](#controlling-function-behavior)
-//! * [Base implementation](#base-implementation)
-//! * [Verifying calls](#verifying-calls)
+//! * [Base implementation usage](#base-implementation-usage)
+//! * [Calls verification](#calls-verification)
 //! * [Generics](#generics)
 //! * [Associated constants and types](#associated-constants-and-types)
 //! * [`impl Trait` types](#impl-trait-types)
@@ -59,14 +59,13 @@
 //! * [Receiver types](#receiver-types)
 //! * [Cloning mocks](#cloning-mocks)
 //! * [Crate features](#feature-flags)
-//! * [Undefined behavior](#undefined-behavior)
+//! * [How it works](#how-it-works)
 //!
 //! ## Mocking traits
 //!
 //! To mock a trait, add `#[mock]` attribute to it.
 //! ```
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! trait Trait {
 //!     fn work(&self, v: i32) -> i32;
@@ -99,12 +98,14 @@
 //! There is one limitation: `automock` cannot mock traits that have super traits (other than
 //! `Clone`). For example, this won't compile:
 //! ```compile_fail
-//! #[mock] trait Trait: SuperTrait {}
+//! #[mock]
+//! trait Trait: SuperTrait {}
 //! ```
 //! But this will:
 //! ```
 //! # use automock::*;
-//! #[mock] trait Trait: Clone {}
+//! #[mock]
+//! trait Trait: Clone {}
 //! # fn main() {}
 //! ```
 //!
@@ -115,8 +116,7 @@
 //! To mock a structure, add `#[mock]` attribute to structure definition and `#[mock]` to its
 //! `impl` blocks whose functionality you want to mock.
 //! ```
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! struct Struct { v: i32 }
 //!
@@ -173,7 +173,8 @@
 //!    be mocked; `bar` will always use base implementation:
 //!    ```
 //!    # use automock::*;
-//!    #[mock] struct Struct;
+//!    #[mock]
+//!    struct Struct;
 //!
 //!    #[mock]
 //!    impl Struct {
@@ -203,9 +204,9 @@
 //! adds `as_TRAIT_NAME` method to mock's `setup()`. `verify_calls()` also checks calls
 //! configured through these trait implementations:
 //! ```
-//! use automock::*;
-//!
-//! #[mock] struct Struct;
+//! # use automock::*;
+//! #[mock]
+//! struct Struct;
 //! #[mock]
 //! impl Struct {
 //!     pub fn new() -> Self { Self }
@@ -293,8 +294,7 @@
 //! as mocked function, which exposes standalone `setup()` and `verify_calls()` functions:
 //!
 //! ```
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! fn work(v: i32) -> i32 { v + 1 }
 //!
@@ -326,7 +326,8 @@
 //!    For example, this is a wrong way of configuring standalone function:
 //!    ```no_run
 //!    # use automock::*;
-//!    #[mock] fn work(v: i32) -> i32 { v }
+//!    #[mock]
+//!    fn work(v: i32) -> i32 { v }
 //!   
 //!    work::setup(1).returns_once(10);
 //!    work::setup(2).returns_once(20); // `work::setup(2)` will clear previous configuration
@@ -347,8 +348,7 @@
 //! that instead of `setup()` and `verify_calls()` you must use `static_setup()` and
 //! `verify_static_calls()`. Here's example of mocking trait with static function:
 //! ```
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! trait Trait {
 //!     fn work(v: i32) -> i32;
@@ -371,9 +371,9 @@
 //!
 //! Static functions in structure implementations can also be mocked:
 //! ```
-//! use automock::*;
-//!
-//! #[mock] struct Struct;
+//! # use automock::*;
+//! #[mock]
+//! struct Struct;
 //!
 //! #[mock]
 //! impl Struct {
@@ -406,7 +406,7 @@
 //!    Can be used either manually like `mock.setup().work(Arg::eq(10))` or implicitly like
 //!    `mock.setup().work(10)`.
 //! 2. [`Arg::is`] - checks that argument passes provided predicate. Usage example:
-//!    `mock.setup().work(Arg::is(|v: &i32| *v == 10))`. Requires specifying closure's argument type.
+//!    `mock.setup().work(Arg::is(|v| *v == 10))`.
 //! 3. [`Arg::is_mut`] - same as `Arg::is`, but receives mutable reference to argument. Can be
 //!    useful for matching `FnMut` arguments.
 //! 4. [`Arg::not_eq`] - checks that argument is NOT equal to provided value. Uses [`PartialEq::eq`]
@@ -442,17 +442,19 @@
 //!    provided reference. Compares references returned by [`std::ops::Deref::deref`] of `T`.
 //!    Opposite of `Arg::ref_eq`.
 //!
-//! ## Comparing mocks
+//! ### Mocks comparison
 //!
-//! All mock objects implement [`Mockable`]. This interface provides [`Mockable::id`] method that
-//! returns mock object's id - unique number that represents concrete mock object. This number is
-//! unique regardless of mock object type - it can not be repeated across mocks of different types.
+//! All mock objects have `id(&self)` method that returns mock object's id - unique number that
+//! represents concrete mock object. This number is unique regardless of mock object type.
 //!
 //! ```
 //! # use automock::*;
-//! #[mock] trait Trait {}
-//! #[mock] struct Struct;
-//! #[mock] impl Struct { pub fn new() -> Self { Self } }
+//! #[mock]
+//! trait Trait {}
+//! #[mock]
+//! struct Struct;
+//! #[mock]
+//! impl Struct { pub fn new() -> Self { Self } }
 //!
 //! # fn main() {
 //! // Arrange
@@ -474,9 +476,12 @@
 //!
 //! ```
 //! # use automock::*;
-//! #[mock] struct Struct;
-//! #[mock] impl Struct { pub fn new() -> Self { Self } }
-//! #[mock] fn work(_: Struct) {}
+//! #[mock]
+//! struct Struct;
+//! #[mock]
+//! impl Struct { pub fn new() -> Self { Self } }
+//! #[mock]
+//! fn work(_: Struct) {}
 //!
 //! # fn main() {
 //! // Arrange
@@ -503,28 +508,29 @@
 //! Mocked functions that have return values can set them in multiple ways:
 //! 1. [`FnConfigurator::returns`] - sets return value for given number of calls, for example
 //!    `.returns(10, 2.times())`. Return value must implement [`Clone`].
-//! 2. [`FnConfigurator::returns_many`] - sets multiple single-use return values in one call.
-//! 3. [`FnConfigurator::returns_once`] - sets single-use return value.
+//! 2. [`FnConfigurator::returns_once`] - sets single-use return value.
+//! 3. [`FnConfigurator::returns_many`] - sets multiple single-use return values in one call.
 //! 4. [`FnConfigurator::returns_with`] - calculates return value on the fly using function's source
-//!    arguments. Receives tuple of argument references and expected call count, for example
+//!    arguments for given number of calls. Receives tuple of argument references, for example
 //!    `.returns_with(|(v,)| *v + 10, 2.times())`.
 //! 5. [`FnConfigurator::returns_once_with`] - like `returns_with` but returns once.
 //!
-//! For functions without return value:
+//! For functions without return value you can specify which calls they are expected to receive
+//! using:
 //! * [`FnConfigurator::expect`] - expects given number of calls, for example `.expect(2.times())`.
 //! * [`FnConfigurator::expect_once`] - expects one call.
 //!
 //! If multiple return values were specified they will be used in the same order:
 //! ```
-//! use automock::*;
-//!
-//! #[mock] fn work(v: i32) -> i32 { v + 1 }
+//! # use automock::*;
+//! #[mock]
+//! fn work(v: i32) -> i32 { v + 1 }
 //!
 //! # fn main() {
 //! // Arrange
 //! work::setup(Arg::Any).returns_once(10)                         // config #1
 //!      .setup(Arg::Any).returns_many([20, 30])                   // config #2
-//!      .setup(Arg::Any).returns_with(|(v,)| *v + 10, 2.times()); // config #3
+//!      .setup(Arg::Any).returns_with(|(v,)| *v * 10, 2.times()); // config #3
 //!
 //! // Act
 //! let first  = work(1);   // uses config #1
@@ -537,21 +543,23 @@
 //! assert_eq!(first,  10);
 //! assert_eq!(second, 20);
 //! assert_eq!(third,  30);
-//! assert_eq!(fourth, 14);
-//! assert_eq!(fifth,  15);
+//! assert_eq!(fourth, 40);
+//! assert_eq!(fifth,  50);
 //! # }
 //! ```
 //!
 //! ### Setting callbacks
-//! Every mocked function can have a callback that is called when it is called with matching
+//! Every mocked function can have a callback that is called upon function invocation with matching
 //! arguments. It can be configured using [`FnCallbackConfigurator::and_does`] after its return
-//! value or the number of expected calls was specified. Static functions receive tuple of argument
-//! values in the callback:
+//! value or the number of expected calls were specified.
+//! 
+//! Static functions receive tuple of argument values in the callback:
 //! ```
-//! use automock::*;
-//!
-//! #[mock] fn get(v: i32) -> i32 { v + 1 }
-//! #[mock] fn set(v: i32) {}
+//! # use automock::*;
+//! #[mock]
+//! fn get(v: i32) -> i32 { v + 1 }
+//! #[mock]
+//! fn set(v: i32) {}
 //!
 //! # fn main() {
 //! get::setup(Arg::Any)    // Function with return value
@@ -567,8 +575,7 @@
 //! ```
 //! Associated functions receive reference to mock and tuple of argument values in the callback:
 //! ```
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! trait Trait {
 //!     fn get(&self) -> i32;
@@ -578,7 +585,8 @@
 //! # fn main() {
 //! let mut mock = TraitMock::new();
 //! mock.setup()
-//!     .get().returns_once(10)
+//!     .get()
+//!     .returns_once(10)
 //!     .work(Arg::Any)
 //!     .expect_once()
 //!     .and_does(|mock_ref, (v,)| {
@@ -589,15 +597,15 @@
 //! # }
 //! ```
 //!
-//! ## Base implementation
+//! ## Base implementation usage
 //!
 //! Mocked functions can use their base implementation in tests. To tell mock object to use base
 //! implementation call `call_base()` on function setup:
 //!
 //! ```
-//! use automock::*;
-//!
-//! #[mock] fn dependency() {}
+//! # use automock::*;
+//! #[mock]
+//! fn dependency() {}
 //! #[mock]
 //! fn work() {
 //!     dependency();   // will be called in test
@@ -621,7 +629,8 @@
 //!
 //! ```compile_fail
 //! # use automock::*;
-//! #[mock] fn work() -> i32 { 1 }
+//! #[mock]
+//! fn work() -> i32 { 1 }
 //! work::setup().call_base().returns_once(10);
 //!                        // ^^^^^^^^^^^^ - error, return value is already
 //!                        //                provided by base implementation
@@ -629,8 +638,7 @@
 //!
 //! In trait mocks, only functions with default implementation can use `call_base()`:
 //! ```
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! trait Trait {
 //!     fn dependency(&self);               // no default implementation - can not use `call_base()`
@@ -659,14 +667,14 @@
 //! # }
 //! ```
 //!
-//! ## Verifying calls
+//! ## Calls verification
 //!
 //! You can verify exactly how a mocked function was called. To do it, just call `verify_calls()`
 //! on mock:
 //! ```
-//! use automock::*;
-//!
-//! #[mock] fn work() {}
+//! # use automock::*;
+//! #[mock]
+//! fn work() {}
 //!
 //! # fn main() {
 //! work::setup().expect_once();
@@ -678,9 +686,9 @@
 //! Missing call is reported when verification runs:
 //!
 //! ```should_panic
-//! use automock::*;
-//!
-//! #[mock] fn work() {}
+//! # use automock::*;
+//! #[mock]
+//! fn work() {}
 //!
 //! work::setup().expect_once();
 //! work::verify_calls();
@@ -691,9 +699,9 @@
 //! function was called with specific arguments:
 //!
 //! ```
-//! use automock::*;
-//!
-//! #[mock] fn work(_: i32, _: &str) {}
+//! # use automock::*;
+//! #[mock]
+//! fn work(_: i32, _: &str) {}
 //!
 //! # fn main() {
 //! // Arrange
@@ -721,13 +729,14 @@
 //! # fn main() {
 //! // Arrange
 //! let mut mock = TraitMock::new();
-//! mock.setup().set(10).expect_once()
+//! mock.setup()
+//!     .set(10).expect_once()
 //!     .set(20).expect_once();
 //!
 //! // Act
 //! mock.set(10);
 //! mock.set(20);
-//! mock.set(30);
+//! mock.set(30);   // unexpected call
 //!
 //! // Assert
 //! mock.verify_calls();
@@ -739,8 +748,7 @@
 //! `automock` supports generics in functions, traits and structures. They are transferred to
 //! generated mocks as is. Here's a simple generics usage example with trait:
 //! ```
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! trait Trait<T> { fn get(&self) -> T; }
 //!
@@ -764,8 +772,7 @@
 //! ```
 //! # use std::marker::PhantomData;
 //! # use std::fmt::{Debug, Display};
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! struct Struct<'a, T1: Clone + ToString, T2>
 //!     where T2: Debug
@@ -808,9 +815,9 @@
 //!
 //! Static functions use separate configurations for each generics combination:
 //! ```
-//! use automock::*;
-//!
-//! #[mock] fn get<T1, T2: Default>(t1: T1) -> T2 { T2::default() }
+//! # use automock::*;
+//! #[mock]
+//! fn get<T1, T2: Default>(t1: T1) -> T2 { T2::default() }
 //!
 //! # fn main() {
 //! // Arrange
@@ -818,7 +825,7 @@
 //!     .returns_once("quo vadis");
 //! get::setup::<[u8; 3], &'static str>([1, 2, 3])
 //!     .returns_once("veridis quo")
-//!     .setup([10, 10, 10])        // generic types are inferred here by `get::setup` function,
+//!     .setup([10, 10, 10])         // generic types are inferred here by `get::setup` function,
 //!     .returns_once("third call"); // no need to specify them again
 //!
 //! // Act
@@ -842,8 +849,7 @@
 //! defined in trait:
 //! ```
 //! # use std::fmt::Debug;
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! trait Trait {
 //!     type Item: Debug + Default;
@@ -914,8 +920,7 @@
 //!     type Item = i32;
 //!     fn get_item(&self) -> <Self as Trait>::Item {
 //!         10              // ^^^^^^^^^^^^^
-//!                         // explicit associated item
-//!     }
+//!     }                   // explicit associated item
 //! }
 //!
 //! # fn main() {}
@@ -928,8 +933,7 @@
 //! `Box<dyn Trait>`. Other than that such functions are mocked as usual:
 //! ```
 //! # use std::fmt::Debug;
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! fn work(v: impl Debug) -> impl ToString { 1 }
 //!
@@ -952,7 +956,7 @@
 //! 2. Because `Trait` must be dyn-compatible, and [`PartialEq`] is not dyn-compatible, the only way
 //!    to compare arguments is to use [`Arg::is`]. Alternatively, you can use [`Arg::Any`] if you
 //!    don't need to check for concrete argument value.
-//! 3. Can not use multiple trait bounds like `impl Foo + Bar`, in that case you will need to
+//! 3. Can not use multiple trait bounds like `impl Foo + Bar`. In that case you will need to
 //!    rewrite your function replacing this argument's type with `T: Foo + Bar`.
 //! 4. A mocked function can return `impl Trait` only if `Trait` is implemented for `Box<dyn Trait>`
 //!    because under the hood `automock` replaces return value with `Box<dyn Trait>` in generated
@@ -965,11 +969,13 @@
 //! Only `unsafe` trait modifier is supported. It can be used both in trait definition and in its
 //! implementation:
 //! ```
-//! use automock::*;
+//! # use automock::*;
 //! # #[mock] struct Struct;
 //!
-//! #[mock] unsafe trait Trait {}
-//! #[mock] unsafe impl Trait for Struct {}
+//! #[mock]
+//! unsafe trait Trait {}
+//! #[mock]
+//! unsafe impl Trait for Struct {}
 //! # fn main() {}
 //! ```
 //!
@@ -979,11 +985,13 @@
 //! associated functions:
 //!
 //! ```
-//! use automock::*;
-//!
-//! #[mock] async fn async_dep() {}
-//! #[mock] unsafe fn unsafe_dep() {}
-//! #[mock] extern "C" fn extern_dep() {}
+//! # use automock::*;
+//! #[mock]
+//! async fn async_dep() {}
+//! #[mock]
+//! unsafe fn unsafe_dep() {}
+//! #[mock]
+//! extern "C" fn extern_dep() {}
 //!
 //! #[mock]
 //! # #[allow(improper_ctypes_definitions)]
@@ -1010,9 +1018,9 @@
 //! To verify that calls were received in the specific, define ordered expectations inside
 //! [`in_sequence`] before running code under test. Then call `.verify()` on returned `sequence`:
 //! ```
-//! use automock::*;
-//!
-//! #[mock] fn set(_: i32) {}
+//! # use automock::*;
+//! #[mock]
+//! fn set(_: i32) {}
 //!
 //! # fn main() {
 //! let sequence = in_sequence(|| {
@@ -1056,16 +1064,17 @@
 //! Call order is verified for all mocked functions relative to each other, regardless if they come
 //! from different functions or even mock objects:
 //! ```
-//! use automock::*;
-//!
-//! #[mock] fn first() {}
+//! # use automock::*;
+//! #[mock]
+//! fn first() {}
 //!
 //! #[mock]
 //! trait Trait {
 //!     fn second(&self);
 //! }
 //!
-//! #[mock] struct Struct;
+//! #[mock]
+//! struct Struct;
 //! #[mock]
 //! impl Struct {
 //!     pub fn new() -> Self { Self }
@@ -1103,8 +1112,7 @@
 //! ```
 //! # use std::rc::Rc;
 //! # use std::sync::Arc;
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! trait Trait {
 //!     fn fn_self(self);
@@ -1117,10 +1125,9 @@
 //! ```
 //!
 //! To mock them you don't need to put mock in the same container that is used in source function's
-//! signature:
+//! signature, `setup` method needs only `&mut self`:
 //! ```
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! trait Trait {
 //!     fn boxed(self: Box<Self>) -> i32;
@@ -1129,8 +1136,8 @@
 //! # fn main() {
 //! // Arrange
 //! let mut mock = TraitMock::new();
-//! mock.setup().boxed().returns_once(10); // setup() and verify_calls() are always called on "&mut self"
-//!
+//! mock.setup().boxed().returns_once(10); // setup() and verify_calls()
+//!                                        // are always called on &mut self
 //! // Act
 //! let result = Box::new(mock.clone()).boxed();    // another feature - mocks cloning, more
 //!                                                 // information in "Cloning mocks" section
@@ -1149,11 +1156,10 @@
 //!    would not work).
 //!
 //! Cloned mocks share the same configuration (it is stored behind reference-counted pointer
-//! internally). This lets you share mocks between parts of your code. This can be useful, for
+//! internally). This lets you share mocks between parts of your code. It can be useful, for
 //! example, if you want to verify that mock received some consuming function:
 //! ```
-//! use automock::*;
-//!
+//! # use automock::*;
 //! #[mock]
 //! trait Trait {
 //!     fn consume(self);
