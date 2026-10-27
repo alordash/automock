@@ -1,7 +1,7 @@
 use crate::args::*;
 use crate::fn_parameters::*;
-use crate::infrastructure::sequence::*;
 use crate::infrastructure::error_printing::*;
+use crate::infrastructure::sequence::*;
 use crate::infrastructure::*;
 use crate::*;
 use std::cell::RefCell;

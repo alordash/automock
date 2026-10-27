@@ -1,4 +1,3 @@
-mod sequence;
 mod error_printing;
 mod fn_callback_configurator;
 mod fn_config;
@@ -11,9 +10,9 @@ mod i_mock_generics_info_provider;
 mod matching_config_search_result;
 mod mock_data;
 mod mockable;
+mod sequence;
 mod static_fn_datas_global_map;
 
-pub use sequence::in_sequence;
 pub use fn_callback_configurator::*;
 pub(crate) use fn_config::*;
 pub use fn_configurator::*;
@@ -25,4 +24,5 @@ pub use i_mock_generics_info_provider::*;
 pub(crate) use matching_config_search_result::*;
 pub use mock_data::*;
 pub use mockable::*;
+pub use sequence::in_sequence;
 pub use static_fn_datas_global_map::*;

@@ -4,9 +4,9 @@ use std::rc::Rc;
 mod call_order_entry;
 mod calls_verification_result;
 
+use crate::infrastructure::error_printing;
 pub(crate) use call_order_entry::CallOrderEntry;
 pub(crate) use calls_verification_result::CallsVerificationResult;
-use crate::infrastructure::error_printing;
 
 pub fn in_sequence(setups: impl FnOnce()) -> Rc<Sequence> {
     let sequence = Sequence {

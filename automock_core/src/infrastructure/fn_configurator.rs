@@ -466,10 +466,8 @@ pub(crate) mod tests {
         let owner = Owner;
         let mut fn_configurator_mock = fn_configurator_mock::<true, IRRELEVANT, IRRELEVANT>(&owner);
         let expected_fn_callback_configurator = fn_callback_configurator::<IRRELEVANT>(&owner);
-        let fs: [Box<dyn FnOnce(ArgRefsTuple) -> ReturnValue>; 2] = [
-            Box::new(|_| unreachable!()),
-            Box::new(|_| unreachable!()),
-        ];
+        let fs: [Box<dyn FnOnce(ArgRefsTuple) -> ReturnValue>; 2] =
+            [Box::new(|_| unreachable!()), Box::new(|_| unreachable!())];
         fn_configurator_mock
             .setup()
             .returns_with_many::<[Box<dyn FnOnce(ArgRefsTuple) -> ReturnValue>; 2]>(
