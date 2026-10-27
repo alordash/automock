@@ -288,12 +288,13 @@ mod tests {
         let mut mock = ReceiversMock::new();
 
         mock.setup().by_value().expect_once();
+        let mock_data = mock.mock_data();
 
         // Act
-        mock.clone().by_value();
+        mock.by_value();
 
         // Assert
-        mock.verify_calls();
+        mock_data.verify_calls();
     }
 
     #[test]
