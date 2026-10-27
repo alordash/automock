@@ -574,6 +574,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::borrowed_box)]
     fn dyn_arguments() {
         // Arrange
         let mut mock = DynArgumentsMock::new();

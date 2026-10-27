@@ -145,7 +145,7 @@ mod tests {
         // Assert
         assert_matches!(result, Arg::Is(_, _));
 
-        ptr_predicate::verify_calls();
+        ptr_predicate::verify_calls::<i32>();
     }
 
     #[automock::mock]

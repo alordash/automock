@@ -20,7 +20,7 @@ pub enum Arg<T: ?Sized> {
     #[doc(hidden)]
     NotEq(ArgCmp<T>, Internal),
     #[doc(hidden)]
-    Is(Box<dyn Fn(*const ()) -> bool>, Internal),
+    Is(Box<dyn Fn(*const T) -> bool>, Internal),
 }
 
 impl<T: Debug> Debug for Arg<T> {
@@ -51,44 +51,43 @@ impl<T: Debug> Debug for Arg<T> {
 
 const UNINITIALIZED_ARG_PRINT_STRING: &str = "[CRITICAL ERROR]: This string should represent arguments value, but if you see this it means that `ArgCmp.print_arg` was not initialized!";
 
-impl<T> Arg<T> {
+impl<T: ?Sized> Arg<T> {
     /// Checks that argument value matches some predicate.
     pub fn is<'a, TFn: Fn(&T) -> bool + 'a>(predicate: TFn) -> Self {
-        let anonymous_predicate = move |ptr: *const ()| {
+        let anonymous_predicate = move |ptr: *const T| {
             // SAFETY: anonymous predicate is called only internally and passed pointer is always
             // created by casting &T.
             let t_ref = unsafe {
-                let t_ptr = ptr as *const T;
-                t_ptr
-                    .as_ref()
+                ptr.as_ref()
                     .expect("Pointer to argument in Arg::is must not be null.")
             };
             return predicate(t_ref);
         };
         let boxed_anonymous_predicate =
-            Box::new(anonymous_predicate) as Box<dyn Fn(*const ()) -> bool + 'a>;
+            Box::new(anonymous_predicate) as Box<dyn Fn(*const T) -> bool + 'a>;
         return Self::Is(transmute_lifetime!(boxed_anonymous_predicate), Internal);
     }
 
     /// Checks that argument value matches some predicate. Receives mutable reference to argument.
     /// Can be useful for matching [`FnMut`] arguments.
     pub fn is_mut<'a, TFn: Fn(&mut T) -> bool + 'a>(predicate: TFn) -> Self {
-        let anonymous_predicate = move |ptr: *const ()| {
+        let anonymous_predicate = move |ptr: *const T| {
             // SAFETY: anonymous predicate is called only internally and passed pointer is always
             // created by casting &mut T.
             let t_ref = unsafe {
-                let t_ptr = ptr as *mut T;
-                t_ptr
+                (ptr as *mut T)
                     .as_mut()
                     .expect("Pointer to argument in Arg::is must not be null.")
             };
             return predicate(t_ref);
         };
         let boxed_anonymous_predicate =
-            Box::new(anonymous_predicate) as Box<dyn Fn(*const ()) -> bool + 'a>;
+            Box::new(anonymous_predicate) as Box<dyn Fn(*const T) -> bool + 'a>;
         return Self::Is(transmute_lifetime!(boxed_anonymous_predicate), Internal);
     }
+}
 
+impl<T> Arg<T> {
     /// Checks that argument value is equal to given value.
     pub fn eq(value: T) -> Self
     where
@@ -175,7 +174,7 @@ impl<T: ?Sized> Arg<T> {
                 }
             }
             Arg::Is(predicate, _) => {
-                if !predicate(actual_value as *const _ as *const ()) {
+                if !predicate(actual_value as *const _) {
                     return ArgCheckResult::Err(ArgCheckResultErr {
                         arg_info,
                         error_msg: format!(
@@ -271,7 +270,7 @@ pub(crate) mod tests {
         let Arg::Is(actual_predicate, _) = arg else {
             unreachable!()
         };
-        let actual_predicate_result = actual_predicate(&CustomType(5) as *const _ as *const ());
+        let actual_predicate_result = actual_predicate(&CustomType(5) as *const _);
         assert!(actual_predicate_result);
 
         predicate::verify_calls();
@@ -290,7 +289,7 @@ pub(crate) mod tests {
         let Arg::Is(actual_predicate, _) = arg else {
             unreachable!()
         };
-        let actual_predicate_result = actual_predicate(&CustomType(5) as *const _ as *const ());
+        let actual_predicate_result = actual_predicate(&CustomType(5) as *const _);
         assert!(actual_predicate_result);
 
         predicate_mut::verify_calls();
@@ -574,7 +573,7 @@ pub(crate) mod tests {
     fn check_Is_IsEqual_ReturnsOk() {
         // Arrange
         let actual_value = &CustomType(1);
-        ptr_predicate::setup(actual_value as *const _ as *const ()).returns_once(true);
+        ptr_predicate::setup(actual_value as *const _).returns_once(true);
 
         let arg_name = "quo vadis";
         let actual_value_str = "veridis quo";
@@ -593,14 +592,14 @@ pub(crate) mod tests {
         assert_eq!(arg_info.arg_type_name(), *CUSTOM_TYPE_NAME);
         assert_eq!(arg_info.clone_arg_debug_string(), actual_value_str);
 
-        ptr_predicate::verify_calls();
+        ptr_predicate::verify_calls::<CustomType>();
     }
 
     #[test]
     fn check_Is_IsNotEqual_ReturnsErr() {
         // Arrange
         let actual_value = &CustomType(1);
-        ptr_predicate::setup(actual_value as *const _ as *const ()).returns_once(false);
+        ptr_predicate::setup(actual_value as *const _).returns_once(false);
 
         let arg_name = "quo vadis";
         let actual_value_str = "veridis quo";
@@ -628,7 +627,7 @@ pub(crate) mod tests {
         );
         assert_eq!(error_msg, expected_error_msg);
 
-        ptr_predicate::verify_calls();
+        ptr_predicate::verify_calls::<CustomType>();
     }
 
     pub mod utilities {
@@ -650,7 +649,7 @@ pub(crate) mod tests {
         }
 
         #[automock::mock]
-        pub fn ptr_predicate(_: *const ()) -> bool {
+        pub fn ptr_predicate<T>(_: *const T) -> bool {
             unreachable!()
         }
     }

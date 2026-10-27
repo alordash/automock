@@ -550,6 +550,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::borrowed_box)]
     fn dyn_arguments() {
         // Arrange
         let mut mock = MonsterMock::<i32, 4, DefaultOutput, DefaultIterator<i32>>::new();

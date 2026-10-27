@@ -600,7 +600,7 @@ List of existing configuration ordered by number of correctly matched arguments 
             // Assert
             assert_eq!(returned_value, actual_returned_value);
             assert_panics(
-                || accept_two_values_return_value::verify_calls(),
+                accept_two_values_return_value::verify_calls,
                 format!(
                     "Expected following calls:
 	accept_two_values_return_value({v1}, {v2}) 2 times"

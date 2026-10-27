@@ -761,6 +761,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::borrowed_box)]
     fn dyn_arguments() {
         // Arrange
         Monster::<'static, i32, 4>::static_setup().new().call_base();

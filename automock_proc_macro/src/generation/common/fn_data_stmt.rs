@@ -163,16 +163,20 @@ fn trait_name_expr(span: Span, trait_path: &Path, fn_info: &FnInfo) -> Expr {
             .collect::<Vec<_>>(),
         _ => Vec::new(),
     };
-    let format_string = if arguments.is_empty() {
-        trait_name
-    } else {
-        format!("{trait_name}<{}>", vec!["{}"; arguments.len()].join(", "))
-    };
+    if arguments.is_empty() {
+        return Expr::MethodCall(expr::method_call::new(
+            span,
+            expr::lit::string(span, &trait_name),
+            Ident::new("to_owned", span),
+            [],
+        ));
+    }
+    let format_string = format!("{trait_name}<{}>", vec!["{}"; arguments.len()].join(", "));
     let format_arguments: Punctuated<_, Token![,]> =
         std::iter::once(expr::lit::string(span, &format_string))
             .chain(arguments)
             .collect();
-    Expr::Macro(ExprMacro {
+    let result = Expr::Macro(ExprMacro {
         attrs: Vec::new(),
         mac: Macro {
             path: path::new(span, ["format"]),
@@ -180,7 +184,8 @@ fn trait_name_expr(span: Span, trait_path: &Path, fn_info: &FnInfo) -> Expr {
             delimiter: MacroDelimiter::Paren(token::Paren(span)),
             tokens: format_arguments.to_token_stream(),
         },
-    })
+    });
+    return result;
 }
 
 fn fn_data_pat(
